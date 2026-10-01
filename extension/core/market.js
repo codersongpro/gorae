@@ -111,7 +111,8 @@ export async function fetchEntryWorks(entry, { fetchFn, config }) {
   // 고래곳간 밖에서 만든 파일은 시트에 적힌 정보로 빈칸을 채운다
   const works = res.works.map((w) => {
     const out = { ...w };
-    if (!out.title || out.title === '제목 없는 작품' || out.title === '주소 작품') out.title = entry.title;
+    // 고래곳간 밖에서 만든 파일·주소만 있는 응답은 시트에 적힌 제목을 쓴다
+    if (res.kind === 'html-plain' || res.kind === 'url-plain' || !out.title) out.title = entry.title;
     if (!out.howToUse) out.howToUse = entry.description || '';
     if (!out.description && entry.description) out.description = entry.description;
     if (!out.author && entry.nickname) out.author = entry.nickname;

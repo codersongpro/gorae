@@ -88,3 +88,50 @@ test('나눔 곳간 작품(m-…, sample-…)의 물뿜기도 집계된다', () 
   assert.deepEqual(res.catalog.spouts['sample-share-bingo'], { teacher: 1, student: 0 });
   assert.deepEqual(res.unknownIds, ['ghost']);
 });
+
+test('바로 반영: 누르면 설문에 자동 제출, 시트에서 세고, 취소 보고는 1을 뺀다', async () => {
+  const { likeNow, unlikeNow, formResponseUrl, loadSpoutCounts } = await import('../extension/core/spout-sync.js');
+  const { tallySpouts, buildCancelReport } = await import('../shared/spout.js');
+  const posted = [];
+  const fetchFn = async (url, opts) => { posted.push({ url, text: new URLSearchParams(opts.body).get('entry.5') }); return { ok: true }; };
+  const config = { feedbackFormUrl: 'https://docs.google.com/forms/d/e/FORM1/viewform', feedbackEntry: 'entry.5' };
+  assert.equal(formResponseUrl(config.feedbackFormUrl), 'https://docs.google.com/forms/d/e/FORM1/formResponse');
+  assert.equal(formResponseUrl('https://evil.test/forms/d/e/X/viewform'), null);
+  const st = createMemoryStorage();
+  const r = await likeNow({ storage: st, fetchFn, config, workId: 'tool-a', role: 'student' });
+  assert.deepEqual(r, { ok: true, sent: true });
+  assert.equal(posted[0].url, 'https://docs.google.com/forms/d/e/FORM1/formResponse');
+  assert.ok(posted[0].text.startsWith('[고래곳간 물뿜기]') && posted[0].text.includes('학생: tool-a'));
+  const mine = (await mySpouts(st))['tool-a'];
+  // 시트에 아직 안 올라갔을 때도 내 화면에는 +1
+  const before = { counts: {}, seen: new Set() };
+  assert.deepEqual(spoutCountsFor(catalog, 'tool-a', mine, before), { teacher: 0, student: 1 });
+  // 시트에 올라간 뒤: 시트 숫자 그대로 (두 번 더하지 않음)
+  const { parseCsv } = await import('../shared/market.js');
+  const csv = `타임스탬프,물뿜기\n1,"${posted[0].text}"`; // 응답 시트 CSV (셀 안 줄바꿈)
+  const sheet1 = tallySpouts(parseCsv(csv).map((r) => r.join('\n')).join('\n'));
+  assert.deepEqual(spoutCountsFor(catalog, 'tool-a', mine, sheet1), { teacher: 0, student: 1 });
+  // 취소
+  const u = await unlikeNow({ storage: st, fetchFn, config, workId: 'tool-a' });
+  assert.equal(u.ok, true);
+  assert.ok(posted[1].text.startsWith('[고래곳간 물뿜기 취소]'));
+  assert.deepEqual(spoutCountsFor(catalog, 'tool-a', null, sheet1, u.pendingCancel), { teacher: 0, student: 0 }); // 시트 반영 전에도 바로 -1
+  const sheet2 = tallySpouts(posted.map((p) => p.text).join('\n'));
+  assert.deepEqual(sheet2.counts['tool-a'], { teacher: 0, student: 0 });
+  // 같은 보고가 두 번 있어도 한 번만, 취소가 더 많아도 0 아래로 안 감
+  const dup = tallySpouts([posted[0].text, posted[0].text, buildCancelReport([{ workId: 'x', role: 'teacher' }], { reportId: 'c-zz11' })].join('\n'));
+  assert.deepEqual(dup.counts['tool-a'], { teacher: 0, student: 1 });
+  assert.deepEqual(dup.counts.x, { teacher: 0, student: 0 });
+  assert.equal(await loadSpoutCounts({ fetchFn, config: {} }), null); // 시트 미설정이면 읽지 않음
+});
+
+test('제출이 실패하면 기기에 남고, 다음에 다시 보낸다', async () => {
+  const { likeNow, flushPending } = await import('../extension/core/spout-sync.js');
+  const config = { feedbackFormUrl: 'https://docs.google.com/forms/d/e/FORM1/viewform', feedbackEntry: 'entry.5' };
+  const st = createMemoryStorage();
+  const down = async () => { throw new TypeError('offline'); };
+  assert.deepEqual(await likeNow({ storage: st, fetchFn: down, config, workId: 'tool-b', role: 'teacher' }), { ok: true, sent: false });
+  assert.equal((await mySpouts(st))['tool-b'].sent, false);
+  assert.equal(await flushPending({ storage: st, fetchFn: async () => ({ ok: true }), config }), 1);
+  assert.equal((await mySpouts(st))['tool-b'].sent, true);
+});

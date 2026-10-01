@@ -70,11 +70,50 @@ export function applySpoutReports(catalog, reports, { now = new Date() } = {}) {
   return { catalog: { ...catalog, spouts, spoutSeen, updatedAt: now.toISOString() }, added, skippedReports, unknownIds: [...unknownIds] };
 }
 
-// 카드에 보일 숫자: 공개된 숫자 + 이 기기에서 아직 보내지 않은 내 물뿜기
-export function spoutCountsFor(catalog, workId, mine = null) {
-  const c = (catalog && catalog.spouts && catalog.spouts[workId]) || { teacher: 0, student: 0 };
+// ---------- 바로 반영 (클릭 즉시 설문에 자동 제출 → 응답 시트를 읽어 센다) ----------
+const CANCEL_HEADER = '[고래곳간 물뿜기 취소]';
+export function buildCancelReport(items, { reportId }) {
+  return buildSpoutReport(items, { reportId }).replace(HEADER, CANCEL_HEADER);
+}
+
+// 응답 시트 글 전체 → 작품별 숫자. 같은 보고 번호는 한 번만, 취소 보고는 1을 뺀다(0 아래로는 안 감).
+// 반환: { counts: { [id]: { teacher, student } }, seen: Set(보고 번호) }
+export function tallySpouts(text) {
+  const t = String(text || '');
+  const counts = {};
+  const seen = new Set();
+  const add = (reports, delta) => {
+    for (const r of reports) {
+      if (seen.has(r.reportId)) continue;
+      seen.add(r.reportId);
+      for (const role of ROLES) {
+        for (const id of r[role]) {
+          counts[id] = counts[id] || { teacher: 0, student: 0 };
+          counts[id][role] = Math.max(0, counts[id][role] + delta);
+        }
+      }
+    }
+  };
+  // 취소 블록과 일반 블록을 나눠 같은 해석기로 읽는다 (취소는 머리글만 다르다)
+  const segs = t.split(CANCEL_HEADER);
+  const likes = segs.map((seg, i) => (i === 0 ? seg : seg.includes(HEADER) ? seg.slice(seg.indexOf(HEADER)) : '')).join('\n');
+  const cancels = segs.slice(1).map((seg) => HEADER + seg.split(HEADER)[0]).join('\n');
+  add(parseSpoutReports(likes), 1);
+  add(parseSpoutReports(cancels), -1);
+  return { counts, seen };
+}
+
+// 카드에 보일 숫자.
+// base: 응답 시트에서 센 숫자(live) 또는 catalog.spouts. mine: 이 기기의 내 물뿜기.
+// 시트에 아직 안 올라간 내 물뿜기는 +1, 시트에 아직 안 올라간 내 취소는 -1 (누르자마자 숫자가 바뀌게)
+export function spoutCountsFor(catalog, workId, mine = null, live = null, pendingCancel = null) {
+  const src = live ? live.counts[workId] : catalog && catalog.spouts && catalog.spouts[workId];
+  const c = src || { teacher: 0, student: 0 };
   const out = { teacher: Number(c.teacher) || 0, student: Number(c.student) || 0 };
-  if (mine && !mine.sent && ROLES.includes(mine.role)) out[mine.role] += 1;
+  if (mine && ROLES.includes(mine.role) && (!mine.sent || (live && !live.seen.has(mine.reportId)))) out[mine.role] += 1;
+  if (pendingCancel && live && live.seen.has(pendingCancel.likeId) && !live.seen.has(pendingCancel.reportId) && ROLES.includes(pendingCancel.role)) {
+    out[pendingCancel.role] = Math.max(0, out[pendingCancel.role] - 1);
+  }
   return out;
 }
 

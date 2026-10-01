@@ -158,7 +158,7 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
 function spoutRow(entry, { countsOf, mineOf, onSpout }) {
   const c = countsOf(entry);
   const mine = mineOf(entry);
-  const locked = !!(mine && mine.sent);
+  const locked = false; // 보낸 뒤에도 다시 누르면 취소 보고가 제출된다
   return h('div', { class: 'row' },
     h('button', {
       class: mine ? 'chip primary' : 'chip', disabled: locked, 'aria-pressed': String(!!mine),

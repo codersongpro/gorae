@@ -13,7 +13,8 @@ import { putRunTicket } from './core/runtab.js';
 import { seedMypod, samplesInMypod } from './core/seed.js';
 import { verifyFeatured } from './shared/featured.js';
 import { spoutCountsFor, spoutTotal } from './shared/spout.js';
-import { recordSpout, unrecordSpout, pendingReport, markSent, mySpouts } from './core/spout-store.js';
+import { pendingReport, markSent, mySpouts } from './core/spout-store.js';
+import { likeNow, unlikeNow, flushPending, loadSpoutCounts } from './core/spout-sync.js';
 import { spoutSendBar } from './ui/views.js';
 import { checkWork } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
@@ -40,7 +41,7 @@ const store = createStore(createIdbBackend());
 const state = {
   market: { status: 'idle', entries: [], query: '', kind: '', busy: {}, done: {} },
   shareProfile: {}, marketRunOk: {}, confirmMarket: null,
-  service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null,
+  service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null, spoutLive: null, pendingCancels: {},
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
   grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
   source: 'network', listRejected: false, notice: '', openId: null,
@@ -260,18 +261,32 @@ async function importFromMarket(entry) {
   render();
 }
 
-// ----- 물뿜기 (서버 없음): 기기에 기록 → 모아서 의견 설문으로 보냄 → 파수꾼이 집계해 catalog에 반영
+// ----- 물뿜기 (서버 없음, 좋아요처럼): 누르면 숫자가 바로 오르고 '고래곳간 물뿜기' 설문에 자동 제출,
+// 모두의 숫자는 그 설문의 응답 시트를 읽어 센다. 다시 누르면 취소(취소 보고 제출).
 const spoutRole = () => (state.mode === 'mother' ? 'teacher' : 'student');
+async function refreshSpoutCounts() {
+  const live = await loadSpoutCounts({ fetchFn: fetch, config: CONFIG });
+  if (live) {
+    state.spoutLive = live;
+    render();
+  }
+}
 const spoutProps = () => ({
-  countsOf: (e) => spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id]),
+  countsOf: (e) => spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id], state.spoutLive, state.pendingCancels[e.work.id]),
   mineOf: (e) => state.mySpouts[e.work.id],
   onSpout: async (e) => {
-    // 좋아요처럼 토글: 안 눌렀으면 뿜기, 눌렀고 아직 안 보냈으면 취소
-    const mine = state.mySpouts[e.work.id];
-    if (mine && !mine.sent) await unrecordSpout(storage, e.work.id);
-    else if (!mine) await recordSpout(storage, e.work.id, spoutRole());
+    const id = e.work.id;
+    if (state.mySpouts[id]) {
+      const r = await unlikeNow({ storage, fetchFn: fetch, config: CONFIG, workId: id });
+      if (r.pendingCancel) state.pendingCancels[id] = r.pendingCancel;
+      if (!r.ok) state.notice = S.spout.cancelFailed;
+    } else {
+      delete state.pendingCancels[id];
+      await likeNow({ storage, fetchFn: fetch, config: CONFIG, workId: id, role: spoutRole() });
+    }
     state.mySpouts = await mySpouts(storage);
     render();
+    setTimeout(refreshSpoutCounts, 5000); // 시트에 올라가는 데 몇 초 걸린다
   },
 });
 async function sendSpouts() {
@@ -410,7 +425,7 @@ async function render() {
   }
   let body;
   if (state.tab === 'catalog') {
-    const totals = Object.fromEntries(state.entries.map((e) => [e.work.id, spoutTotal(spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id]))]));
+    const totals = Object.fromEntries(state.entries.map((e) => [e.work.id, spoutTotal(spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id], state.spoutLive, state.pendingCancels[e.work.id]))]));
     const visible = sortEntries(filterEntries(state.entries, state), state.sort, totals);
     const pending = Object.values(state.mySpouts).filter((v) => !v.sent).length;
     body = catalogView({
@@ -484,6 +499,8 @@ try {
 try {
   await loadAll();
   render();
+  // 물뿜기: 보내지 못한 것을 다시 보내고, 응답 시트에서 모두의 숫자를 읽는다
+  flushPending({ storage, fetchFn: fetch, config: CONFIG }).then(async () => { state.mySpouts = await mySpouts(storage); refreshSpoutCounts(); });
   // 메인 탭이 바뀌면 서비스에 맞는 공유 버튼 순서를 갱신한다
   if (chrome.tabs && chrome.tabs.onActivated) {
     chrome.tabs.onActivated.addListener(refreshService);

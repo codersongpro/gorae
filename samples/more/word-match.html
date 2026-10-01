@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>영어 단어 짝 맞추기</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6fb; color: #1f2328; }
+  h1 { font-size: 1.4rem; margin: 0 0 8px; }
+  #grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 520px; }
+  .c { aspect-ratio: 1; border: 0; border-radius: 14px; font-size: 1.1rem; font-weight: 700; background: #5b4a8a; color: #5b4a8a; cursor: pointer; }
+  .c.open, .c.done { background: #fff; color: #1f2328; outline: 3px solid #5b4a8a; }
+  .c.done { outline-color: #2e7d32; color: #2e7d32; }
+  #msg { font-weight: 800; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<h1>🔤 영어 단어 짝 맞추기</h1>
+<p>같은 뜻의 영어 단어와 우리말 카드를 찾아요. <span id="msg" aria-live="polite"></span></p>
+<div id="grid"></div>
+<script>
+  const words = [['apple', '사과'], ['school', '학교'], ['friend', '친구'], ['happy', '행복한'], ['book', '책'], ['water', '물'], ['rain', '비'], ['blue', '파란색']];
+  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const cards = words.flatMap(([en, ko], i) => [{ t: en, k: i }, { t: ko, k: i }]);
+  for (let i = cards.length - 1; i > 0; i--) { const j = rand(i + 1); [cards[i], cards[j]] = [cards[j], cards[i]]; }
+  let first = null, lock = false, found = 0, tries = 0;
+  const grid = document.getElementById('grid');
+  cards.forEach((c) => {
+    const b = document.createElement('button'); b.className = 'c'; b.textContent = c.t; b.setAttribute('aria-label', '카드');
+    b.onclick = () => {
+      if (lock || b.classList.contains('open') || b.classList.contains('done')) return;
+      b.classList.add('open');
+      if (!first) { first = { b, c }; return; }
+      tries++;
+      if (first.c.k === c.k) {
+        first.b.className = b.className = 'c done'; found++; first = null;
+        document.getElementById('msg').textContent = found === words.length ? `모두 찾았어요! (${tries}번 시도)` : '';
+      } else {
+        lock = true;
+        setTimeout(() => { first.b.classList.remove('open'); b.classList.remove('open'); first = null; lock = false; }, 700);
+      }
+    };
+    grid.appendChild(b);
+  });
+</script>
+</body>
+</html>

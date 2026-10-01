@@ -39,8 +39,8 @@ test('AC-001 인터넷이 되면 목록과 족보를 받아 작품 카드를 만
   assert.equal(res.source, 'network');
   assert.equal(res.offline, false);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.length, 13); // 샘플 6개 + 기본 수업도구 7개
-  assert.equal(entries.filter((e) => e.status.ok).length, 9); // 서명된 샘플 2개 + 수업도구 7개만 검증 통과
+  assert.equal(entries.length, 16); // 샘플 6개 + 기본 수업도구 7개 + 추가 샘플 3개
+  assert.equal(entries.filter((e) => e.status.ok).length, 14); // 미검수 시연용 2개(구구단·곱셈 카드)만 빼고 검증 통과
 });
 
 test('AC-002 한 번 받은 뒤 인터넷이 끊겨도 사본으로 보여 주고 배지 검증도 된다', async () => {
@@ -49,7 +49,7 @@ test('AC-002 한 번 받은 뒤 인터넷이 끊겨도 사본으로 보여 주�
   const res = await loadCatalog({ fetchFn: downFetch, storage, config: CONFIG, resolveLocal });
   assert.deepEqual([res.source, res.offline], ['cache', true]);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.filter((e) => displayBadge({ status: e.status }) === 'clear').length, 9);
+  assert.equal(entries.filter((e) => displayBadge({ status: e.status }) === 'clear').length, 12);
 });
 
 test('처음부터 인터넷이 없으면 번들 샘플 목록을 쓴다', async () => {
@@ -70,13 +70,14 @@ test('학생고래 모드는 맑은 바다(검증 통과)만 보인다', async (
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const baby = filterEntries(entries, { mode: 'baby' });
-  assert.ok(baby.length === 9 && baby.every((e) => displayBadge(e) === 'clear'));
+  assert.ok(baby.length === 12 && baby.every((e) => displayBadge(e) === 'clear'));
 });
 
 test('정렬: 고래 픽 먼저 / 새로 들어옴 / 물뿜기 많은 순', async () => {
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
-  assert.equal(sortEntries(entries, 'pick')[0].work.id, 'sample-fraction-pizza');
+  // 시연 배치: 고래 픽(럭키드로우·모둠 점수판·분수 피자 게임)이 맨 위
+  assert.deepEqual(sortEntries(entries, 'pick').slice(0, 3).map((e) => e.work.id), ['tool-lucky-draw', 'tool-scoreboard', 'sample-fraction-pizza']);
   const newest = [...entries].sort((a, b) => Date.parse(b.work.addedAt) - Date.parse(a.work.addedAt))[0].work.addedAt;
   assert.equal(sortEntries(entries, 'new')[0].work.addedAt, newest);
   assert.equal(sortEntries(entries, 'spout', { 'sample-times-quiz': 99 })[0].work.id, 'sample-times-quiz');
@@ -94,7 +95,7 @@ test('기본 수업도구 7개가 수업도구 카테고리로 들어 있고 모
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const tools = filterEntries(entries, { domain: 'lesson', category: 'classroom_tool', mode: 'baby' });
-  assert.equal(tools.length, 7);
+  assert.equal(tools.length, 8); // 기본 수업도구 7개 + 교실 타이머
   assert.ok(tools.every((e) => e.status.ok && checkHtml(e.work.html).ok));
   assert.deepEqual(filterEntries(entries, { query: '뽑기' }).map((e) => e.work.id), ['tool-lucky-draw']);
   assert.deepEqual(filterEntries(entries, { subcategory: 'scoreboard' }).map((e) => e.work.id), ['tool-scoreboard']);

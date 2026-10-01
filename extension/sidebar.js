@@ -10,6 +10,7 @@ import { buildSharePackage, buildSongSubmission, validFormUrl } from './core/sub
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
+import { seedMypod, samplesInMypod } from './core/seed.js';
 import { verifyFeatured } from './shared/featured.js';
 import { spoutCountsFor, spoutTotal } from './shared/spout.js';
 import { recordSpout, pendingReport, markSent, mySpouts } from './core/spout-store.js';
@@ -28,7 +29,7 @@ import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView
 import { createView } from './ui/form.js';
 import { pinView, marketView, marketRunConfirm } from './ui/views.js';
 import { MARKET, shareReady } from './core/market-config.js';
-import { loadMarket, importEntry } from './core/market.js';
+import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
 import { hasPin, setPin, checkPin, resetPin } from './core/pin.js';
 
@@ -85,7 +86,21 @@ function keepSidebarOpen() {
   }
 }
 
-// 실행 관문: HTML·URL 작품 모두 canRun을 통과해야 한다. URL 작품은 확인 카드를 거친 뒤에만 새 탭으로 연다.
+// 별도 웨일 창으로 연다. 창을 열 수 없으면 새 탭으로. 반환: 열었는지 여부
+// type 'popup': 고래곳간 실행 화면(주소창 없음) / 'normal': 외부 웹앱(어느 사이트인지 주소창이 보이게)
+function openInWindow(url, type = 'normal') {
+  if (chrome.windows && chrome.windows.create) {
+    chrome.windows.create({ url, type, width: 1024, height: 768, focused: true }, () => keepSidebarOpen());
+    return true;
+  }
+  if (chrome.tabs && chrome.tabs.create) {
+    chrome.tabs.create({ url });
+    return true;
+  }
+  return false;
+}
+
+// 실행 관문: HTML·URL 작품 모두 canRun을 통과해야 한다. URL 작품은 확인 카드를 거친 뒤에만 새 창으로 연다.
 async function run(entry) {
   const w = entry.work;
   const c = canRun(entry);
@@ -95,11 +110,7 @@ async function run(entry) {
   // HTML 작품은 별도 웨일 창에서 연다 (확장앱 실행 화면 → sandbox 페이지, 격리 방식은 같다)
   if ((chrome.windows && chrome.windows.create) || (chrome.tabs && chrome.tabs.create)) {
     const id = await putRunTicket(storage, entry);
-    const url = chrome.runtime.getURL('run.html#' + id);
-    if (chrome.windows && chrome.windows.create) {
-      chrome.windows.create({ url, type: 'popup', width: 1024, height: 768, focused: true }, () => keepSidebarOpen());
-    }
-    else chrome.tabs.create({ url }); // 창을 못 열면 새 탭으로
+    openInWindow(chrome.runtime.getURL('run.html#' + id), 'popup');
     return go({ notice: S.run.openedTab(w.title), confirmUrl: null });
   }
   // 탭을 열 수 없는 환경이면 예전처럼 패널 안에서 실행한다
@@ -116,7 +127,8 @@ async function run(entry) {
 
 const openConfirmed = () => {
   const info = state.confirmUrl;
-  if (info) chrome.tabs.create({ url: info.url });
+  // 외부 웹앱도 HTML 작품처럼 별도 웨일 창으로 연다 (창을 못 열면 새 탭)
+  if (info) openInWindow(info.url);
   go({ confirmUrl: null, notice: S.run.external });
 };
 
@@ -188,11 +200,31 @@ const submitProps = (allowRecommend) => ({
 async function refreshMarket() {
   state.market = { ...state.market, status: 'loading', error: '', notice: '' };
   render();
+  // 앱에 들어 있는 샘플은 시트를 못 받아도 늘 보인다 (시연용)
+  let samples = [];
+  try {
+    samples = await (await fetch(chrome.runtime.getURL('sample/market-samples.json'))).json();
+  } catch { /* 샘플이 없어도 된다 */ }
   try {
     const r = await loadMarket({ fetchFn: fetch, config: MARKET, storage });
-    state.market = { ...state.market, status: 'ok', entries: r.entries, source: r.source, header: r.header, missing: r.missing };
+    state.market = { ...state.market, status: 'ok', entries: [...r.entries, ...samples], source: r.source, header: r.header, missing: r.missing };
   } catch (e) {
-    state.market = { ...state.market, status: 'error', error: e.code || 'NETWORK', entries: [] };
+    state.market = { ...state.market, status: samples.length ? 'ok' : 'error', error: e.code || 'NETWORK', entries: samples, notice: samples.length ? S.market.error[e.code] || S.market.error.NETWORK : '' };
+  }
+  render();
+}
+
+// 미리 실행: 내 곳간에 담지 않고 바로 실행한다 (내려받기·검증은 가져오기와 같고, 실행 전 출처 확인)
+async function previewFromMarket(entry) {
+  state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: true }, notice: '' };
+  render();
+  try {
+    const { works } = await fetchEntryWorks(entry, { fetchFn: fetch, config: MARKET });
+    const [e] = await verifyWorks([works[0]]);
+    state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false } };
+    return run({ ...e, source: 'market' });
+  } catch (err) {
+    state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, notice: (S.market.error[err.code] || S.market.error.NETWORK) + (err.detail ? ` (${err.detail})` : '') };
   }
   render();
 }
@@ -372,7 +404,7 @@ async function render() {
   } else if (state.tab === 'market') {
     if (state.market.status === 'idle') setTimeout(refreshMarket, 0); // 탭에 들어오면 자동으로 불러온다
     body = marketView({
-      m: state.market, onRefresh: refreshMarket, onImport: importFromMarket,
+      m: state.market, onRefresh: refreshMarket, onImport: importFromMarket, onPreview: previewFromMarket,
       onFilter: (p) => { state.market = { ...state.market, ...p }; render(); },
     });
   } else if (state.tab === 'mypod') {
@@ -421,6 +453,13 @@ state.mode = (await storage.get('mode')) || 'baby';
 state.shareProfile = (await storage.get('shareProfile')) || {};
 // 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 학생고래 모드로 시작한다
 if (state.mode === 'mother' && !(await hasPin(storage))) state.mode = 'baby';
+// 시연용 샘플: 처음 실행하면 내 곳간에 한 번 담고, 학급 꾸러미는 그 샘플들을 미리 골라 둔다
+try {
+  const sample = await (await fetch(chrome.runtime.getURL('sample/mypod-samples.json'))).json();
+  await seedMypod({ storage, store, samples: sample.works });
+  state.classSelected = await samplesInMypod(store, sample.works);
+  if (state.classSelected.length) state.className = sample.className;
+} catch { /* 샘플이 없어도 된다 */ }
 try {
   await loadAll();
   render();

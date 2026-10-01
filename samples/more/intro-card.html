@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나를 소개하는 카드</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #eef7f6; color: #1f2328; }
+  .card { max-width: 420px; background: #fff; border-radius: 20px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.08); text-align: center; }
+  #face { font-size: 4rem; cursor: pointer; }
+  input { width: 100%; box-sizing: border-box; font-size: 1.1rem; padding: 8px; margin: 4px 0; border: 1px solid #cfd8dc; border-radius: 8px; }
+  h2 { margin: 6px 0; }
+</style>
+</head>
+<body>
+<h1>🪪 나를 소개하는 카드</h1>
+<div class="card">
+  <div id="face" title="눌러서 바꾸기">🐳</div>
+  <h2 id="nick">파도타는 고래</h2>
+  <input id="like" aria-label="좋아하는 것" value="좋아하는 것: 축구, 그림 그리기">
+  <input id="dream" aria-label="꿈" value="꿈: 게임을 만드는 사람">
+  <input id="say" aria-label="한마디" value="한마디: 같이 놀자!">
+</div>
+<p>카드를 눌러 얼굴을 바꾸고, 글을 고쳐 나만의 카드를 만들어요. (진짜 이름 대신 별명을 써요)</p>
+<script>
+  const faces = ['🐳', '🐬', '🦈', '🐙', '🐠', '🦭'];
+  let i = 0;
+  document.getElementById('face').onclick = (e) => { i = (i + 1) % faces.length; e.target.textContent = faces[i]; };
+  document.getElementById('nick').onclick = (e) => { e.target.textContent = ['파도타는 고래', '노래하는 고래', '점프하는 고래'][i % 3]; };
+</script>
+</body>
+</html>

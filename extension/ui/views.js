@@ -197,7 +197,7 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
 }
 
 // 나눔 곳간: 시트 목록 → 검색·분류 거르기 → 가져오기
-export function marketView({ m, onRefresh, onFilter, onImport }) {
+export function marketView({ m, onRefresh, onFilter, onImport, onPreview }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
@@ -225,14 +225,17 @@ export function marketView({ m, onRefresh, onFilter, onImport }) {
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
     shown.map((e) => h('article', { class: 'card' },
       h('h3', {}, e.title),
-      h('span', { class: 'badge shallow' }, S.badge.shallow),
+      h('div', { class: 'row' }, h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
       e.kinds.length || e.categoryText ? h('p', { class: 'muted' }, [e.kinds.join(' · '), e.categoryText].filter(Boolean).join(' / ')) : null,
       h('p', { class: 'muted' }, [M.by(e.nickname, e.whale), e.timestamp].filter(Boolean).join(' · ')),
       e.description ? h('p', {}, e.description) : null,
       e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
-      e.files.length ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),
-      h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
-        m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import))));
+      e.files.length || e.payload ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),
+      h('div', { class: 'row' },
+        // 미리 실행: 내 곳간에 담지 않고 바로 실행 (실행 전 출처 확인)
+        h('button', { disabled: !!(m.busy && m.busy[e.id]), onclick: () => onPreview(e) }, M.preview),
+        h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
+          m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import)))));
 }
 
 // 나눔 곳간 작품을 실행하기 전 출처 확인
@@ -274,6 +277,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
     records.length ? records.map((r) => {
       const w = r.work;
       const tags = [`출처: ${S.source[r.source] || r.source}`, `버전 ${w.version}`];
+      if (r.sample) tags.unshift(S.market.sampleTag);
       if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
       if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
       return workCard(entriesById.get(r.id), {

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발표자 룰렛</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #fbf6ee; color: #1f2328; text-align: center; }
+  #wheel { width: min(80vw, 300px); height: min(80vw, 300px); margin: 10px auto; border-radius: 50%; transition: transform 2.5s cubic-bezier(.2,.8,.2,1); }
+  #pin { font-size: 2rem; line-height: 1; }
+  textarea { width: 100%; max-width: 420px; box-sizing: border-box; min-height: 80px; font-size: 1rem; }
+  button { font-size: 1.2rem; padding: 10px 20px; border-radius: 12px; border: 0; background: #c0392b; color: #fff; cursor: pointer; }
+  #who { font-size: 2rem; font-weight: 800; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<h1>🎡 발표자 룰렛</h1>
+<p>럭키드로우를 리믹스해서 돌림판 모양으로 바꿨어요.</p>
+<textarea id="list" aria-label="룰렛 칸">1모둠
+2모둠
+3모둠
+4모둠
+5모둠
+6모둠</textarea><br>
+<div id="pin">▼</div>
+<div id="wheel" aria-hidden="true"></div>
+<button id="spin">돌리기!</button>
+<p id="who" aria-live="polite"></p>
+<script>
+  const colors = ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#1abc9c', '#e67e22'];
+  const items = () => document.getElementById('list').value.split('\n').map((s) => s.trim()).filter(Boolean);
+  const wheel = document.getElementById('wheel');
+  function paint() {
+    const it = items(); const step = 360 / Math.max(1, it.length);
+    wheel.style.background = `conic-gradient(${it.map((_, i) => `${colors[i % colors.length]} ${i * step}deg ${(i + 1) * step}deg`).join(',')})`;
+  }
+  let angle = 0;
+  document.getElementById('list').oninput = paint;
+  document.getElementById('spin').onclick = () => {
+    const it = items(); if (!it.length) return;
+    const k = crypto.getRandomValues(new Uint32Array(1))[0] % it.length, step = 360 / it.length;
+    angle += 360 * 5 + (360 - (angle % 360)) - (k * step + step / 2);
+    wheel.style.transform = `rotate(${angle}deg)`;
+    document.getElementById('who').textContent = '';
+    setTimeout(() => { document.getElementById('who').textContent = `🎤 ${it[k]}`; }, 2600);
+  };
+  paint();
+</script>
+</body>
+</html>

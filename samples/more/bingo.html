@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>곱셈 빙고</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f5f3fb; color: #1f2328; }
+  #q { font-size: 2rem; font-weight: 800; margin: 8px 0; }
+  #b { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 360px; }
+  #b button { aspect-ratio: 1; font-size: 1.4rem; font-weight: 700; border: 0; border-radius: 12px; background: #fff; cursor: pointer; }
+  #b button.on { background: #5b4a8a; color: #fff; }
+  #msg { font-weight: 800; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<h1>🎯 곱셈 빙고</h1>
+<p>문제의 답을 빙고판에서 찾아 눌러요. 한 줄을 먼저 채우면 빙고!</p>
+<div id="q" aria-live="polite"></div>
+<div id="b"></div>
+<p id="msg" aria-live="polite"></p>
+<script>
+  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const nums = new Set(); while (nums.size < 16) nums.add((2 + rand(8)) * (2 + rand(8)));
+  const cells = [...nums];
+  let target = 0;
+  function ask() {
+    const left = cells.filter((_, i) => !board.children[i].classList.contains('on'));
+    target = left[rand(left.length)];
+    const pairs = []; for (let a = 2; a <= 9; a++) if (target % a === 0 && target / a <= 9 && target / a >= 2) pairs.push([a, target / a]);
+    const [a, c] = pairs[rand(pairs.length)];
+    document.getElementById('q').textContent = `${a} × ${c} = ?`;
+  }
+  const board = document.getElementById('b');
+  cells.forEach((v) => {
+    const btn = document.createElement('button'); btn.textContent = v;
+    btn.onclick = () => {
+      if (v !== target) { document.getElementById('msg').textContent = '다시 찾아 봐요'; return; }
+      btn.classList.add('on'); document.getElementById('msg').textContent = '';
+      const on = [...board.children].map((x) => x.classList.contains('on'));
+      const lines = [];
+      for (let r = 0; r < 4; r++) { lines.push([0, 1, 2, 3].map((c) => r * 4 + c)); lines.push([0, 1, 2, 3].map((c) => c * 4 + r)); }
+      lines.push([0, 5, 10, 15], [3, 6, 9, 12]);
+      if (lines.some((l) => l.every((i) => on[i]))) { document.getElementById('msg').textContent = '🎉 빙고!'; document.getElementById('q').textContent = ''; return; }
+      ask();
+    };
+    board.appendChild(btn);
+  });
+  ask();
+</script>
+</body>
+</html>

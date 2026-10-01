@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>회의록 정리기</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f7f7f5; color: #1f2328; }
+  h1 { font-size: 1.4rem; margin: 0 0 8px; }
+  label { display: block; margin: 8px 0 4px; font-weight: 700; }
+  input, textarea { width: 100%; box-sizing: border-box; font-size: 1rem; padding: 8px; }
+  textarea { min-height: 110px; }
+  button { margin-top: 10px; font-size: 1.05rem; padding: 10px 16px; border-radius: 10px; border: 0; background: #8a6d3b; color: #fff; cursor: pointer; }
+  pre { white-space: pre-wrap; background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+</style>
+</head>
+<body>
+<h1>📝 회의록 정리기</h1>
+<p>회의 중 메모를 붙여 넣으면 안건·결정·할 일로 나눠 정리해요. 내용은 이 화면 밖으로 나가지 않아요.</p>
+<label for="topic">회의 주제</label>
+<input id="topic" value="학년 협의회 (10월 체험학습)">
+<label for="memo">메모 (한 줄에 하나, "결정:" "할 일:"로 시작하면 따로 모아요)</label>
+<textarea id="memo">체험학습 장소 후보 두 곳 비교
+결정: 과학관으로 간다
+할 일: 버스 견적 받기 (3반)
+할 일: 가정통신문 초안 (1반)
+안전 교육은 출발 전날 실시</textarea>
+<button id="go">정리하기</button>
+<pre id="out" aria-live="polite"></pre>
+<script>
+  document.getElementById('go').onclick = () => {
+    const lines = document.getElementById('memo').value.split('\n').map((s) => s.trim()).filter(Boolean);
+    const pick = (p) => lines.filter((l) => l.startsWith(p)).map((l) => '• ' + l.slice(p.length).trim());
+    const rest = lines.filter((l) => !/^(결정:|할 일:)/.test(l)).map((l) => '• ' + l);
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('out').textContent = [
+      `[회의록] ${document.getElementById('topic').value}  (${today})`, '',
+      '■ 논의', ...rest, '', '■ 결정 사항', ...pick('결정:'), '', '■ 할 일', ...pick('할 일:'),
+    ].join('\n');
+  };
+  document.getElementById('go').click();
+</script>
+</body>
+</html>

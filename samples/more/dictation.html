@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>받아쓰기 연습장</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f7f5ef; color: #1f2328; }
+  #hint { font-size: 1.3rem; background: #fff; border-radius: 12px; padding: 12px; }
+  input { width: 100%; box-sizing: border-box; font-size: 1.5rem; padding: 10px; margin: 10px 0; }
+  button { font-size: 1.1rem; padding: 10px 16px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }
+  #res { font-size: 1.3rem; font-weight: 800; min-height: 1.5em; }
+  mark { background: #ffd6d6; }
+</style>
+</head>
+<body>
+<h1>✏️ 받아쓰기 연습장</h1>
+<p>선생님이 문장을 읽어 주면 받아 쓰고 [확인]을 눌러요. 틀린 글자는 빨갛게 보여요.</p>
+<div id="hint" aria-live="polite"></div>
+<input id="ans" aria-label="받아쓴 문장" autocomplete="off">
+<button id="check">확인</button> <button id="next">다음 문장</button>
+<p id="res" aria-live="polite"></p>
+<script>
+  const S = ['바닷가에서 조개를 주웠다', '할머니께서 떡을 만드셨다', '가을 하늘이 참 맑습니다', '친구와 사이좋게 지내요'];
+  let i = 0;
+  const show = () => { document.getElementById('hint').textContent = `${i + 1}번 문장 (${S[i].length}글자) — 선생님이 읽어 줘요`; document.getElementById('ans').value = ''; document.getElementById('res').textContent = ''; };
+  document.getElementById('check').onclick = () => {
+    const goal = S[i], a = document.getElementById('ans').value.trim();
+    const res = document.getElementById('res'); res.textContent = '';
+    if (a === goal) { res.textContent = '💯 모두 맞았어요!'; return; }
+    [...goal].forEach((ch, k) => { const s = document.createElement(a[k] === ch ? 'span' : 'mark'); s.textContent = ch; res.appendChild(s); });
+  };
+  document.getElementById('next').onclick = () => { i = (i + 1) % S.length; show(); };
+  show();
+</script>
+</body>
+</html>

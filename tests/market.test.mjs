@@ -9,7 +9,7 @@ import { createMemoryStorage } from '../extension/core/storage.js';
 import { toSubmissionHtml } from '../shared/submission.js';
 
 const config = { sheetId: 'SHEET123', publishedCsvUrl: '', fetchTimeoutMs: 2000, maxFileBytes: 2 * 1024 * 1024 };
-const work = { id: 'my-1', title: '럭키 뽑기', type: 'html', artifactType: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw', audience: ['teacher'], tags: ['랜덤'], html: '<p>뽑기</p>', howToUse: '누르세요', description: '무작위로 뽑아요', version: 1 };
+const work = { id: 'my-1', title: '럭키드로우', type: 'html', artifactType: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw', audience: ['teacher'], tags: ['랜덤'], html: '<p>뽑기</p>', howToUse: '누르세요', description: '무작위로 뽑아요', version: 1 };
 
 const HEADER = '타임스탬프,어떤 고래이신가요?,제작하신 분의 닉네임,제작한 앱의 제목,설명,분류,웹앱 주소,한 마디,제작한 파일을 업로드 해주세요.';
 const csvOf = (...rows) => [HEADER, ...rows].join('\r\n');
@@ -42,13 +42,13 @@ test('열 찾기: 정확히 일치 → 부분 일치, 질문 순서가 바뀌어
 
 test('시트 목록: 항목·파일 주소·분류 코드를 읽고, 최근 등록이 위로', () => {
   const csv = csvOf(
-    `2026. 10. 1 오후 3:00:00,교사고래,파란 고래,럭키 뽑기,"무작위로 뽑아요\n여러 줄",수업 › 수업도구 › 럭키드로우·랜덤뽑기 [lesson/classroom_tool/lucky_draw],,재밌어요,${FILE}`,
+    `2026. 10. 1 오후 3:00:00,교사고래,파란 고래,럭키드로우,"무작위로 뽑아요\n여러 줄",수업 › 수업도구 › 럭키드로우·랜덤뽑기 [lesson/classroom_tool/lucky_draw],,재밌어요,${FILE}`,
     '2026. 10. 2 오전 9:00:00,학생고래,노을,분수 웹앱,설명,,https://app.example.com/f,,',
     '2026. 10. 3 오전 9:00:00,학생고래,빈칸,파일도 주소도 없음,,,,,',
   );
   const r = parseMarketCsv(csv);
   assert.equal(r.ok, true);
-  assert.deepEqual(r.entries.map((e) => e.title), ['분수 웹앱', '럭키 뽑기']); // 파일·주소 없는 행은 뺀다
+  assert.deepEqual(r.entries.map((e) => e.title), ['분수 웹앱', '럭키드로우']); // 파일·주소 없는 행은 뺀다
   const lucky = r.entries[1];
   assert.deepEqual(lucky.category, { domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw' });
   assert.equal(lucky.categoryText, '수업 › 수업도구 › 럭키드로우·랜덤뽑기');
@@ -74,10 +74,10 @@ test('드라이브 공유 주소 → 직접 받기 주소, 구글이 아닌 주�
 });
 
 test('폼 미리 채우기 주소: entry 번호가 있는 값만, docs.google.com만', () => {
-  const url = buildPrefillUrl('https://docs.google.com/forms/d/e/FORMID/viewform', { title: 'entry.111', nickname: 'entry.222', bad: 'x.333' }, { title: '럭키 뽑기 & 친구', nickname: '파란 고래', bad: 'no', comment: '없음' });
+  const url = buildPrefillUrl('https://docs.google.com/forms/d/e/FORMID/viewform', { title: 'entry.111', nickname: 'entry.222', bad: 'x.333' }, { title: '럭키드로우 & 친구', nickname: '파란 고래', bad: 'no', comment: '없음' });
   const u = new URL(url);
   assert.equal(u.searchParams.get('usp'), 'pp_url');
-  assert.equal(u.searchParams.get('entry.111'), '럭키 뽑기 & 친구');
+  assert.equal(u.searchParams.get('entry.111'), '럭키드로우 & 친구');
   assert.equal(u.searchParams.get('entry.222'), '파란 고래');
   assert.equal([...u.searchParams.keys()].length, 3);
   assert.equal(buildPrefillUrl('https://evil.test/forms', {}, {}), null);
@@ -86,8 +86,8 @@ test('폼 미리 채우기 주소: entry 번호가 있는 값만, docs.google.co
 test('공유 묶음: 업로드 파일 + 폼 문항(닉네임·제목·앱 종류·설명·자료 종류)에 맞춘 미리 채우기, 개인정보 확인 필수', () => {
   assert.equal(buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', privacyChecked: false }).ok, false);
   const p = buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', privacyChecked: true });
-  assert.equal(p.file.name, '럭키_뽑기.html');
-  assert.deepEqual(p.prefill, { nickname: '파란 고래', title: '럭키 뽑기', kind: ['수업자료'], description: '무작위로 뽑아요', format: 'HTML 파일', address: '' });
+  assert.equal(p.file.name, '럭키드로우.html');
+  assert.deepEqual(p.prefill, { nickname: '파란 고래', title: '럭키드로우', kind: ['수업자료'], description: '무작위로 뽑아요', format: 'HTML 파일', address: '' });
   const web = buildSharePackage({ ...work, type: 'url', artifactType: 'webapp', url: 'https://app.example.com', html: undefined, domain: 'work', category: 'student_life', subcategory: 'guidance' }, { nickname: '노을', privacyChecked: true });
   assert.deepEqual([web.prefill.kind, web.prefill.format], [['학생관리'], '배포한 웹 앱']);
   assert.ok(web.prefill.address.startsWith('https://app.example.com\n[고래곳간 작품 정보]'));
@@ -113,7 +113,7 @@ t2,b,웹,교무행정,설명,배포한 웹 앱,https://app.example.com,`;
 
 test('시트 불러오기: 비공개(웹 화면이 옴)면 다음 주소, 모두 실패하면 보관된 사본, 그것도 없으면 오류', async () => {
   const [exportUrl, pubUrl] = sheetCsvUrls(config);
-  const csv = csvOf(`t,교사고래,a,럭키 뽑기,,,,,${FILE}`);
+  const csv = csvOf(`t,교사고래,a,럭키드로우,,,,,${FILE}`);
   const storage = createMemoryStorage();
   const ok = await loadMarket({ fetchFn: mockFetch({ [exportUrl]: { body: '<html>로그인</html>', type: 'text/html' }, [pubUrl]: { body: csv } }), config, storage });
   assert.deepEqual([ok.source, ok.entries.length], ['network', 1]);
@@ -137,15 +137,15 @@ test('내려받기 안전장치: 로그인 화면으로 보내면 비공개, 엉
 test('가져오기: 검증 통과분만 내 곳간에(출처: 나눔 곳간), 같은 제목은 건너뜀, 잘못된 파일은 저장하지 않음', async () => {
   const store = createStore(createMemoryBackend());
   const dl = toDriveDownloadUrl(FILE);
-  const entry = { id: 'm-1', title: '럭키 뽑기', nickname: '파란 고래', whale: '교사고래', description: '', files: [FILE], address: '', category: null, timestamp: 't' };
+  const entry = { id: 'm-1', title: '럭키드로우', nickname: '파란 고래', whale: '교사고래', description: '', files: [FILE], address: '', category: null, timestamp: 't' };
   const fetchFn = mockFetch({ [dl]: { body: toSubmissionHtml(work), type: 'text/html' } });
   const r = await importEntry(entry, { fetchFn, config, store });
-  assert.deepEqual(r.added, ['럭키 뽑기']);
+  assert.deepEqual(r.added, ['럭키드로우']);
   const [rec] = await store.list();
   assert.equal(rec.source, 'market');
   assert.equal(rec.market.nickname, '파란 고래');
   assert.equal(rec.work.category, 'classroom_tool'); // 파일 속 작품 정보로 분류가 살아남
-  assert.deepEqual((await importEntry(entry, { fetchFn, config, store })).skipped, ['럭키 뽑기']);
+  assert.deepEqual((await importEntry(entry, { fetchFn, config, store })).skipped, ['럭키드로우']);
   const bad = mockFetch({ [dl]: { body: '그냥 글' } });
   await assert.rejects(() => importEntry({ ...entry, title: '다른 것' }, { fetchFn: bad, config, store }), (e) => e.code === 'INVALID');
   assert.equal((await store.list()).length, 1);

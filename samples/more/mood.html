@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘의 마음 날씨</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #fdf8ef; color: #1f2328; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+  button { font-size: 1.1rem; padding: 14px 8px; border-radius: 14px; border: 0; background: #fff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  button span { display: block; font-size: 2.4rem; }
+  #board { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; font-size: 1.8rem; }
+</style>
+</head>
+<body>
+<h1>🌤️ 오늘의 마음 날씨</h1>
+<p>지금 내 마음과 가장 비슷한 날씨를 눌러요. 이름은 남지 않고 날씨만 모여요.</p>
+<div class="opts" id="opts"></div>
+<p id="sum" aria-live="polite"></p>
+<div id="board" aria-label="모인 날씨"></div>
+<script>
+  const W = [['☀️', '맑음'], ['⛅', '조금 흐림'], ['🌧️', '비'], ['⛈️', '천둥'], ['🌈', '무지개']];
+  const n = {};
+  const opts = document.getElementById('opts');
+  W.forEach(([e, t]) => {
+    const b = document.createElement('button'); b.innerHTML = '<span></span>'; b.firstChild.textContent = e; b.append(t);
+    b.onclick = () => {
+      n[t] = (n[t] || 0) + 1;
+      const s = document.createElement('span'); s.textContent = e; document.getElementById('board').appendChild(s);
+      document.getElementById('sum').textContent = W.map(([, k]) => `${k} ${n[k] || 0}`).join(' · ');
+    };
+    opts.appendChild(b);
+  });
+</script>
+</body>
+</html>

@@ -128,7 +128,7 @@ export const works = [
     howToUse: '분을 고르고 시작을 누르면 남은 시간이 크게 보여요.',
     promptRecipe: '전자칠판에 크게 보이는 수업용 타이머를 만들어 줘. 분을 고르고 시작·멈춤 버튼이 있어.',
     version: 1,
-    addedAt: '2026-09-10T00:00:00Z',
+    addedAt: '2026-10-01T02:59:00Z', // 기본 도구 바로 뒤에 보이도록
     html: page('교실 타이머', '<select id="m"><option>1</option><option selected>3</option><option>5</option></select>분 <button id="s">시작</button><p id="t" style="font-size:48px">03:00</p>',
       'let left=0,iv;const t=document.getElementById("t");function draw(){t.textContent=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}document.getElementById("s").onclick=()=>{clearInterval(iv);left=+document.getElementById("m").value*60;draw();iv=setInterval(()=>{left=Math.max(0,left-1);draw();if(!left)clearInterval(iv)},1000)}'),
   },

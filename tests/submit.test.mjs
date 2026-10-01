@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { buildWorkSubmission, buildSongSubmission, validFormUrl, FORM_LIMITS } from '../extension/core/submit.js';
 import { readSubmission, toSubmissionHtml } from '../shared/submission.js';
 
-const html = { id: 'my-1', title: '럭키 뽑기', type: 'html', artifactType: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw', audience: ['teacher'], tags: ['랜덤'], html: '<!doctype html><title>x</title><p>뽑기 -- 시작</p>', howToUse: '누르세요', promptRecipe: '레시피 --> 끝', author: '푸른 고래', version: 2 };
+const html = { id: 'my-1', title: '럭키드로우', type: 'html', artifactType: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw', audience: ['teacher'], tags: ['랜덤'], html: '<!doctype html><title>x</title><p>뽑기 -- 시작</p>', howToUse: '누르세요', promptRecipe: '레시피 --> 끝', author: '푸른 고래', version: 2 };
 const webapp = { id: 'my-2', title: '분수 웹앱', type: 'url', artifactType: 'webapp', domain: 'lesson', category: 'subject_activity', subcategory: 'game', url: 'https://app.example.com/f', howToUse: '열어요', version: 1 };
 const exe = { id: 'my-3', title: '설치 도구', type: 'exe-link', artifactType: 'exe', url: 'https://e.x/a.exe', sourceRepo: 'https://e.x/src', sha256: 'a'.repeat(64), scanResult: '통과', environment: 'Windows 11', howToUse: '설치', version: 1 };
 const ok = { nickname: '파란 고래', privacyChecked: true };
@@ -20,13 +20,13 @@ test('개인정보 확인·닉네임이 없거나 실명 같으면, 제목이 10
 
 test('폼 문항 1~4 답: 고래 종류는 모드에서, HTML은 "네"', () => {
   const t = buildWorkSubmission(html, { ...ok, role: 'teacher' });
-  assert.deepEqual(t.answers, { whale: '교사고래', nickname: '파란 고래', title: '럭키 뽑기', isFile: '네' });
+  assert.deepEqual(t.answers, { whale: '교사고래', nickname: '파란 고래', title: '럭키드로우', isFile: '네' });
   assert.equal(buildWorkSubmission(html, { ...ok, role: 'student' }).answers.whale, '학생고래');
 });
 
 test('HTML 작품은 업로드용 .html 파일이 되고, 그대로 열어도 실행되며 검수 도구가 작품 정보를 되살린다', () => {
   const r = buildWorkSubmission(html, ok);
-  assert.equal(r.file.name, '럭키_뽑기.html');
+  assert.equal(r.file.name, '럭키드로우.html');
   assert.ok(r.file.text.startsWith('<!--gorae-card '));
   assert.ok(r.file.text.endsWith(html.html)); // 원래 HTML이 그대로 뒤에 있다
   assert.equal((r.file.text.match(/-->/g) || []).length, 1); // 주석이 중간에 끊기지 않는다

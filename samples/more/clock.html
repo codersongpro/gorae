@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시계 읽기 연습</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f6f9f4; color: #1f2328; text-align: center; }
+  svg { width: min(70vw, 260px); height: auto; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 360px; margin: 12px auto; }
+  button { font-size: 1.3rem; padding: 12px; border-radius: 12px; border: 0; background: #3f7a76; color: #fff; cursor: pointer; }
+  #msg { font-size: 1.4rem; font-weight: 800; min-height: 1.6em; }
+</style>
+</head>
+<body>
+<h1>🕒 시계 읽기 연습</h1>
+<svg viewBox="-110 -110 220 220" aria-label="시계">
+  <circle r="100" fill="#fff" stroke="#3f7a76" stroke-width="6"/>
+  <g id="ticks"></g>
+  <line id="hour" x1="0" y1="0" x2="0" y2="-50" stroke="#1f2328" stroke-width="8" stroke-linecap="round"/>
+  <line id="min" x1="0" y1="0" x2="0" y2="-80" stroke="#c0392b" stroke-width="5" stroke-linecap="round"/>
+  <circle r="6" fill="#1f2328"/>
+</svg>
+<p>몇 시 몇 분일까요?</p>
+<div class="opts" id="opts"></div>
+<p id="msg" aria-live="polite"></p>
+<p>맞힌 문제: <b id="score">0</b></p>
+<script>
+  const ticks = document.getElementById('ticks');
+  for (let i = 1; i <= 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', Math.sin(a) * 80); t.setAttribute('y', -Math.cos(a) * 80 + 7);
+    t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-size', '18'); t.textContent = i;
+    ticks.appendChild(t);
+  }
+  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const label = (h, m) => `${h}시` + (m ? ` ${m}분` : '');
+  let answer = '', score = 0;
+  function next() {
+    const h = 1 + rand(12), m = rand(12) * 5;
+    document.getElementById('hour').setAttribute('transform', `rotate(${(h % 12) * 30 + m / 2})`);
+    document.getElementById('min').setAttribute('transform', `rotate(${m * 6})`);
+    answer = label(h, m);
+    const set = new Set([answer]);
+    while (set.size < 4) set.add(label(1 + rand(12), rand(12) * 5));
+    const box = document.getElementById('opts'); box.textContent = '';
+    [...set].sort(() => rand(3) - 1).forEach((o) => {
+      const b = document.createElement('button'); b.textContent = o;
+      b.onclick = () => {
+        const ok = o === answer;
+        document.getElementById('msg').textContent = ok ? '정답! 👏' : `아쉬워요. 정답은 ${answer}`;
+        if (ok) document.getElementById('score').textContent = ++score;
+        setTimeout(next, 900);
+      };
+      box.appendChild(b);
+    });
+  }
+  next();
+</script>
+</body>
+</html>

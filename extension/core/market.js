@@ -99,7 +99,10 @@ export async function loadMarket({ fetchFn, config, storage }) {
 // 목록 항목 → 작품 카드 [여러 개]. 파일이 있으면 드라이브에서 받고, 없으면 주소 칸을 읽는다.
 export async function fetchEntryWorks(entry, { fetchFn, config }) {
   let res;
-  if (entry.files.length) {
+  if (entry.payload) {
+    // 앱에 들어 있는 나눔 곳간 샘플: 업로드 파일과 같은 형식이라 같은 검증을 거친다
+    res = readSubmission(entry.payload, { fileName: entry.title + '.html' });
+  } else if (entry.files.length) {
     const url = toDriveDownloadUrl(entry.files[0]);
     if (!url) throw new MarketError('BAD_URL');
     const { text } = await fetchText({ fetchFn, url, maxBytes: config.maxFileBytes, timeoutMs: config.fetchTimeoutMs, allowHost: isAllowedDownloadHost });

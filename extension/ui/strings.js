@@ -60,7 +60,7 @@ export const S = {
     confirmUnverified: '검수 서명이 없는 미검수 작품이에요.',
     confirmOpen: '새 탭에서 열기', confirmCancel: '취소',
     running: '격리된 공간에서 실행 중이에요 (외부 통신 차단)',
-    openedTab: (t) => `‘${t}’을(를) 새 탭에서 열었어요.`,
+    openedTab: (t) => `‘${t}’을(를) 새 창에서 열었어요.`,
     ticketGone: '실행할 작품을 찾을 수 없어요. 사이드바에서 [실행]을 다시 눌러 주세요.',
     external: '외부 사이트입니다. 새 탭에서 열려요.',
   },

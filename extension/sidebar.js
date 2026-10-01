@@ -63,10 +63,12 @@ async function run(entry) {
   const c = canRun(entry);
   if (!c.ok) return go({ notice: S.run[c.reason], confirmUrl: null });
   if (c.kind === 'url') return go({ confirmUrl: describeExternalOpen(entry), notice: '' });
-  // HTML 작품은 지금 보고 있는 웨일 창의 새 탭에서 연다 (확장앱 실행 화면 → sandbox 페이지, 격리 방식은 같다)
-  if (chrome.tabs && chrome.tabs.create) {
+  // HTML 작품은 별도 웨일 창에서 연다 (확장앱 실행 화면 → sandbox 페이지, 격리 방식은 같다)
+  if ((chrome.windows && chrome.windows.create) || (chrome.tabs && chrome.tabs.create)) {
     const id = await putRunTicket(storage, entry);
-    chrome.tabs.create({ url: chrome.runtime.getURL('run.html#' + id) });
+    const url = chrome.runtime.getURL('run.html#' + id);
+    if (chrome.windows && chrome.windows.create) chrome.windows.create({ url, type: 'popup', width: 1024, height: 768, focused: true });
+    else chrome.tabs.create({ url }); // 창을 못 열면 새 탭으로
     return go({ notice: S.run.openedTab(w.title), confirmUrl: null });
   }
   // 탭을 열 수 없는 환경이면 예전처럼 패널 안에서 실행한다

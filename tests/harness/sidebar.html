@@ -22,6 +22,7 @@
       set: async (o) => { for (const [k, v] of Object.entries(o)) localStorage.setItem('h:' + k, JSON.stringify(v)); },
     } },
     runtime: { getURL: (p) => '/extension/' + p },
+    windows: { create: (o) => { window.__lastWindow = o; } },
     tabs: {
       create: (o) => { window.__lastTab = o; },
       // 메인 탭 주소는 localStorage 'h_tabUrl' 값으로 흉내 낸다

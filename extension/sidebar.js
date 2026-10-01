@@ -22,6 +22,8 @@ import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
+import { pinView } from './ui/views.js';
+import { hasPin, setPin, checkPin, resetPin } from './core/pin.js';
 
 const app = document.getElementById('app');
 const storage = createChromeStorage();
@@ -251,6 +253,23 @@ async function render() {
       hint: k === 'remix' ? S.edit.remixHint : null,
     }));
   }
+  if (state.screen === 'pin') {
+    const P = S.pin;
+    const toMother = async () => { await storage.set('mode', 'mother'); go({ screen: 'main', mode: 'mother', notice: S.mode.on }); };
+    return app.replaceChildren(pinView({
+      hasPin: state.pin.has, error: state.pin.error, askReset: state.pin.askReset,
+      onSet: async (a, b) => { const r = await setPin(storage, a, b); return r.ok ? toMother() : go({ pin: { ...state.pin, error: P[r.error] } }); },
+      onEnter: async (a) => {
+        const r = await checkPin(storage, a);
+        if (r.ok) return toMother();
+        const error = r.error === 'LOCKED' ? P.LOCKED(Math.ceil(r.waitMs / 1000)) : r.error === 'WRONG' ? P.WRONG(r.left) : P.FORMAT;
+        go({ pin: { ...state.pin, error } });
+      },
+      onCancel: () => go({ screen: 'main' }),
+      onForgot: () => go({ pin: { ...state.pin, askReset: true } }),
+      onReset: async () => { await resetPin(storage); go({ mode: 'baby', pin: { has: false, error: P.resetDone, askReset: false } }); },
+    }));
+  }
   if (state.screen === 'import') {
     return app.replaceChildren(importView({
       preview: state.imp.preview, errors: state.imp.errors, selected: state.imp.selected,
@@ -293,9 +312,12 @@ async function render() {
   }
   app.replaceChildren(
     topBar(state.mode, async () => {
-      const mode = state.mode === 'baby' ? 'mother' : 'baby';
-      await storage.set('mode', mode);
-      go({ mode, notice: mode === 'mother' ? S.mode.devNote : '' });
+      // 아기고래로는 바로, 어미고래로는 암호를 거쳐서 바꾼다
+      if (state.mode === 'mother') {
+        await storage.set('mode', 'baby');
+        return go({ mode: 'baby', notice: '', classOut: null });
+      }
+      go({ screen: 'pin', pin: { has: await hasPin(storage), error: '', askReset: false } });
     }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' })),
     tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null })),
     // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
@@ -304,6 +326,8 @@ async function render() {
 }
 
 state.mode = (await storage.get('mode')) || 'baby';
+// 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 아기고래 모드로 시작한다
+if (state.mode === 'mother' && !(await hasPin(storage))) state.mode = 'baby';
 try {
   await loadAll();
   render();

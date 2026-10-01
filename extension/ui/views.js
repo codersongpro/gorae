@@ -271,3 +271,23 @@ export function urlConfirmView({ info, onOpen, onCancel }) {
         h('button', { class: 'primary', onclick: onOpen }, S.run.confirmOpen),
         h('button', { onclick: onCancel }, S.run.confirmCancel))));
 }
+
+// 어미고래 암호 화면: 처음이면 정하기, 아니면 넣기
+export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onForgot, onReset }) {
+  const P = S.pin;
+  const pin = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'off', 'aria-label': P.pin, placeholder: P.pin, maxlength: '8' });
+  const again = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'off', 'aria-label': P.confirm, placeholder: P.confirm, maxlength: '8' });
+  const submit = () => (hasPin ? onEnter(pin.value) : onSet(pin.value, again.value));
+  pin.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  again.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  setTimeout(() => pin.focus(), 0);
+  return h('section', { class: 'section' },
+    h('div', { class: 'card' },
+      h('h2', {}, hasPin ? P.enterTitle : P.setTitle),
+      h('p', { class: 'muted' }, hasPin ? P.enterHint : P.setHint),
+      error ? h('p', { class: 'notice error', role: 'alert' }, error) : null,
+      pin, hasPin ? null : again,
+      h('div', { class: 'row' }, h('button', { class: 'primary', onclick: submit }, P.ok), h('button', { onclick: onCancel }, P.cancel)),
+      hasPin && !askReset ? h('button', { onclick: onForgot }, P.forgot) : null,
+      askReset ? h('div', { class: 'notice' }, h('p', {}, P.forgotConfirm), h('button', { class: 'danger', onclick: onReset }, P.reset)) : null));
+}

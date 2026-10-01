@@ -10,7 +10,7 @@ export const S = {
     mother: '어미고래 모드 (교사)',
     toggleToMother: '어미고래 모드로 (교사)',
     toggleToBaby: '아기고래 모드로 (학생)',
-    devNote: '※ 암호(PIN)는 8단계에서 붙습니다. 지금은 누구나 전환할 수 있는 임시 버튼입니다.',
+    on: '어미고래 모드로 바꿨어요. 학생 앞에서는 위쪽 띠 색을 확인하세요.',
   },
   badge: {
     clear: '🟢 맑은 바다 (학생 사용 가능)',
@@ -123,6 +123,16 @@ export const S = {
     found: (n, total) => `${total}개 중 ${n}개를 찾았어요.`,
   },
   cardMeta: { webapp: '🌐 외부 웹앱입니다', exe: '⚠️ 실행형 프로그램(EXE)', legacy: '예전 작품 (분류 없음)' },
+  pin: {
+    setTitle: '어미고래 암호 정하기', setHint: '이 기기에서만 쓰는 4~8자리 숫자예요. 해시로만 저장돼요.',
+    enterTitle: '어미고래 암호 (교사)', enterHint: '암호를 넣으면 어미고래 모드(교사)로 바뀌어요.',
+    pin: '암호 (숫자 4~8자리)', confirm: '한 번 더', ok: '확인', cancel: '취소',
+    FORMAT: '암호는 숫자 4~8자리로 정해 주세요.', MISMATCH: '두 암호가 서로 달라요.',
+    WRONG: (left) => `암호가 틀렸어요. (${left}번 더 틀리면 잠시 잠겨요)`,
+    LOCKED: (sec) => `여러 번 틀려서 ${sec}초 동안 잠겼어요.`,
+    forgot: '암호를 잊었어요', forgotConfirm: '암호를 지우고 아기고래 모드로 돌아갈까요? 다시 정하면 어미고래 모드를 쓸 수 있어요. (내 곳간 작품은 그대로예요)',
+    reset: '암호 지우기', resetDone: '암호를 지웠어요. 새로 정해 주세요.',
+  },
   lineage: (title) => `이 작품은 ‘${title}’을(를) 리믹스했습니다.`,
   share: {
     title: '웨일 스페이스에 공유 (붙여넣기용으로 복사돼요)',

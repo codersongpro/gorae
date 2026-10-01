@@ -2,7 +2,7 @@
 import { createWork, validateNewWork } from './work.js';
 import { checkHtml } from './checker.js';
 
-// 리믹스 시작용 입력값: 원본 내용과 레시피를 복사하고 remixOf를 기록한다. 꼬리지문은 따라가지 않는다.
+// 리믹스 시작용 입력값: 원본 내용과 레시피를 복사하고 remixOf를 기록한다. 검수 서명은 따라가지 않는다.
 export function remixInput(original) {
   const w = original;
   return {
@@ -26,8 +26,8 @@ export function editInput(work) {
 }
 
 // 수정 저장.
-// - 내가 직접 만들었고 꼬리지문이 없는 작품: 같은 기록에서 버전만 올린다.
-// - 큰 곳간·꾸러미 작품이거나 꼬리지문이 있는 작품: 원본은 그대로 두고 '내 수정본(미검수)'을 따로 저장한다.
+// - 내가 직접 만들었고 검수 서명이 없는 작품: 같은 기록에서 버전만 올린다.
+// - 큰 곳간·꾸러미 작품이거나 검수 서명이 있는 작품: 원본은 그대로 두고 '내 수정본(미검수)'을 따로 저장한다.
 // 반환: { ok, errors?, warnings?, record?, separate? }
 export async function saveEdit(store, record, input, opts = {}) {
   const v = validateNewWork(input);

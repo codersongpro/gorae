@@ -1,4 +1,4 @@
-// 꼬리지문(전자서명) 핵심 모듈 — DOM 없이 WebCrypto만 사용 (확장앱·뷰어·검수 도구 공용)
+// 검수 서명(전자서명) 핵심 모듈 — DOM 없이 WebCrypto만 사용 (확장앱·뷰어·검수 도구 공용)
 // 서명: ECDSA P-256 + SHA-256. 검증 3단계: 족보 서명 → 파수꾼 등록·미말소 → 작품 서명.
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
@@ -89,7 +89,7 @@ const workPayload = (t) =>
     signedAt: t.signedAt,
   });
 
-// 파수꾼이 작품에 꼬리지문을 찍는다. 반환: tailprint가 붙은 새 작품 카드
+// 파수꾼이 작품에 검수 서명을 찍는다. 반환: tailprint가 붙은 새 작품 카드
 export async function signWork(work, privateKey, { reviewer, badge, pick = false, songs = [], signedAt }) {
   const t = {
     contentHash: await contentHash(work),

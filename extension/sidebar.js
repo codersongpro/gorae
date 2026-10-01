@@ -14,6 +14,7 @@ import { h } from './ui/dom.js';
 import { S } from './ui/strings.js';
 import { exportBundle, previewImport, importSelected } from './core/bundle.js';
 import { remixInput, editInput, saveEdit } from './core/remix.js';
+import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, createView, importView } from './ui/views.js';
 
 const app = document.getElementById('app');
@@ -27,6 +28,7 @@ const state = {
   entries: [], list: null,
   create: { kind: 'create', errors: [], warnings: [] }, // kind: create | edit | remix
   selected: [], packName: '', exportOut: null,
+  classSelected: [], className: '', classNote: '', classOut: null,
   imp: { preview: null, errors: [], selected: [] },
 };
 const freshCreate = () => ({ kind: 'create', errors: [], warnings: [] });
@@ -106,12 +108,27 @@ async function doExport(name) {
   const out = exportBundle(await store.list(), state.selected, { name });
   go({ exportOut: out, packName: name, notice: '' });
 }
-function saveFile() {
-  const blob = new Blob([state.exportOut.text], { type: 'application/json' });
-  const a = h('a', { href: URL.createObjectURL(blob), download: state.exportOut.fileName });
+function saveTextFile(text, fileName) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const a = h('a', { href: URL.createObjectURL(blob), download: fileName });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
+const saveFile = () => saveTextFile(state.exportOut.text, state.exportOut.fileName);
+
+// 학급 꾸러미: 어미고래 모드에서만. 꾸러미 + 웨일 클래스 공지 문구를 함께 만든다
+async function buildClass(name, note) {
+  const nm = name.trim() || S.classPack.defaultName;
+  const out = buildClassBundle(await store.list(), state.classSelected, { name: nm, teacherNote: note });
+  if (!out.ok) return go({ className: name, classNote: note, notice: out.error === 'NONE' ? S.classPack.none : S.classPack.tooMany });
+  go({ className: name, classNote: note, classOut: out, notice: '' });
+}
+async function copyClass(kind) {
+  const o = state.classOut;
+  await navigator.clipboard.writeText(kind === 'all' ? o.combined : kind === 'notice' ? o.notice : o.packText);
+  go({ notice: S.classPack.copied[kind] });
+}
+const openClass = () => chrome.tabs.create({ url: CLASS_URL });
 async function copyPack() {
   await navigator.clipboard.writeText(state.exportOut.text);
   go({ notice: S.bundle.copied });
@@ -170,7 +187,12 @@ async function render() {
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
     });
   } else {
-    body = classView();
+    body = classView({
+      mode: state.mode, records: state.mode === 'mother' ? await store.list() : [], state,
+      onSelect: (id, on) => { state.classSelected = toggleIn(state.classSelected, id, on); },
+      onBuild: buildClass, out: state.classOut, onCopy: copyClass,
+      onSaveFile: () => saveTextFile(state.classOut.packText, state.classOut.fileName), onOpenClass: openClass,
+    });
   }
   app.replaceChildren(
     topBar(state.mode, async () => {

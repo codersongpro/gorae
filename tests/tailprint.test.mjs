@@ -1,4 +1,4 @@
-// 4단계: 꼬리지문 핵심 모듈 — AC-024~029
+// 4단계: 검수 서명 핵심 모듈 — AC-024~029
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as tp from '../shared/tailprint.js';
@@ -34,7 +34,7 @@ test('정상 서명은 3단계를 모두 통과한다', async () => {
   assert.equal(r.reviewer.nickname, '푸른물결');
 });
 
-test('AC-024 서명 없이 badge만 clear로 고치면 꼬리지문 없음', async () => {
+test('AC-024 서명 없이 badge만 clear로 고치면 검수 서명 없음', async () => {
   const s = await setup();
   const r = await (await verifier(s)).verify({ ...work, badge: 'clear' });
   assert.deepEqual([r.ok, r.reason], [false, tp.REASON.NO_TAILPRINT]);

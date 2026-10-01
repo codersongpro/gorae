@@ -26,7 +26,7 @@ async function env() {
 }
 const rec = (work, source = 'maker') => ({ id: work.id, work, source, importedAt: '2026-10-01T00:00:00Z', checkReport: null, favorite: false });
 
-test('AC-010 서명된 작품 1개 포함 3개를 내보내면 3개가 저장되고 꼬리지문이 따라간다', async () => {
+test('AC-010 서명된 작품 1개 포함 3개를 내보내면 3개가 저장되고 검수 서명이 따라간다', async () => {
   const { signed } = await env();
   const records = [rec(mk('일')), rec(mk('이')), rec(signed, 'catalog'), rec(mk('사'))];
   const out = exportBundle(records, [records[0].id, records[1].id, signed.id], { name: '우리 반 꾸러미' });

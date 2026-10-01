@@ -9,7 +9,7 @@ const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const err = (code, message, index) => ({ code, message, ...(index === undefined ? {} : { index }) });
 const byteLen = (s) => new TextEncoder().encode(s).length;
 
-// 작품 1~10개를 꾸러미 객체로 묶는다. 꼬리지문(tailprint)이 있으면 그대로 함께 담긴다.
+// 작품 1~10개를 꾸러미 객체로 묶는다. 검수 서명(tailprint)이 있으면 그대로 함께 담긴다.
 export function createPack({ name, items, now = new Date() }) {
   if (!Array.isArray(items) || items.length < 1) throw new Error('작품을 1개 이상 골라 주세요.');
   if (items.length > MAX_ITEMS) throw new Error(`꾸러미에는 작품을 ${MAX_ITEMS}개까지 담을 수 있어요.`);
@@ -24,6 +24,14 @@ export function createPack({ name, items, now = new Date() }) {
 
 export const serializePack = (pack) => JSON.stringify(pack);
 
+// 공지 글 속에 꾸러미가 섞여 붙은 경우(안내 문구 + 꾸러미 JSON)에도 꾸러미 부분만 뽑아 낸다.
+export function extractPackText(text) {
+  const start = text.indexOf('{"format":"gorae-pack"');
+  if (start <= 0) return text;
+  const end = text.lastIndexOf('}');
+  return end > start ? text.slice(start, end + 1) : text.slice(start);
+}
+
 // 문자열 또는 객체를 받아 형식을 검사한다. 하나라도 틀리면 꾸러미 전체를 거부한다.
 // 반환: { ok, pack?, errors[] }
 export function parsePack(input) {
@@ -31,7 +39,7 @@ export function parsePack(input) {
   if (typeof input === 'string') {
     if (input.length > MAX_PACK_CHARS) return { ok: false, errors: [err('TOO_BIG', '꾸러미 파일이 너무 커요.')] };
     try {
-      obj = JSON.parse(input);
+      obj = JSON.parse(extractPackText(input));
     } catch {
       return { ok: false, errors: [err('NOT_JSON', '꾸러미 형식이 아니에요. (JSON을 읽을 수 없어요)')] };
     }
@@ -59,7 +67,7 @@ export function parsePack(input) {
     } else {
       errors.push(err('BAD_TYPE', '꾸러미에 담을 수 없는 작품 종류예요.', i));
     }
-    if (w.tailprint !== undefined && !isObj(w.tailprint)) errors.push(err('BAD_TAILPRINT', '꼬리지문 형식이 틀렸어요.', i));
+    if (w.tailprint !== undefined && !isObj(w.tailprint)) errors.push(err('BAD_TAILPRINT', '검수 서명 형식이 틀렸어요.', i));
   });
   if (errors.length) return { ok: false, errors };
   return { ok: true, pack: obj, errors: [] };

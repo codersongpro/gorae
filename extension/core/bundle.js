@@ -10,7 +10,7 @@ export function exportBundle(records, ids, { name, now = new Date() } = {}) {
   return { text: serializePack(pack), count: picked.length, fileName: `${safe}.gorae.json` };
 }
 
-// 가져오기 미리보기: 형식 검사 → 작품마다 점검·꼬리지문 검증·중복 여부.
+// 가져오기 미리보기: 형식 검사 → 작품마다 점검·검수 서명 검증·중복 여부.
 // verifyWorks(works) → [{ work, status }] (sidebar가 현재 족보로 만든 함수를 넘긴다)
 export async function previewImport(text, { verifyWorks, existingIds }) {
   const parsed = parsePack(text);

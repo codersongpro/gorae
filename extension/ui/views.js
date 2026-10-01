@@ -12,7 +12,7 @@ function badgeEl(entry) {
   return h('span', { class: `badge ${b}` }, S.badge[b]);
 }
 
-// 검증 결과 한 줄: 통과하면 꼬리지문 확인, 아니면 이유 (서명이 아예 없으면 이유 생략 가능)
+// 검증 결과 한 줄: 통과하면 검수 서명 확인, 아니면 이유 (서명이 아예 없으면 이유 생략 가능)
 function verifyLine(entry) {
   const st = entry.status;
   if (st.ok) return h('p', { class: 'muted' }, S.tailprintOk(st.reviewer.nickname, dateOnly(st.signedAt)));
@@ -115,8 +115,32 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
     }) : h('p', { class: 'muted' }, S.empty.mypod));
 }
 
-export function classView() {
-  return h('section', { class: 'section' }, h('p', { class: 'muted' }, S.empty.class));
+export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass }) {
+  const C = S.classPack;
+  if (mode !== 'mother') return h('section', { class: 'section' }, h('p', { class: 'notice' }, C.needMother));
+  if (!records.length) return h('section', { class: 'section' }, h('p', { class: 'muted' }, C.empty));
+  const nameInput = h('input', { 'aria-label': C.name, placeholder: C.name, value: state.className || '' });
+  const noteInput = h('textarea', { 'aria-label': C.note, placeholder: C.note }, state.classNote || '');
+  return h('section', { class: 'section' },
+    h('h2', {}, C.title),
+    h('p', { class: 'muted' }, C.steps),
+    state.notice ? h('p', { class: 'notice' }, state.notice) : null,
+    h('p', {}, C.pick),
+    records.map((r) => h('label', { class: 'check' },
+      h('input', { type: 'checkbox', checked: (state.classSelected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }),
+      `${r.work.title} (${[r.work.grade, r.work.subject].filter(Boolean).join('·')})`)),
+    nameInput, noteInput,
+    h('button', { class: 'primary', onclick: () => onBuild(nameInput.value, noteInput.value) }, C.build),
+    out ? h('div', { class: 'card' },
+      h('p', {}, C.madeN(out.count)),
+      h('p', { class: 'muted' }, C.guide),
+      out.tooLong ? h('p', { class: 'notice error' }, C.tooLong) : null,
+      h('button', { class: 'primary', onclick: () => onCopy('all') }, C.copyAll),
+      h('div', { class: 'row' },
+        h('button', { onclick: () => onCopy('notice') }, C.copyNotice),
+        h('button', { onclick: () => onCopy('pack') }, C.copyPack),
+        h('button', { onclick: onSaveFile }, C.saveFile)),
+      h('button', { onclick: onOpenClass }, C.openClass)) : null);
 }
 
 export function runView({ entry, onBack, onOpenTab }) {

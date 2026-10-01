@@ -172,6 +172,13 @@ const openForm = (u) => {
   if (url) chrome.tabs.create({ url });
   return !!url;
 };
+// 의견 설문(물뿜기·고래 노래)을 글을 미리 채운 채로 연다. 반환: 열었는지 여부
+const openFeedback = (text) => {
+  const url = buildPrefillUrl(CONFIG.feedbackFormUrl, { text: CONFIG.feedbackEntry }, { text });
+  if (url) chrome.tabs.create({ url });
+  return !!url;
+};
+
 const submitProps = (allowRecommend) => ({
   allowRecommend,
   profile: state.shareProfile,
@@ -192,7 +199,7 @@ const submitProps = (allowRecommend) => ({
     const r = buildSongSubmission(entry.work, { text: v.text, author: v.author, privacyChecked: v.privacyChecked });
     if (!r.ok) return go({ notice: r.errors.join(' ') });
     await navigator.clipboard.writeText(r.text);
-    go({ notice: openForm(CONFIG.feedbackFormUrl) ? S.submit.songCopied : S.submit.songNoForm });
+    go({ notice: openFeedback(r.text) ? S.submit.songCopied : S.submit.songNoForm });
   },
 });
 
@@ -271,7 +278,7 @@ async function sendSpouts() {
   const rep = await pendingReport(storage);
   if (!rep.count) return;
   await navigator.clipboard.writeText(rep.text);
-  const opened = openForm(CONFIG.feedbackFormUrl); // 물뿜기는 작품 폼이 아니라 의견 폼으로
+  const opened = openFeedback(rep.text); // 물뿜기는 작품 폼이 아니라 의견 설문으로, 보고 글을 미리 채워서
   go({ spoutWaiting: rep.ids, notice: opened ? S.spout.copiedOpen : S.spout.copiedNoForm });
 }
 async function confirmSpoutsSent() {

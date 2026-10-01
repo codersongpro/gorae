@@ -10,7 +10,8 @@ export const CONFIG = {
   // 작품 공유 설문(구글 설문) 주소. 설문을 만든 뒤 https 주소를 넣는다. (네이버 폼은 파일 업로드 제한으로 쓰지 않음)
   formUrl: '',
   // 고래 노래·물뿜기를 받는 의견 설문 (아직 없음 — 만들면 https 주소를 넣는다)
-  feedbackFormUrl: '',
+  feedbackFormUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScN5ZZHyI8b7widyMS6uFky2y7hFcgFmmTiVQNuDA-jbTHi8w/viewform', // '고래곳간 물뿜기' (로그인 없이 응답)
+  feedbackEntry: 'entry.102027181', // 장문형 한 칸: 보고 글을 미리 채워 열면 [제출]만 누르면 된다
   fetchTimeoutMs: 4000,
   maxHtmlBytes: 1024 * 1024, // 1MB
 };

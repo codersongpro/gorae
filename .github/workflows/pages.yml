@@ -1,0 +1,40 @@
+# site/ 폴더(큰 곳간 목록·고래 족보·바로 실행 뷰어)를 GitHub Pages로 공개한다.
+# 주소: https://codersongpro.github.io/gorae/
+name: 사이트 배포
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'shared/**', 'design/tokens.css', 'extension/core/rootkey.js', 'extension/ui/strings.js', 'tools/sync.mjs', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 공용 파일 동기화와 시험
+        run: |
+          node tools/sync.mjs
+          node --test "tests/*.test.mjs"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

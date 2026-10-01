@@ -18,6 +18,15 @@ export async function recordSpout(storage, workId, role, now = new Date()) {
   return { ok: true };
 }
 
+// 좋아요 취소: 아직 보내지 않은 물뿜기만 지울 수 있다. 반환: 지웠는지 여부
+export async function unrecordSpout(storage, workId) {
+  const all = await mySpouts(storage);
+  if (!all[workId] || all[workId].sent) return false;
+  delete all[workId];
+  await storage.set(KEY, all);
+  return true;
+}
+
 // 아직 보내지 않은 물뿜기 → 보고 글. 반환: { count, text, reportId, ids } (없으면 count 0)
 export async function pendingReport(storage, { idGen = () => Math.random().toString(36).slice(2, 10) } = {}) {
   const all = await mySpouts(storage);

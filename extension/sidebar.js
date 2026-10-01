@@ -13,7 +13,7 @@ import { putRunTicket } from './core/runtab.js';
 import { seedMypod, samplesInMypod } from './core/seed.js';
 import { verifyFeatured } from './shared/featured.js';
 import { spoutCountsFor, spoutTotal } from './shared/spout.js';
-import { recordSpout, pendingReport, markSent, mySpouts } from './core/spout-store.js';
+import { recordSpout, unrecordSpout, pendingReport, markSent, mySpouts } from './core/spout-store.js';
 import { spoutSendBar } from './ui/views.js';
 import { checkWork } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
@@ -259,9 +259,12 @@ const spoutProps = () => ({
   countsOf: (e) => spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id]),
   mineOf: (e) => state.mySpouts[e.work.id],
   onSpout: async (e) => {
-    const r = await recordSpout(storage, e.work.id, spoutRole());
+    // 좋아요처럼 토글: 안 눌렀으면 뿜기, 눌렀고 아직 안 보냈으면 취소
+    const mine = state.mySpouts[e.work.id];
+    if (mine && !mine.sent) await unrecordSpout(storage, e.work.id);
+    else if (!mine) await recordSpout(storage, e.work.id, spoutRole());
     state.mySpouts = await mySpouts(storage);
-    go({ notice: r.ok ? S.spout.hint : S.spout.already });
+    render();
   },
 });
 async function sendSpouts() {
@@ -414,6 +417,8 @@ async function render() {
     if (state.market.status === 'idle') setTimeout(refreshMarket, 0); // 탭에 들어오면 자동으로 불러온다
     body = marketView({
       m: state.market, onRefresh: refreshMarket, onImport: importFromMarket, onPreview: previewFromMarket,
+      spout: spoutProps(),
+      sendBar: spoutSendBar({ pending: Object.values(state.mySpouts).filter((v) => !v.sent).length, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
       onFilter: (p) => { state.market = { ...state.market, ...p }; render(); },
     });
   } else if (state.tab === 'mypod') {

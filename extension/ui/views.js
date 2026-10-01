@@ -154,12 +154,17 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
 }
 
 // 물뿜기: 교사·학생 숫자를 그대로 보여 주고, 기기당 한 번 누를 수 있다
+// 좋아요처럼: 누르면 💨 뿜었어요(숫자 +1), 아직 보내기 전이면 다시 눌러 취소. 보낸 뒤에는 고정.
 function spoutRow(entry, { countsOf, mineOf, onSpout }) {
   const c = countsOf(entry);
   const mine = mineOf(entry);
+  const locked = !!(mine && mine.sent);
   return h('div', { class: 'row' },
-    h('span', { 'aria-label': S.spout.hint, title: S.spout.hint }, S.spout.counts(c.teacher, c.student)),
-    h('button', { class: 'chip', disabled: !!mine, onclick: () => onSpout(entry) }, mine ? S.spout.done : S.spout.button));
+    h('button', {
+      class: mine ? 'chip primary' : 'chip', disabled: locked, 'aria-pressed': String(!!mine),
+      title: locked ? S.spout.lockedHint : S.spout.hint, onclick: () => onSpout(entry),
+    }, mine ? S.spout.done : S.spout.button),
+    h('span', { title: S.spout.hint }, S.spout.counts(c.teacher, c.student)));
 }
 
 // 보내지 않은 물뿜기 띠
@@ -197,7 +202,7 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
 }
 
 // 나눔 곳간: 시트 목록 → 검색·분류 거르기 → 가져오기
-export function marketView({ m, onRefresh, onFilter, onImport, onPreview }) {
+export function marketView({ m, onRefresh, onFilter, onImport, onPreview, spout, sendBar }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
@@ -213,6 +218,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview }) {
   else if (m.missing && m.missing.length) state = h('p', { class: 'notice error' }, M.columns(m.missing, m.header || []));
   return h('section', { class: 'section' },
     h('p', { class: 'muted' }, M.hint),
+    sendBar || null,
     h('div', { class: 'filters' },
       h('label', { class: 'wide' }, S.find.search, q),
       select(S.market.kind, m.kind, KIND_OPTIONS, (v) => onFilter({ kind: v }), {}, S.filter.all),
@@ -231,6 +237,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview }) {
       e.description ? h('p', {}, e.description) : null,
       e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
       e.files.length || e.payload ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),
+      spout ? spoutRow({ work: { id: e.id } }, spout) : null,
       h('div', { class: 'row' },
         // 미리 보기: 내 곳간에 담지 않고 바로 새 창에서 연다
         h('button', { disabled: !!(m.busy && m.busy[e.id]), onclick: () => onPreview(e) }, M.preview),

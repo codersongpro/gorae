@@ -9,6 +9,7 @@ const HEADER = '[고래곳간 물뿜기]';
 const ROLE_LABEL = { teacher: '교사', student: '학생' };
 const LABEL_ROLE = { 교사: 'teacher', 학생: 'student' };
 const ID_RE = /^[A-Za-z0-9._-]{1,80}$/;
+const MARKET_ID = /^(m|sample)-[a-z0-9-]{1,60}$/;
 export const MAX_SPOUT_SEEN = 5000; // 같은 보고를 두 번 더하지 않으려고 기억하는 보고 번호 수
 
 // 보고 글 만들기. pending: [{ workId, role }]
@@ -54,7 +55,8 @@ export function applySpoutReports(catalog, reports, { now = new Date() } = {}) {
     seen.add(r.reportId);
     for (const role of ROLES) {
       for (const id of r[role]) {
-        if (!known.has(id)) {
+        // 나눔 곳간 작품(m-…: 시트 항목, sample-…: 앱 안 샘플)은 catalog 밖이지만 숫자를 함께 모은다
+        if (!known.has(id) && !MARKET_ID.test(id)) {
           unknownIds.add(id);
           continue;
         }

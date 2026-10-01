@@ -68,3 +68,23 @@ test('엉뚱한 글이나 이상한 id는 무시한다', () => {
   const r = parseSpoutReports('[고래곳간 물뿜기]\n보고 번호: r-xx11\n교사: ok-id, <script>, ok-id\n학생: ');
   assert.deepEqual(r[0].teacher, ['ok-id']);
 });
+
+test('좋아요처럼 취소: 보내기 전에는 지울 수 있고, 보낸 뒤에는 지울 수 없다', async () => {
+  const { unrecordSpout } = await import('../extension/core/spout-store.js');
+  const st = createMemoryStorage();
+  await recordSpout(st, 'tool-a', 'student');
+  assert.equal(await unrecordSpout(st, 'tool-a'), true);
+  assert.equal((await mySpouts(st))['tool-a'], undefined);
+  assert.equal((await recordSpout(st, 'tool-a', 'student')).ok, true); // 취소 뒤 다시 누를 수 있다
+  await markSent(st, ['tool-a']);
+  assert.equal(await unrecordSpout(st, 'tool-a'), false);
+  assert.equal(await unrecordSpout(st, 'nothing'), false);
+});
+
+test('나눔 곳간 작품(m-…, sample-…)의 물뿜기도 집계된다', () => {
+  const rep = buildSpoutReport([{ workId: 'm-1abc', role: 'student' }, { workId: 'sample-share-bingo', role: 'teacher' }, { workId: 'ghost', role: 'student' }], { reportId: 'r-mk1' });
+  const res = applySpoutReports(catalog, parseSpoutReports(rep));
+  assert.deepEqual(res.catalog.spouts['m-1abc'], { teacher: 0, student: 1 });
+  assert.deepEqual(res.catalog.spouts['sample-share-bingo'], { teacher: 1, student: 0 });
+  assert.deepEqual(res.unknownIds, ['ghost']);
+});

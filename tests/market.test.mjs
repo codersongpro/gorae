@@ -83,15 +83,32 @@ test('폼 미리 채우기 주소: entry 번호가 있는 값만, docs.google.co
   assert.equal(buildPrefillUrl('https://evil.test/forms', {}, {}), null);
 });
 
-test('공유 묶음: 업로드 파일 + 미리 채우기 값(분류 코드 포함), 개인정보 확인 필수', () => {
+test('공유 묶음: 업로드 파일 + 폼 문항(닉네임·제목·앱 종류·설명·자료 종류)에 맞춘 미리 채우기, 개인정보 확인 필수', () => {
   assert.equal(buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', privacyChecked: false }).ok, false);
-  const p = buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', comment: '추천해요', privacyChecked: true });
+  const p = buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', privacyChecked: true });
   assert.equal(p.file.name, '럭키_뽑기.html');
-  assert.equal(p.prefill.whale, '교사고래');
-  assert.equal(p.prefill.category, '수업 › 수업도구 › 럭키드로우·랜덤뽑기 [lesson/classroom_tool/lucky_draw]');
-  assert.deepEqual(parseCategoryCode(p.prefill.category), { domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw' });
-  assert.equal(p.prefill.description, '무작위로 뽑아요');
-  assert.equal(p.prefill.comment, '추천해요');
+  assert.deepEqual(p.prefill, { nickname: '파란 고래', title: '럭키 뽑기', kind: ['수업자료'], description: '무작위로 뽑아요', format: 'HTML 파일 또는 exe파일', address: '' });
+  const web = buildSharePackage({ ...work, type: 'url', artifactType: 'webapp', url: 'https://app.example.com', html: undefined, domain: 'work', category: 'student_life', subcategory: 'guidance' }, { nickname: '노을', privacyChecked: true });
+  assert.deepEqual([web.prefill.kind, web.prefill.format], [['학생관리'], '배포한 웹 앱']);
+  assert.ok(web.prefill.address.startsWith('https://app.example.com\n[고래곳간 작품 정보]'));
+  // 체크박스(복수 선택)는 같은 entry를 여러 번 붙인다
+  const url = new URL(buildPrefillUrl('https://docs.google.com/forms/d/e/F/viewform', { kind: 'entry.3' }, { kind: ['교무행정', '학생관리'] }));
+  assert.deepEqual(url.searchParams.getAll('entry.3'), ['교무행정', '학생관리']);
+});
+
+test('사용자 폼의 응답 시트 열(앱 종류·자료 종류)을 읽고 앱 종류로 영역을 짐작한다', () => {
+  const head = '타임스탬프,제작하신 분의 닉네임을 적어주세요.,제작한 앱의 제목을 적어주세요.,"제작한 앱의 종류를 선택해주세요. 복수 선택 가능합니다.",도구에 대한 설명을 간단히 적어주세요,만드신 자료의 종류는?,배포하신 웹 앱 주소를 알려주세요.,바이브코딩 자료를 업로드 해주세요.';
+  const csv = `${head}
+t,a,럭키,"수업자료, 기타",설명,HTML 파일 또는 exe파일,,${FILE}
+t2,b,웹,교무행정,설명,배포한 웹 앱,https://app.example.com,`;
+  const r = parseMarketCsv(csv);
+  assert.equal(r.ok, true);
+  const [web, lucky] = r.entries;
+  assert.deepEqual(lucky.kinds, ['수업자료', '기타']);
+  assert.deepEqual(lucky.category, { domain: 'lesson' });
+  assert.equal(lucky.format, 'HTML 파일 또는 exe파일');
+  assert.deepEqual(web.category, { domain: 'work' });
+  assert.equal(web.address, 'https://app.example.com');
 });
 
 test('시트 불러오기: 비공개(웹 화면이 옴)면 다음 주소, 모두 실패하면 보관된 사본, 그것도 없으면 오류', async () => {

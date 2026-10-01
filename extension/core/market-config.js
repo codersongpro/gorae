@@ -7,14 +7,14 @@ export const MARKET = {
   // 구글 폼 응답 주소 (https://docs.google.com/forms/d/e/.../viewform)
   formUrl: '',
   // 폼 ⋮ → '미리 채워진 링크 받기'에서 확인한 질문별 entry 번호
+  // 폼 '고래곳간 자료공유': 1 닉네임 · 2 앱 제목 · 3 앱 종류(복수) · 4 설명 · 5 자료 종류 → 섹션2 웹 앱 주소 / 섹션3 파일
   entry: {
-    whale: '', // 어떤 고래이신가요? (학생고래/교사고래)
-    nickname: '', // 닉네임
-    title: '', // 앱 제목
-    description: '', // 설명
-    category: '', // 분류
-    address: '', // 웹앱 주소 (웹앱·EXE)
-    comment: '', // 한 마디
+    nickname: '', // 1. 제작하신 분의 닉네임
+    title: '', // 2. 제작한 앱의 제목
+    kind: '', // 3. 제작한 앱의 종류 (교무행정·수업자료·학생관리·기타)
+    description: '', // 4. 도구에 대한 설명
+    format: '', // 5. 만드신 자료의 종류 (HTML 파일 또는 exe파일 / 배포한 웹 앱)
+    address: '', // 섹션 2. 배포하신 웹 앱 주소
   },
   fetchTimeoutMs: 15000,
   maxFileBytes: 2 * 1024 * 1024, // 내려받는 파일 상한 (작품 HTML은 1MB 이하)

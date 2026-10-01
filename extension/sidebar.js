@@ -37,7 +37,7 @@ const storage = createChromeStorage();
 const store = createStore(createIdbBackend());
 
 const state = {
-  market: { status: 'idle', entries: [], query: '', domain: '', category: '', busy: {}, done: {} },
+  market: { status: 'idle', entries: [], query: '', kind: '', busy: {}, done: {} },
   shareProfile: {}, marketRunOk: {}, confirmMarket: null,
   service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null,
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
@@ -166,11 +166,11 @@ const submitProps = (allowRecommend) => ({
   ready: shareReady(MARKET),
   draftOf: (entry) => (state.submitDraft && state.submitDraft.workId === entry.work.id ? state.submitDraft : null),
   onPrepare: async (entry, v) => {
-    const result = buildSharePackage(entry.work, { nickname: v.nickname, role: spoutRole(), comment: v.comment, privacyChecked: v.privacyChecked });
+    const result = buildSharePackage(entry.work, { nickname: v.nickname, role: spoutRole(), privacyChecked: v.privacyChecked });
     if (!result.ok) return go({ notice: result.errors.join(' ') });
     state.shareProfile = { nickname: v.nickname.trim() }; // 다음번을 위해 닉네임만 기억
     await storage.set('shareProfile', state.shareProfile);
-    go({ submitDraft: { workId: entry.work.id, nickname: v.nickname, comment: v.comment, result }, notice: '' });
+    go({ submitDraft: { workId: entry.work.id, nickname: v.nickname, result }, notice: '' });
   },
   onCopy: async (text) => { await navigator.clipboard.writeText(text); go({ notice: S.submit.copied }); },
   onSaveFile: (file) => saveTextFile(file.text, file.name, file.type),

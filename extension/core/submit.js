@@ -5,7 +5,7 @@
 import { MAX_SONG_CHARS } from '../shared/review.js';
 import { toSubmissionHtml, cardLine } from '../shared/submission.js';
 import { normalizeWork } from '../shared/taxonomy.js';
-import { categoryText } from '../shared/market.js';
+import { kindsForWork, FORMAT_OPTIONS } from '../shared/market.js';
 
 export const FORM_LIMITS = { title: 100, address: 2000 };
 const REAL_NAME = /^[가-힣]{2,4}$/;
@@ -52,16 +52,16 @@ export function buildSharePackage(work, { nickname, role, comment = '', privacyC
   const base = buildWorkSubmission(work, { nickname, role, privacyChecked });
   if (!base.ok) return base;
   const m = normalizeWork(work);
-  const code = { domain: m.domain, category: m.category || 'etc', subcategory: m.subcategory || 'etc' };
+  // 폼 문항: 닉네임 · 앱 제목 · 앱 종류(복수) · 설명 · 자료 종류 · (웹 앱이면) 주소
   const prefill = {
-    whale: base.answers.whale,
     nickname: base.answers.nickname,
     title: work.title,
+    kind: kindsForWork(m),
     description: (m.description || work.howToUse || '').slice(0, 500),
-    category: categoryText(m.path, code),
+    format: work.type === 'html' ? FORMAT_OPTIONS.file : FORMAT_OPTIONS.webapp,
     address: base.answers.address || '',
-    comment: String(comment || '').trim().slice(0, 100),
   };
+  void comment;
   return { ok: true, file: base.file, prefill, warnings: base.warnings };
 }
 

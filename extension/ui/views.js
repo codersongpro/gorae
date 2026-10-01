@@ -3,6 +3,7 @@ import { h } from './dom.js';
 import { S } from './strings.js';
 import { displayBadge } from '../core/trust.js';
 import { facetValues, metaOf, topTags } from '../core/filter.js';
+import { KIND_OPTIONS } from '../shared/market.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
 
@@ -175,7 +176,6 @@ export function spoutSendBar({ pending, waiting, onSend, onSent }) {
 function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, onCopy, onSaveFile, onOpenForm, showSong, onSong }) {
   const Sb = S.submit;
   const nick = h('input', { 'aria-label': Sb.nickname, placeholder: Sb.nickname, value: (draft && draft.nickname) || (profile && profile.nickname) || '' });
-  const comment = h('input', { 'aria-label': Sb.comment, placeholder: Sb.comment, maxlength: '100', value: (draft && draft.comment) || '' });
   const privacy = h('input', { type: 'checkbox', checked: !!draft });
   const song = h('input', { 'aria-label': Sb.songLabel, placeholder: Sb.songLabel, maxlength: '120' });
   const pkg = draft && draft.result;
@@ -184,9 +184,9 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
   return h('div', { class: 'detail' },
     h('p', { class: 'muted' }, Sb.title),
     allowRecommend ? h('div', { class: 'section' },
-      nick, comment,
+      nick,
       h('label', { class: 'check' }, privacy, Sb.privacy),
-      h('button', { onclick: () => onPrepare(entry, { nickname: nick.value, comment: comment.value, privacyChecked: privacy.checked }) }, Sb.prepare)) : null,
+      h('button', { onclick: () => onPrepare(entry, { nickname: nick.value, privacyChecked: privacy.checked }) }, Sb.prepare)) : null,
     pkg ? h('div', { class: 'card' },
       pkg.file ? h('button', { onclick: () => onSaveFile(pkg.file) }, Sb.step1(pkg.file.name)) : h('p', { class: 'muted' }, Sb.noFile),
       ready ? h('button', { class: 'primary', onclick: () => onOpenForm(pkg) }, Sb.step2) : h('p', { class: 'notice' }, Sb.notReady),
@@ -201,12 +201,10 @@ export function marketView({ m, onRefresh, onFilter, onImport }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
-  const cats = m.domain ? categoriesOf(m.domain) : [];
   const shown = (m.entries || []).filter((e) => {
-    if (m.domain && (!e.category || e.category.domain !== m.domain)) return false;
-    if (m.category && (!e.category || e.category.category !== m.category)) return false;
+    if (m.kind && !e.kinds.includes(m.kind)) return false;
     if (!m.query) return true;
-    const hay = [e.title, e.description, e.nickname, e.comment, e.categoryText].join(' ').toLowerCase();
+    const hay = [e.title, e.description, e.nickname, e.comment, e.categoryText, ...e.kinds].join(' ').toLowerCase();
     return m.query.toLowerCase().split(/\s+/).every((t) => hay.includes(t));
   });
   let state = null;
@@ -217,8 +215,7 @@ export function marketView({ m, onRefresh, onFilter, onImport }) {
     h('p', { class: 'muted' }, M.hint),
     h('div', { class: 'filters' },
       h('label', { class: 'wide' }, S.find.search, q),
-      select(S.form.domain, m.domain, DOMAINS, (v) => onFilter({ domain: v, category: '' }), {}, S.find.domainAll),
-      m.domain ? select(S.form.category, m.category, cats, (v) => onFilter({ category: v }), {}, S.find.categoryAll) : h('span', {}),
+      select(S.market.kind, m.kind, KIND_OPTIONS, (v) => onFilter({ kind: v }), {}, S.filter.all),
       h('button', { class: 'wide', onclick: onRefresh }, M.refresh)),
     state,
     m.source === 'cache' ? h('p', { class: 'notice' }, M.cache) : null,
@@ -229,7 +226,7 @@ export function marketView({ m, onRefresh, onFilter, onImport }) {
     shown.map((e) => h('article', { class: 'card' },
       h('h3', {}, e.title),
       h('span', { class: 'badge shallow' }, S.badge.shallow),
-      e.categoryText ? h('p', { class: 'muted' }, e.categoryText) : null,
+      e.kinds.length || e.categoryText ? h('p', { class: 'muted' }, [e.kinds.join(' · '), e.categoryText].filter(Boolean).join(' / ')) : null,
       h('p', { class: 'muted' }, [M.by(e.nickname, e.whale), e.timestamp].filter(Boolean).join(' · ')),
       e.description ? h('p', {}, e.description) : null,
       e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,

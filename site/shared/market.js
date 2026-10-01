@@ -45,6 +45,8 @@ export const MARKET_COLUMNS = {
   whale: ['어떤 고래', '고래 종류'],
   nickname: ['닉네임', '작성자'],
   title: ['제목', '앱 이름', '작품 이름'],
+  kind: ['앱의 종류', '앱 종류'], // 교무행정 / 수업자료 / 학생관리 / 기타 (복수 선택)
+  format: ['자료의 종류', '자료 종류'], // HTML 파일 또는 exe파일 / 배포한 웹 앱
   description: ['설명'],
   category: ['분류', '카테고리'],
   address: ['주소', '웹앱'],
@@ -66,6 +68,16 @@ export function findColumns(header, spec = MARKET_COLUMNS) {
   }
   return cols;
 }
+
+// 폼의 '앱 종류' 선택지 ↔ 고래곳간 영역 (선택지 글자는 폼과 똑같아야 미리 채우기가 된다)
+export const KIND_OPTIONS = ['교무행정', '수업자료', '학생관리', '기타'];
+export function kindsForWork(meta) {
+  if (meta.domain === 'lesson') return ['수업자료'];
+  if (meta.domain === 'work') return ['class_management', 'student_life'].includes(meta.category) ? ['학생관리'] : ['교무행정'];
+  return ['기타'];
+}
+export const FORMAT_OPTIONS = { file: 'HTML 파일 또는 exe파일', webapp: '배포한 웹 앱' };
+const domainOfKinds = (kinds) => (kinds.includes('수업자료') ? 'lesson' : kinds.some((k) => k === '교무행정' || k === '학생관리') ? 'work' : '');
 
 // '수업 › 수업도구 › 럭키드로우·랜덤뽑기 [lesson/classroom_tool/lucky_draw]' → 분류 코드
 export function parseCategoryCode(text) {
@@ -96,6 +108,8 @@ export function parseMarketCsv(text, spec = MARKET_COLUMNS) {
       const title = cell(r, 'title');
       const files = cell(r, 'file').match(URL_RE) || [];
       const address = cell(r, 'address');
+      const kinds = cell(r, 'kind').split(',').map((x) => x.trim()).filter(Boolean);
+      const code = parseCategoryCode(cell(r, 'category'));
       return {
         id: 'm-' + shortHash(cell(r, 'timestamp') + '|' + title + '|' + files.join(',')),
         timestamp: cell(r, 'timestamp'),
@@ -104,7 +118,10 @@ export function parseMarketCsv(text, spec = MARKET_COLUMNS) {
         title,
         description: cell(r, 'description'),
         categoryText: cell(r, 'category').replace(/\s*\[[a-z_/]+\]\s*$/, ''),
-        category: parseCategoryCode(cell(r, 'category')),
+        kinds,
+        format: cell(r, 'format'),
+        // 분류 코드가 없으면 '앱 종류'로 영역만 짐작한다
+        category: code || (domainOfKinds(kinds) ? { domain: domainOfKinds(kinds) } : null),
         address,
         comment: cell(r, 'comment'),
         files,
@@ -157,7 +174,9 @@ export function buildPrefillUrl(formUrl, entryIds, values) {
   u.searchParams.set('usp', 'pp_url');
   for (const [k, v] of Object.entries(values)) {
     const id = entryIds[k];
-    if (id && /^entry\.\d+$/.test(id) && v) u.searchParams.set(id, String(v));
+    if (!id || !/^entry\.\d+$/.test(id) || !v || (Array.isArray(v) && !v.length)) continue;
+    if (Array.isArray(v)) for (const x of v) u.searchParams.append(id, String(x)); // 체크박스(복수 선택)
+    else u.searchParams.set(id, String(v));
   }
   return u.href;
 }

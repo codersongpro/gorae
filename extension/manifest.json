@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "고래곳간",
+  "description": "로그인 없이 바이브코딩 작품을 꾸러미로 주고받고, 웨일 사이드바에서 안전하게 실행하는 곳간",
+  "version": "0.1.0",
+  "permissions": ["storage"],
+  "host_permissions": ["https://codersongpro.github.io/*"],
+  "sidebar_action": {
+    "default_page": "sidebar.html",
+    "default_title": "고래곳간",
+    "use_navigation_bar": false
+  },
+  "sandbox": { "pages": ["sandbox.html"] },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src data:; object-src 'none'; form-action 'none'; base-uri 'none'"
+  }
+}

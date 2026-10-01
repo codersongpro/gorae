@@ -1,0 +1,67 @@
+// 화면 문구 모음 — 고래 용어는 짧은 설명과 함께 쓴다. 디자인 교체 때도 문구는 여기서만 고친다.
+export const S = {
+  appName: '고래곳간',
+  tabs: { catalog: '큰 곳간', mypod: '내 곳간', class: '학급 꾸러미' },
+  tabHints: { catalog: '검수된 작품 모음', mypod: '내 기기에만 저장', class: '어미고래 전용' },
+  mode: {
+    baby: '아기고래 모드 (학생)',
+    mother: '어미고래 모드 (교사)',
+    toggleToMother: '어미고래 모드로 (교사)',
+    toggleToBaby: '아기고래 모드로 (학생)',
+    devNote: '※ 암호(PIN)는 8단계에서 붙습니다. 지금은 누구나 전환할 수 있는 임시 버튼입니다.',
+  },
+  badge: {
+    clear: '🟢 맑은 바다 (학생 사용 가능)',
+    shallow: '🟡 얕은 바다 (교사용 또는 미검수)',
+    whirlpool: '🔴 소용돌이 (보류)',
+  },
+  pick: '🐋 고래 픽 (파수꾼이 찜했어요)',
+  tailprintOk: (name, date) => `꼬리지문 확인됨 (검수 서명) · 파수꾼 ${name} · ${date}`,
+  reason: {
+    NO_TAILPRINT: '꼬리지문(검수 서명)이 없어요',
+    CONTENT_CHANGED: '서명 뒤 내용이 바뀌었어요',
+    REVIEWER_UNKNOWN: '고래 족보에 없는 꼬리지문이에요',
+    REVIEWER_REVOKED: '말소된 꼬리지문이라 배지를 표시하지 않아요',
+    SIG_INVALID: '꼬리지문이 맞지 않아요',
+    LIST_INVALID: '고래 족보(파수꾼 명부)를 확인할 수 없어 배지 확인이 불가능해요',
+    LIST_OLD: '이미 본 것보다 오래된 고래 족보예요',
+  },
+  source: { maker: '직접 만듦', catalog: '큰 곳간에서 담음', bundle: '꾸러미', link: '바로 실행 링크' },
+  listState: {
+    network: '최신 목록',
+    cache: '오프라인 목록 (마지막으로 받은 목록)',
+    sample: '샘플 목록 (아직 공개 주소가 없어요)',
+    listRejected: '새 고래 족보가 오래되어 이전 족보를 계속 써요',
+  },
+  filter: {
+    grade: '학년', subject: '교과', badge: '배지', all: '전체',
+    pickOnly: '🐋 고래 픽만',
+    sort: { label: '정렬', pick: '고래 픽 먼저', new: '새로 들어옴', spout: '물뿜기 많은 순' },
+  },
+  empty: {
+    catalog: '조건에 맞는 작품이 없어요.',
+    mypod: '큰 곳간에서 담아 보세요.',
+    class: '학급 꾸러미는 어미고래 모드에서 쓸 수 있어요. (8단계에서 구현)',
+  },
+  actions: {
+    run: '실행', add: '내 곳간에 담기', remove: '삭제', back: '← 돌아가기', openTab: '새 탭에서 열기',
+    create: '만들기', save: '내 곳간에 저장', details: '자세히', close: '접기',
+  },
+  detail: { howTo: '사용 방법', recipe: '프롬프트 레시피', check: '자동 점검', checkOk: '걸린 항목이 없어요' },
+  run: {
+    NOT_HTML: '이 작품은 패널 안에서 실행할 수 없어요.',
+    WHIRLPOOL: '소용돌이(보류) 작품은 실행할 수 없어요.',
+    running: '격리된 공간에서 실행 중이에요 (외부 통신 차단)',
+    external: '외부 사이트입니다. 새 탭에서 열려요.',
+  },
+  add: { done: '내 곳간에 담았어요.', dup: '이미 내 곳간에 있어요.', warn: (n) => `점검에서 ${n}개 항목이 걸렸어요. 얕은 바다(미검수)로 표시돼요.` },
+  create: {
+    title: '작품 만들기', name: '제목', kind: '종류', kindHtml: 'HTML 붙여넣기/파일', kindUrl: '외부 주소(https)',
+    html: 'HTML', file: '.html 파일 (1MB 이하)', url: '주소', grade: '학년', subject: '교과', standard: '성취기준 코드 (선택)',
+    author: '별명 · 학교급 (예: 푸른 고래 · 초등)', howTo: '사용 방법', recipe: '프롬프트 레시피 (선택)',
+    privacyNote: '이름·학교명·연락처는 쓰지 마세요. 별명과 학교급만 써요.',
+    saved: '저장했어요.', checkTitle: '자동 점검 결과',
+  },
+  grades: ['초1', '초2', '초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'],
+  subjects: ['국어', '수학', '사회', '과학', '영어', '정보', '미술', '음악', '체육', '도덕', '기타'],
+};

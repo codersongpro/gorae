@@ -1,0 +1,7 @@
+# 테스트·운영 열쇠는 절대 커밋하지 않음
+tests/keys/
+*.key
+*.keybackup
+.env
+.vercel
+node_modules/

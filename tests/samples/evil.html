@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>격리 시험용 작품 (AC-004·005)</title>
+<body style="font-family:sans-serif;padding:12px">
+<h3>격리 시험</h3>
+<p>모든 줄이 "차단됨"이어야 안전합니다. "뚫림"이 하나라도 있으면 알려 주세요.</p>
+<pre id="out">검사 중...</pre>
+<script>
+  const lines = [];
+  const blocked = (name, fn) => {
+    try { const r = fn(); lines.push((r === false ? '차단됨' : '뚫림') + ' · ' + name); }
+    catch (e) { lines.push('차단됨 · ' + name); }
+  };
+  blocked('document.cookie 읽기', () => { document.cookie; return true; });
+  blocked('localStorage 접근', () => { localStorage.setItem('a', '1'); return true; });
+  blocked('parent.document 접근', () => { parent.document.title; return true; });
+  blocked('chrome 확장 API', () => typeof chrome !== 'undefined' && !!chrome.runtime ? true : false);
+  blocked('window.open 팝업', () => !!window.open('https://example.com'));
+  blocked('top 주소 바꾸기', () => { top.location.href = 'https://example.com'; return true; });
+  const done = () => { document.getElementById('out').textContent = lines.join('\n'); };
+  // 외부 통신 (AC-005): CSP connect-src 'none' 때문에 실패해야 한다
+  fetch('https://example.com/', { mode: 'no-cors' })
+    .then(() => lines.push('뚫림 · 외부 fetch'))
+    .catch(() => lines.push('차단됨 · 외부 fetch'))
+    .finally(done);
+</script>
+</body>
+</html>

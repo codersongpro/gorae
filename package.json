@@ -1,0 +1,10 @@
+{
+  "name": "gorae-gotgan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node tools/sync.mjs",
+    "build:sample": "node tools/build-sample.mjs",
+    "test": "node tools/sync.mjs && node --test \"tests/*.test.mjs\""
+  }
+}

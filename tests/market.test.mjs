@@ -87,7 +87,7 @@ test('공유 묶음: 업로드 파일 + 폼 문항(닉네임·제목·앱 종류
   assert.equal(buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', privacyChecked: false }).ok, false);
   const p = buildSharePackage(work, { nickname: '파란 고래', role: 'teacher', privacyChecked: true });
   assert.equal(p.file.name, '럭키_뽑기.html');
-  assert.deepEqual(p.prefill, { nickname: '파란 고래', title: '럭키 뽑기', kind: ['수업자료'], description: '무작위로 뽑아요', format: 'HTML 파일 또는 exe파일', address: '' });
+  assert.deepEqual(p.prefill, { nickname: '파란 고래', title: '럭키 뽑기', kind: ['수업자료'], description: '무작위로 뽑아요', format: 'HTML 파일', address: '' });
   const web = buildSharePackage({ ...work, type: 'url', artifactType: 'webapp', url: 'https://app.example.com', html: undefined, domain: 'work', category: 'student_life', subcategory: 'guidance' }, { nickname: '노을', privacyChecked: true });
   assert.deepEqual([web.prefill.kind, web.prefill.format], [['학생관리'], '배포한 웹 앱']);
   assert.ok(web.prefill.address.startsWith('https://app.example.com\n[고래곳간 작품 정보]'));

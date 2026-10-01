@@ -76,7 +76,7 @@ export function kindsForWork(meta) {
   if (meta.domain === 'work') return ['class_management', 'student_life'].includes(meta.category) ? ['학생관리'] : ['교무행정'];
   return ['기타'];
 }
-export const FORMAT_OPTIONS = { file: 'HTML 파일 또는 exe파일', webapp: '배포한 웹 앱' };
+export const FORMAT_OPTIONS = { file: 'HTML 파일', webapp: '배포한 웹 앱' }; // 폼 5번 선택지 글자와 같아야 한다
 const domainOfKinds = (kinds) => (kinds.includes('수업자료') ? 'lesson' : kinds.some((k) => k === '교무행정' || k === '학생관리') ? 'work' : '');
 
 // '수업 › 수업도구 › 럭키드로우·랜덤뽑기 [lesson/classroom_tool/lucky_draw]' → 분류 코드

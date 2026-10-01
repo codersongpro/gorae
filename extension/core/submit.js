@@ -4,6 +4,8 @@
 // 고래 노래·물뿜기는 이 폼에 문항이 없어 따로 쓰는 '의견 폼'(CONFIG.feedbackFormUrl)으로 보낸다.
 import { MAX_SONG_CHARS } from '../shared/review.js';
 import { toSubmissionHtml, cardLine } from '../shared/submission.js';
+import { normalizeWork } from '../shared/taxonomy.js';
+import { categoryText } from '../shared/market.js';
 
 export const FORM_LIMITS = { title: 100, address: 2000 };
 const REAL_NAME = /^[가-힣]{2,4}$/;
@@ -42,6 +44,25 @@ export function buildWorkSubmission(work, { nickname, role, privacyChecked } = {
   else warnings.push('작품 정보가 길어 주소만 보내요. 파수꾼이 분류를 직접 확인해야 해요.');
   if (address.length > FORM_LIMITS.address) return { ok: false, errors: [`주소 칸은 ${FORM_LIMITS.address}자까지예요.`] };
   return { ok: true, answers: { ...answers, address }, warnings };
+}
+
+// 나눔 곳간 공유 묶음: 업로드 파일 + 구글 폼 미리 채우기 값 (에듀노트 스킬마켓의 ShareModal과 같은 흐름)
+// 반환: { ok, file?, prefill: { whale, nickname, title, description, category, address, comment }, warnings, errors? }
+export function buildSharePackage(work, { nickname, role, comment = '', privacyChecked } = {}) {
+  const base = buildWorkSubmission(work, { nickname, role, privacyChecked });
+  if (!base.ok) return base;
+  const m = normalizeWork(work);
+  const code = { domain: m.domain, category: m.category || 'etc', subcategory: m.subcategory || 'etc' };
+  const prefill = {
+    whale: base.answers.whale,
+    nickname: base.answers.nickname,
+    title: work.title,
+    description: (m.description || work.howToUse || '').slice(0, 500),
+    category: categoryText(m.path, code),
+    address: base.answers.address || '',
+    comment: String(comment || '').trim().slice(0, 100),
+  };
+  return { ok: true, file: base.file, prefill, warnings: base.warnings };
 }
 
 // 고래 노래(한 줄 후기) 글 — 의견 폼으로 보낸다

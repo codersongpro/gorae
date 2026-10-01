@@ -6,6 +6,10 @@
   "permissions": ["storage", "clipboardWrite"],
   "host_permissions": [
     "https://codersongpro.github.io/*",
+    "https://docs.google.com/*",
+    "https://drive.google.com/*",
+    "https://drive.usercontent.google.com/*",
+    "https://*.googleusercontent.com/*",
     "https://class.whalespace.io/*",
     "https://teamboard.whalespace.io/*",
     "https://teamboard.whale.naver.com/*",

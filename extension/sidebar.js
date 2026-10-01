@@ -6,7 +6,7 @@ import { resolveTrustedList, buildEntries } from './core/trust.js';
 import { filterEntries, sortEntries } from './core/filter.js';
 import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
 import { buildShare } from './core/share.js';
-import { buildWorkSubmission, buildSongSubmission, validFormUrl } from './core/submit.js';
+import { buildSharePackage, buildSongSubmission, validFormUrl } from './core/submit.js';
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
@@ -26,7 +26,10 @@ import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
-import { pinView } from './ui/views.js';
+import { pinView, marketView, marketRunConfirm } from './ui/views.js';
+import { MARKET, shareReady } from './core/market-config.js';
+import { loadMarket, importEntry } from './core/market.js';
+import { buildPrefillUrl } from './shared/market.js';
 import { hasPin, setPin, checkPin, resetPin } from './core/pin.js';
 
 const app = document.getElementById('app');
@@ -34,6 +37,8 @@ const storage = createChromeStorage();
 const store = createStore(createIdbBackend());
 
 const state = {
+  market: { status: 'idle', entries: [], query: '', domain: '', category: '', busy: {}, done: {} },
+  shareProfile: {}, marketRunOk: {}, confirmMarket: null,
   service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null,
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
   grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
@@ -86,6 +91,7 @@ async function run(entry) {
   const c = canRun(entry);
   if (!c.ok) return go({ notice: S.run[c.reason], confirmUrl: null });
   if (c.kind === 'url') return go({ confirmUrl: describeExternalOpen(entry), notice: '' });
+  if (entry.source === 'market' && !state.marketRunOk[w.id]) return go({ confirmMarket: entry, notice: '' });
   // HTML 작품은 별도 웨일 창에서 연다 (확장앱 실행 화면 → sandbox 페이지, 격리 방식은 같다)
   if ((chrome.windows && chrome.windows.create) || (chrome.tabs && chrome.tabs.create)) {
     const id = await putRunTicket(storage, entry);
@@ -156,16 +162,19 @@ const openForm = (u) => {
 };
 const submitProps = (allowRecommend) => ({
   allowRecommend,
-  draft: null, // 카드마다 workCard에서 덮어쓴다
+  profile: state.shareProfile,
+  ready: shareReady(MARKET),
   draftOf: (entry) => (state.submitDraft && state.submitDraft.workId === entry.work.id ? state.submitDraft : null),
-  onPrepare: (entry, v) => {
-    const result = buildWorkSubmission(entry.work, { nickname: v.nickname, role: spoutRole(), privacyChecked: v.privacyChecked });
+  onPrepare: async (entry, v) => {
+    const result = buildSharePackage(entry.work, { nickname: v.nickname, role: spoutRole(), comment: v.comment, privacyChecked: v.privacyChecked });
     if (!result.ok) return go({ notice: result.errors.join(' ') });
-    go({ submitDraft: { workId: entry.work.id, nickname: v.nickname, result }, notice: '' });
+    state.shareProfile = { nickname: v.nickname.trim() }; // 다음번을 위해 닉네임만 기억
+    await storage.set('shareProfile', state.shareProfile);
+    go({ submitDraft: { workId: entry.work.id, nickname: v.nickname, comment: v.comment, result }, notice: '' });
   },
   onCopy: async (text) => { await navigator.clipboard.writeText(text); go({ notice: S.submit.copied }); },
   onSaveFile: (file) => saveTextFile(file.text, file.name, file.type),
-  onOpenForm: () => { if (!openForm(CONFIG.formUrl)) go({ notice: S.submit.noForm }); },
+  onOpenForm: (pkg) => { const url = buildPrefillUrl(MARKET.formUrl, MARKET.entry, pkg.prefill); if (url) chrome.tabs.create({ url }); },
   showSong: state.mode === 'mother', // 고래 노래(수업 활용 후기)는 교사고래만
   onSong: async (entry, v) => {
     const r = buildSongSubmission(entry.work, { text: v.text, author: v.author, privacyChecked: v.privacyChecked });
@@ -174,6 +183,34 @@ const submitProps = (allowRecommend) => ({
     go({ notice: openForm(CONFIG.feedbackFormUrl) ? S.submit.songCopied : S.submit.songNoForm });
   },
 });
+
+// ----- 나눔 곳간: 시트 목록 불러오기·가져오기
+async function refreshMarket() {
+  state.market = { ...state.market, status: 'loading', error: '', notice: '' };
+  render();
+  try {
+    const r = await loadMarket({ fetchFn: fetch, config: MARKET, storage });
+    state.market = { ...state.market, status: 'ok', entries: r.entries, source: r.source, header: r.header, missing: r.missing };
+  } catch (e) {
+    state.market = { ...state.market, status: 'error', error: e.code || 'NETWORK', entries: [] };
+  }
+  render();
+}
+async function importFromMarket(entry) {
+  state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: true }, notice: '' };
+  render();
+  const M = S.market;
+  try {
+    const r = await importEntry(entry, { fetchFn: fetch, config: MARKET, store });
+    const msgs = [r.added.length ? M.added(r.added) : '', r.skipped.length ? M.dup(r.skipped) : '', ...r.warnings].filter(Boolean);
+    state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, done: r.added.length ? { ...state.market.done, [entry.id]: true } : state.market.done };
+    if (r.added.length) return go({ tab: 'mypod', notice: msgs.join(' ') }); // 성공하면 내 곳간으로
+    state.market.notice = msgs.join(' ');
+  } catch (e) {
+    state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, notice: (M.error[e.code] || M.error.NETWORK) + (e.detail ? ` (${e.detail})` : '') };
+  }
+  render();
+}
 
 // ----- 물뿜기 (서버 없음): 기기에 기록 → 모아서 의견 설문으로 보냄 → 파수꾼이 집계해 catalog에 반영
 const spoutRole = () => (state.mode === 'mother' ? 'teacher' : 'student');
@@ -332,6 +369,12 @@ async function render() {
       spout: spoutProps(),
       sendBar: spoutSendBar({ pending, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
     });
+  } else if (state.tab === 'market') {
+    if (state.market.status === 'idle') setTimeout(refreshMarket, 0); // 탭에 들어오면 자동으로 불러온다
+    body = marketView({
+      m: state.market, onRefresh: refreshMarket, onImport: importFromMarket,
+      onFilter: (p) => { state.market = { ...state.market, ...p }; render(); },
+    });
   } else if (state.tab === 'mypod') {
     const all = await store.list();
     const entries = await verifyWorks(all.map((r) => r.work));
@@ -339,7 +382,7 @@ async function render() {
     const hit = state.mypodQuery ? new Set(filterEntries(entries, { query: state.mypodQuery }).map((e) => e.work.id)) : null;
     const records = hit ? all.filter((r) => hit.has(r.id)) : all;
     body = mypodView({
-      records, entriesById: new Map(entries.map((e) => [e.work.id, e])), state,
+      records, entriesById: new Map(entries.map((e) => [e.work.id, { ...e, source: (records.find((r) => r.id === e.work.id) || {}).source }])), state,
       onRun: run, onRemove: removeRecord, onToggleDetail: toggleDetail,
       onEdit: startEdit, onRemix: startRemix,
       onSelect: (id, on) => { state.selected = toggleIn(state.selected, id, on); },
@@ -366,11 +409,16 @@ async function render() {
     }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' })),
     tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null })),
     // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
-    ...[state.confirmUrl ? urlConfirmView({ info: state.confirmUrl, onOpen: openConfirmed, onCancel: () => go({ confirmUrl: null }) }) : null, body].filter(Boolean),
+    ...[
+      state.confirmUrl ? urlConfirmView({ info: state.confirmUrl, onOpen: openConfirmed, onCancel: () => go({ confirmUrl: null }) }) : null,
+      state.confirmMarket ? marketRunConfirm({ title: state.confirmMarket.work.title, onCancel: () => go({ confirmMarket: null }), onRun: () => { const e = state.confirmMarket; state.marketRunOk[e.work.id] = true; state.confirmMarket = null; run(e); } }) : null,
+      body,
+    ].filter(Boolean),
   );
 }
 
 state.mode = (await storage.get('mode')) || 'baby';
+state.shareProfile = (await storage.get('shareProfile')) || {};
 // 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 학생고래 모드로 시작한다
 if (state.mode === 'mother' && !(await hasPin(storage))) state.mode = 'baby';
 try {

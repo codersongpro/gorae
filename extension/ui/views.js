@@ -29,7 +29,7 @@ function checkList(report) {
 
 export function tabsBar(current, onSelect) {
   return h('div', { class: 'tabs', role: 'tablist' },
-    ['catalog', 'mypod', 'class'].map((k) =>
+    ['catalog', 'market', 'mypod', 'class'].map((k) =>
       h('button', { class: `tab ${k}`, role: 'tab', 'aria-selected': String(current === k), onclick: () => onSelect(k) },
         S.tabs[k], h('small', {}, S.tabHints[k]))));
 }
@@ -172,34 +172,81 @@ export function spoutSendBar({ pending, waiting, onSend, onSent }) {
 }
 
 // 큰 곳간에 보내기 (교사고래 모드에서만 만들어진다): 개인정보 확인 → 설문 문항별 답·업로드 파일 → 구글 설문 열기
-function submitPanel(entry, { allowRecommend, draft, onPrepare, onCopy, onSaveFile, onOpenForm, showSong, onSong }) {
+function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, onCopy, onSaveFile, onOpenForm, showSong, onSong }) {
   const Sb = S.submit;
-  const nick = h('input', { 'aria-label': Sb.nickname, placeholder: Sb.nickname, value: (draft && draft.nickname) || '' });
+  const nick = h('input', { 'aria-label': Sb.nickname, placeholder: Sb.nickname, value: (draft && draft.nickname) || (profile && profile.nickname) || '' });
+  const comment = h('input', { 'aria-label': Sb.comment, placeholder: Sb.comment, maxlength: '100', value: (draft && draft.comment) || '' });
   const privacy = h('input', { type: 'checkbox', checked: !!draft });
   const song = h('input', { 'aria-label': Sb.songLabel, placeholder: Sb.songLabel, maxlength: '120' });
-  const ans = draft && draft.result && draft.result.answers;
-  const row = (q, value, copyable = true) => h('div', { class: 'field' }, h('span', {}, q),
-    h('div', { class: 'row' }, h('strong', {}, value), copyable ? h('button', { class: 'chip', onclick: () => onCopy(value) }, Sb.copy) : null));
+  const pkg = draft && draft.result;
+  const row = (label, value) => (value ? h('div', { class: 'field' }, h('span', {}, label),
+    h('div', { class: 'row' }, h('span', {}, value), h('button', { class: 'chip', onclick: () => onCopy(value) }, Sb.copy))) : null);
   return h('div', { class: 'detail' },
     h('p', { class: 'muted' }, Sb.title),
     allowRecommend ? h('div', { class: 'section' },
-      nick,
+      nick, comment,
       h('label', { class: 'check' }, privacy, Sb.privacy),
-      h('button', { onclick: () => onPrepare(entry, { nickname: nick.value, privacyChecked: privacy.checked }) }, Sb.prepare)) : null,
-    ans ? h('div', { class: 'card' },
-      h('p', {}, Sb.guide),
-      h('button', { class: 'primary', onclick: onOpenForm }, Sb.openForm),
-      row(Sb.q1, ans.whale, false),
-      row(Sb.q2, ans.nickname),
-      row(Sb.q3, ans.title),
-      row(Sb.q4, ans.isFile, false),
-      entry.work.type === 'exe-link' ? h('p', { class: 'notice' }, Sb.exeHint) : null,
-      ans.address ? h('div', { class: 'field' }, h('span', {}, Sb.q5), h('pre', {}, ans.address), h('button', { onclick: () => onCopy(ans.address) }, Sb.copy)) : null,
-      draft.result.file ? h('div', { class: 'field' }, h('span', {}, Sb.q6),
-        h('button', { onclick: () => onSaveFile(draft.result.file) }, Sb.saveFile(draft.result.file.name)),
-        h('p', { class: 'muted' }, Sb.fileHint)) : null,
-      (draft.result.warnings || []).map((w) => h('p', { class: 'notice' }, w))) : null,
+      h('button', { onclick: () => onPrepare(entry, { nickname: nick.value, comment: comment.value, privacyChecked: privacy.checked }) }, Sb.prepare)) : null,
+    pkg ? h('div', { class: 'card' },
+      pkg.file ? h('button', { onclick: () => onSaveFile(pkg.file) }, Sb.step1(pkg.file.name)) : h('p', { class: 'muted' }, Sb.noFile),
+      ready ? h('button', { class: 'primary', onclick: () => onOpenForm(pkg) }, Sb.step2) : h('p', { class: 'notice' }, Sb.notReady),
+      ready ? null : Object.entries(pkg.prefill).map(([k, v]) => row(Sb.field[k] || k, v)),
+      h('p', { class: 'muted' }, Sb.step3),
+      (pkg.warnings || []).map((w) => h('p', { class: 'notice' }, w))) : null,
     showSong ? h('div', { class: 'section' }, song, h('button', { onclick: () => onSong(entry, { text: song.value, author: nick.value, privacyChecked: privacy.checked }) }, Sb.song)) : null);
+}
+
+// 나눔 곳간: 시트 목록 → 검색·분류 거르기 → 가져오기
+export function marketView({ m, onRefresh, onFilter, onImport }) {
+  const M = S.market;
+  const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
+  q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
+  const cats = m.domain ? categoriesOf(m.domain) : [];
+  const shown = (m.entries || []).filter((e) => {
+    if (m.domain && (!e.category || e.category.domain !== m.domain)) return false;
+    if (m.category && (!e.category || e.category.category !== m.category)) return false;
+    if (!m.query) return true;
+    const hay = [e.title, e.description, e.nickname, e.comment, e.categoryText].join(' ').toLowerCase();
+    return m.query.toLowerCase().split(/\s+/).every((t) => hay.includes(t));
+  });
+  let state = null;
+  if (m.status === 'loading') state = h('p', { class: 'notice' }, M.loading);
+  else if (m.status === 'error') state = h('p', { class: 'notice error', role: 'alert' }, M.error[m.error] || m.error);
+  else if (m.missing && m.missing.length) state = h('p', { class: 'notice error' }, M.columns(m.missing, m.header || []));
+  return h('section', { class: 'section' },
+    h('p', { class: 'muted' }, M.hint),
+    h('div', { class: 'filters' },
+      h('label', { class: 'wide' }, S.find.search, q),
+      select(S.form.domain, m.domain, DOMAINS, (v) => onFilter({ domain: v, category: '' }), {}, S.find.domainAll),
+      m.domain ? select(S.form.category, m.category, cats, (v) => onFilter({ category: v }), {}, S.find.categoryAll) : h('span', {}),
+      h('button', { class: 'wide', onclick: onRefresh }, M.refresh)),
+    state,
+    m.source === 'cache' ? h('p', { class: 'notice' }, M.cache) : null,
+    m.notice ? h('p', { class: 'notice' }, m.notice) : null,
+    m.status === 'ok' && !(m.entries || []).length ? h('p', { class: 'muted' }, M.empty) : null,
+    m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
+    m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
+    shown.map((e) => h('article', { class: 'card' },
+      h('h3', {}, e.title),
+      h('span', { class: 'badge shallow' }, S.badge.shallow),
+      e.categoryText ? h('p', { class: 'muted' }, e.categoryText) : null,
+      h('p', { class: 'muted' }, [M.by(e.nickname, e.whale), e.timestamp].filter(Boolean).join(' · ')),
+      e.description ? h('p', {}, e.description) : null,
+      e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
+      e.files.length ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),
+      h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
+        m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import))));
+}
+
+// 나눔 곳간 작품을 실행하기 전 출처 확인
+export function marketRunConfirm({ title, onRun, onCancel }) {
+  const M = S.market;
+  return h('section', { class: 'section' },
+    h('div', { class: 'card', role: 'alertdialog', 'aria-label': M.runTitle },
+      h('h3', {}, M.runTitle),
+      h('p', {}, h('strong', {}, title)),
+      h('p', {}, M.runBody),
+      h('div', { class: 'row' }, h('button', { class: 'primary', onclick: onRun }, M.runOk), h('button', { onclick: onCancel }, M.runCancel))));
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다

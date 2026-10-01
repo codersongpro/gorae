@@ -4,7 +4,10 @@ import { createChromeStorage } from './core/storage.js';
 import { loadCatalog } from './core/catalog.js';
 import { resolveTrustedList, buildEntries } from './core/trust.js';
 import { filterEntries, sortEntries } from './core/filter.js';
-import { buildRunMessage, canRun } from './core/runner.js';
+import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
+import { buildShare } from './core/share.js';
+import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
+import { buildViewerLink } from './shared/link.js';
 import { checkHtml } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
 import { createStore } from './core/store.js';
@@ -15,13 +18,14 @@ import { S } from './ui/strings.js';
 import { exportBundle, previewImport, importSelected } from './core/bundle.js';
 import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
-import { topBar, tabsBar, catalogView, mypodView, classView, runView, createView, importView } from './ui/views.js';
+import { topBar, tabsBar, catalogView, mypodView, classView, runView, createView, importView, urlConfirmView } from './ui/views.js';
 
 const app = document.getElementById('app');
 const storage = createChromeStorage();
 const store = createStore(createIdbBackend());
 
 const state = {
+  service: null, confirmUrl: null,
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
   grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
   source: 'network', listRejected: false, notice: '', openId: null,
@@ -48,13 +52,12 @@ const verifyWorks = (works) => buildEntries({ works, list: state.list, storage, 
 function go(patch) { Object.assign(state, patch); render(); }
 const toggleDetail = (id) => go({ openId: state.openId === id ? null : id });
 
+// 실행 관문: HTML·URL 작품 모두 canRun을 통과해야 한다. URL 작품은 확인 카드를 거친 뒤에만 새 탭으로 연다.
 async function run(entry) {
   const w = entry.work;
-  if (w.type === 'url') {
-    try { if (new URL(w.url).protocol === 'https:') chrome.tabs.create({ url: w.url }); } catch { /* 잘못된 주소는 무시 */ }
-    return go({ notice: S.run.external });
-  }
-  if (!canRun(entry).ok) return;
+  const c = canRun(entry);
+  if (!c.ok) return go({ notice: S.run[c.reason], confirmUrl: null });
+  if (c.kind === 'url') return go({ confirmUrl: describeExternalOpen(entry), notice: '' });
   const view = runView({ entry, onBack: () => { window.removeEventListener('message', onReady); go({ screen: 'main' }); } });
   // sandbox 페이지가 준비되면 작품을 보낸다 (보낸 쪽이 그 iframe일 때만 응답)
   function onReady(e) {
@@ -65,6 +68,46 @@ async function run(entry) {
   state.screen = 'run';
   app.replaceChildren(view.el);
 }
+
+const openConfirmed = () => {
+  const info = state.confirmUrl;
+  if (info) chrome.tabs.create({ url: info.url });
+  go({ confirmUrl: null, notice: S.run.external });
+};
+
+// ----- 웨일 스페이스 공유: 붙여넣기용 글을 만들어 클립보드에 복사한다 (다른 화면을 조작하지 않음)
+const viewerLinkOf = async (work) => {
+  const r = await buildViewerLink(work, CONFIG.viewerUrl);
+  return r.ok ? r.url : null;
+};
+async function shareWork(entry, kind) {
+  const link = await viewerLinkOf(entry.work);
+  const { text } = buildShare(kind, entry.work, { link, status: entry.status });
+  await navigator.clipboard.writeText(text);
+  go({ notice: link ? S.share.copied(S.share.kinds[kind]) : `${S.share.tooBig} ${S.share.tooBigCopied}` });
+}
+async function copyViewerLink(entry) {
+  const link = await viewerLinkOf(entry.work);
+  if (!link) return go({ notice: S.share.tooBig });
+  await navigator.clipboard.writeText(link);
+  go({ notice: S.share.linkCopied });
+}
+
+// 메인 탭 도메인만 보고 서비스를 알아본다 (주소는 저장하지 않음)
+async function refreshService() {
+  let service = null;
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    service = detectService(tab && tab.url);
+  } catch { /* 탭 정보를 못 읽으면 기본 순서 */ }
+  if (service !== state.service) go({ service });
+}
+const shareProps = () => ({
+  kinds: orderShareKinds(state.service),
+  serviceLabel: ['class', 'teamboard', 'ubt'].includes(state.service) ? SERVICE_LABEL[state.service] : null,
+  onShare: shareWork,
+  onLink: copyViewerLink,
+});
 
 async function addToMypod(entry) {
   const w = entry.work;
@@ -175,6 +218,7 @@ async function render() {
     body = catalogView({
       entries: state.entries, visible, state,
       onFilter: (p) => go({ ...p, notice: '' }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
+      onRemix: startRemix, share: shareProps(),
     });
   } else if (state.tab === 'mypod') {
     const records = await store.list();
@@ -185,6 +229,7 @@ async function render() {
       onEdit: startEdit, onRemix: startRemix,
       onSelect: (id, on) => { state.selected = toggleIn(state.selected, id, on); },
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
+      share: shareProps(),
     });
   } else {
     body = classView({
@@ -200,8 +245,9 @@ async function render() {
       await storage.set('mode', mode);
       go({ mode, notice: mode === 'mother' ? S.mode.devNote : '' });
     }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' })),
-    tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null })),
-    body,
+    tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null })),
+    // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
+    ...[state.confirmUrl ? urlConfirmView({ info: state.confirmUrl, onOpen: openConfirmed, onCancel: () => go({ confirmUrl: null }) }) : null, body].filter(Boolean),
   );
 }
 
@@ -209,6 +255,12 @@ state.mode = (await storage.get('mode')) || 'baby';
 try {
   await loadAll();
   render();
+  // 메인 탭이 바뀌면 서비스에 맞는 공유 버튼 순서를 갱신한다
+  if (chrome.tabs && chrome.tabs.onActivated) {
+    chrome.tabs.onActivated.addListener(refreshService);
+    chrome.tabs.onUpdated.addListener((_id, change) => { if (change.url || change.status === 'complete') refreshService(); });
+  }
+  refreshService();
 } catch (e) {
   app.replaceChildren(h('p', { class: 'notice error' }, `목록을 불러오지 못했어요: ${e.message}`));
 }

@@ -44,7 +44,12 @@ export function createWork(input, { now = new Date(), idGen = () => Math.random(
     version: 1,
     addedAt: now.toISOString(),
   };
-  if (input.remixOf) w.remixOf = input.remixOf; // 리믹스 원본 id
+  if (input.remixOf) {
+    w.remixOf = input.remixOf; // 리믹스 원본 id
+    w.remixOfTitle = input.remixOfTitle || ''; // 계보 표시용 원본 제목
+  }
+  const min = Math.round(Number(input.minutes));
+  if (min > 0 && min <= 240) w.minutes = min; // 활동 시간(분, 선택)
   if (input.type === 'html') w.html = input.html;
   else w.url = input.url;
   return w;

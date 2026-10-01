@@ -49,11 +49,12 @@ function select(label, value, options, onChange) {
       options.map((o) => h('option', { value: o, selected: o === value }, o))));
 }
 
-export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail }) {
+export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
+    h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
     h('div', { class: 'filters' },
       select(S.filter.grade, state.grade, facetValues(entries, 'grade'), (v) => onFilter({ grade: v })),
@@ -62,10 +63,10 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
       sortSel,
       h('label', { class: 'check wide' }, h('input', { type: 'checkbox', checked: state.pickOnly, onchange: (e) => onFilter({ pickOnly: e.target.checked }) }), S.filter.pickOnly)),
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
-    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
+    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
 }
 
-function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra }) {
+function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share }) {
   const w = entry.work;
   const run = canRun(entry);
   return h('article', { class: 'card' },
@@ -74,23 +75,36 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
     h('div', { class: 'row' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge shallow' }, S.pick) : null),
     h('p', { class: 'muted' }, `${w.grade} · ${w.subject} · ${w.author}`),
     verifyLine(entry),
+    w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
     extra || null,
     h('div', { class: 'row' },
-      h('button', { class: 'primary', disabled: !run.ok && w.type === 'html', onclick: () => onRun(entry) }, S.actions.run),
+      h('button', { class: 'primary', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run),
       onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
       onEdit ? h('button', { onclick: () => onEdit(entry) }, S.actions.edit) : null,
       onRemix ? h('button', { onclick: () => onRemix(entry) }, S.actions.remix) : null,
       onRemove ? h('button', { class: 'danger', onclick: () => onRemove(entry) }, S.actions.remove) : null,
       h('button', { onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details)),
-    !run.ok && w.type === 'html' ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
+    !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
       h('div', {}, h('p', { class: 'muted' }, S.detail.howTo), h('p', {}, w.howToUse)),
       w.promptRecipe ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
       entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎵 ${s.text} — ${s.author}`)) : null,
-      checkList(report)) : null);
+      checkList(report),
+      share ? sharePanel(entry, share) : null) : null);
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy }) {
+// 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다
+function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
+  return h('div', { class: 'detail' },
+    h('p', { class: 'muted' }, S.share.title),
+    serviceLabel ? h('p', { class: 'notice' }, S.share.nowOn(serviceLabel)) : null,
+    h('div', { class: 'row' },
+      kinds.map((k, i) => h('button', { class: i === 0 && serviceLabel ? 'primary' : '', onclick: () => onShare(entry, k) }, S.share.kinds[k])),
+      h('button', { onclick: () => onLink(entry) }, S.share.link)),
+    h('p', { class: 'muted' }, S.share.hint));
+}
+
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share }) {
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
@@ -103,11 +117,10 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
     records.length ? records.map((r) => {
       const w = r.work;
       const tags = [`출처: ${S.source[r.source] || r.source}`, `버전 ${w.version}`];
-      if (w.remixOf) tags.push(`${S.edit.remixOfLabel}: ${w.remixOf}`);
       if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
       if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
       return workCard(entriesById.get(r.id), {
-        onRun, onRemove, onToggleDetail, onEdit, onRemix, open: state.openId === r.id, report: r.checkReport,
+        onRun, onRemove, onToggleDetail, onEdit, onRemix, share, open: state.openId === r.id, report: r.checkReport,
         selectBox: h('label', { class: 'check' },
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),
@@ -169,7 +182,7 @@ export function createView({ onSubmit, onCancel, errors, warnings, report, value
   const collect = () => ({
     title: f.title.value, type: kind.value, html: f.html.value, url: f.url.value, grade: f.grade.value, subject: f.subject.value,
     standard: f.standard.value, author: f.author.value, howToUse: f.howToUse.value, promptRecipe: f.promptRecipe.value,
-    remixOf: values.remixOf,
+    remixOf: values.remixOf, remixOfTitle: values.remixOfTitle, minutes: f.minutes.value,
   });
   const root = h('section', { class: 'section' },
     h('h2', {}, heading),
@@ -185,6 +198,7 @@ export function createView({ onSubmit, onCancel, errors, warnings, report, value
       field('grade', S.create.grade, h('select', {}, h('option', { value: '' }, S.filter.all), S.grades.map((g) => h('option', { value: g }, g)))),
       field('subject', S.create.subject, h('select', {}, h('option', { value: '' }, S.filter.all), S.subjects.map((g) => h('option', { value: g }, g))))),
     field('standard', S.create.standard, h('input', {})),
+    field('minutes', S.create.minutes, h('input', { type: 'number', min: '1', max: '240' })),
     field('author', S.create.author, h('input', {})),
     field('howToUse', S.create.howTo, h('textarea', {})),
     field('promptRecipe', S.create.recipe, h('textarea', {})),
@@ -221,4 +235,17 @@ export function importView({ preview, errors, onCheck, onToggle, selected, onCon
           checkList(it.report));
       }),
       h('button', { class: 'primary', onclick: onConfirm }, S.bundle.confirm)) : null);
+}
+
+// 외부 사이트(URL 작품)를 열기 전 확인 카드 — 사용자가 [새 탭에서 열기]를 눌러야 열린다
+export function urlConfirmView({ info, onOpen, onCancel }) {
+  return h('section', { class: 'section' },
+    h('div', { class: 'card', role: 'alertdialog', 'aria-label': S.run.confirmTitle },
+      h('h3', {}, S.run.confirmTitle),
+      h('p', {}, S.run.confirmHost(info.host)),
+      info.verified ? null : h('p', { class: 'notice error' }, S.run.confirmUnverified),
+      h('p', { class: 'muted' }, info.url),
+      h('div', { class: 'row' },
+        h('button', { class: 'primary', onclick: onOpen }, S.run.confirmOpen),
+        h('button', { onclick: onCancel }, S.run.confirmCancel))));
 }

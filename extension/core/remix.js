@@ -17,12 +17,13 @@ export function remixInput(original) {
     howToUse: w.howToUse,
     promptRecipe: w.promptRecipe,
     remixOf: w.id,
+    remixOfTitle: w.title,
   };
 }
 
 export function editInput(work) {
-  const { title, type, html, url, grade, subject, standard, author, howToUse, promptRecipe } = work;
-  return { title, type, html, url, grade, subject, standard, author, howToUse, promptRecipe };
+  const { title, type, html, url, grade, subject, standard, author, howToUse, promptRecipe, minutes } = work;
+  return { title, type, html, url, grade, subject, standard, author, howToUse, promptRecipe, minutes };
 }
 
 // 수정 저장.
@@ -36,13 +37,13 @@ export async function saveEdit(store, record, input, opts = {}) {
   const inPlace = record.source === 'maker' && !record.work.tailprint;
   if (inPlace) {
     const work = { ...createWork(input, opts), id: record.work.id, addedAt: record.work.addedAt, version: record.work.version + 1 };
-    if (record.work.remixOf) work.remixOf = record.work.remixOf;
+    if (record.work.remixOf) Object.assign(work, { remixOf: record.work.remixOf, remixOfTitle: record.work.remixOfTitle });
     const next = { ...record, work, checkReport: report };
     await store.put(next);
     return { ok: true, record: next, separate: false, warnings: v.warnings };
   }
   const work = { ...createWork(input, opts), editedFrom: record.work.id, version: record.work.version + 1 };
-  if (record.work.remixOf) work.remixOf = record.work.remixOf;
+  if (record.work.remixOf) Object.assign(work, { remixOf: record.work.remixOf, remixOfTitle: record.work.remixOfTitle });
   const r = await store.add(work, { source: 'maker', checkReport: report });
   return { ok: true, record: r.record, separate: true, warnings: v.warnings };
 }

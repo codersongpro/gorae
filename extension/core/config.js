@@ -5,6 +5,8 @@ export const CONFIG = {
   reviewersUrl: 'https://codersongpro.github.io/gorae/reviewers.json',
   sampleCatalogPath: 'sample/catalog.json',
   sampleReviewersPath: 'sample/reviewers.json',
+  // 바로 실행 뷰어 주소 (GitHub Pages로 site/를 공개한 뒤 확인)
+  viewerUrl: 'https://codersongpro.github.io/gorae/viewer.html',
   fetchTimeoutMs: 4000,
   maxHtmlBytes: 1024 * 1024, // 1MB
 };

@@ -1,0 +1,91 @@
+/* =========================================================
+   고래곳간 디자인 토큰 계약 (design/tokens.css)
+   - 아래 값은 Claude Design 결과가 오기 전까지 쓰는 '중립 임시값'입니다.
+   - 변수 '이름'은 계약이므로 바꾸지 않습니다. 값만 교체합니다.
+   - ui/ 코드는 이 변수만 사용합니다 (색·px 하드코딩 금지).
+   ========================================================= */
+:root {
+  /* 기본 면·글자 */
+  --color-bg: #ffffff;
+  --color-surface: #f6f7f8;
+  --color-surface-raised: #ffffff;
+  --color-border: #d9dde1;
+  --color-text: #1f2328;
+  --color-text-muted: #5b636b;
+  --color-primary: #3a5a78;
+  --color-primary-text: #ffffff;
+
+  /* 공간 구분 (임시 회색조 — 디자인 확정 시 교체) */
+  --color-catalog: #3a5a78;        /* 큰 곳간 */
+  --color-catalog-soft: #e8edf2;
+  --color-mypod: #3f7a76;          /* 내 곳간 */
+  --color-mypod-soft: #e7f1f0;
+  --color-teacher-band: #8a6d3b;   /* 어미고래 모드 띠 */
+
+  /* 배지 */
+  --color-badge-clear: #e3f1e6;
+  --color-badge-clear-text: #1e5b2c;
+  --color-badge-shallow: #f5eed9;
+  --color-badge-shallow-text: #6b4f12;
+  --color-badge-whirlpool: #f6e1e1;
+  --color-badge-whirlpool-text: #7a1f1f;
+
+  --color-danger: #b42318;
+  --color-focus: #2f6feb;
+
+  /* 글꼴 */
+  --font-sans: "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "D2Coding", "Consolas", ui-monospace, monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;   /* 본문 최소 14px */
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+  --line-height: 1.55;
+
+  /* 간격·모양 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.10);
+
+  /* 기타 */
+  --border-width: 1px;       /* 선 굵기 (ui에서 px 직접 쓰지 않기 위해 추가) */
+  --touch-min: 44px;
+  --panel-width: 360px;
+  --motion-fast: 120ms;
+  --motion-normal: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #15181b;
+    --color-surface: #1d2125;
+    --color-surface-raised: #23282d;
+    --color-border: #343b42;
+    --color-text: #e6e8ea;
+    --color-text-muted: #a3abb3;
+    --color-catalog-soft: #1f2a35;
+    --color-mypod-soft: #1d2d2b;
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #15181b;
+  --color-surface: #1d2125;
+  --color-surface-raised: #23282d;
+  --color-border: #343b42;
+  --color-text: #e6e8ea;
+  --color-text-muted: #a3abb3;
+  --color-catalog-soft: #1f2a35;
+  --color-mypod-soft: #1d2d2b;
+}

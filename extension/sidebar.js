@@ -11,6 +11,9 @@ import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.j
 import { buildViewerLink } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
 import { verifyFeatured } from './shared/featured.js';
+import { spoutCountsFor, spoutTotal } from './shared/spout.js';
+import { recordSpout, pendingReport, markSent, mySpouts } from './core/spout-store.js';
+import { spoutSendBar } from './ui/views.js';
 import { checkWork } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
 import { createStore } from './core/store.js';
@@ -31,7 +34,7 @@ const storage = createChromeStorage();
 const store = createStore(createIdbBackend());
 
 const state = {
-  service: null, confirmUrl: null,
+  service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null,
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
   grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
   source: 'network', listRejected: false, notice: '', openId: null,
@@ -55,6 +58,8 @@ async function loadAll() {
   state.entries = await buildEntries({ works: res.catalog.items, list: trusted.list, storage, rootJwk: ROOT_PUBLIC_JWK });
   // 이달의 고래자리: 대왕고래 서명이 맞을 때만 띠를 보인다
   state.featured = await verifyFeatured(res.catalog.featured, ROOT_PUBLIC_JWK, res.catalog.items);
+  state.catalog = res.catalog; // 물뿜기 숫자(spouts)를 읽는다
+  state.mySpouts = await mySpouts(storage);
 }
 
 const verifyWorks = (works) => buildEntries({ works, list: state.list, storage, rootJwk: ROOT_PUBLIC_JWK });
@@ -143,7 +148,7 @@ const shareProps = () => ({
   onLink: copyViewerLink,
 });
 
-// ----- 큰 곳간에 보내기: 어미고래 모드에서만. 글을 복사하고 네이버 폼을 연다
+// ----- 큰 곳간에 보내기: 교사고래 모드에서만. 글을 복사하고 네이버 폼을 연다
 async function sendToForm(result) {
   if (!result.ok) return go({ notice: result.errors.join(' ') });
   await navigator.clipboard.writeText(result.text);
@@ -159,7 +164,32 @@ const submitProps = (allowRecommend) =>
         onRecommend: (entry, v) => sendToForm(buildWorkSubmission(entry.work, { author: v.author, privacyChecked: v.privacyChecked })),
         onSong: (entry, v) => sendToForm(buildSongSubmission(entry.work, { text: v.text, author: v.author, privacyChecked: v.privacyChecked })),
       }
-    : null; // 아기고래 모드에서는 메뉴 자체를 만들지 않는다
+    : null; // 학생고래 모드에서는 메뉴 자체를 만들지 않는다
+
+// ----- 물뿜기 (서버 없음): 기기에 기록 → 모아서 네이버 폼으로 보냄 → 파수꾼이 집계해 catalog에 반영
+const spoutRole = () => (state.mode === 'mother' ? 'teacher' : 'student');
+const spoutProps = () => ({
+  countsOf: (e) => spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id]),
+  mineOf: (e) => state.mySpouts[e.work.id],
+  onSpout: async (e) => {
+    const r = await recordSpout(storage, e.work.id, spoutRole());
+    state.mySpouts = await mySpouts(storage);
+    go({ notice: r.ok ? S.spout.hint : S.spout.already });
+  },
+});
+async function sendSpouts() {
+  const rep = await pendingReport(storage);
+  if (!rep.count) return;
+  await navigator.clipboard.writeText(rep.text);
+  const url = validFormUrl(CONFIG.formUrl);
+  if (url) chrome.tabs.create({ url });
+  go({ spoutWaiting: rep.ids, notice: url ? S.spout.copiedOpen : S.spout.copiedNoForm });
+}
+async function confirmSpoutsSent() {
+  await markSent(storage, state.spoutWaiting || []);
+  state.mySpouts = await mySpouts(storage);
+  go({ spoutWaiting: null, notice: S.spout.thanks });
+}
 
 async function addToMypod(entry) {
   const w = entry.work;
@@ -211,7 +241,7 @@ function saveTextFile(text, fileName) {
 }
 const saveFile = () => saveTextFile(state.exportOut.text, state.exportOut.fileName);
 
-// 학급 꾸러미: 어미고래 모드에서만. 꾸러미 + 웨일 클래스 공지 문구를 함께 만든다
+// 학급 꾸러미: 교사고래 모드에서만. 꾸러미 + 웨일 클래스 공지 문구를 함께 만든다
 async function buildClass(name, note) {
   const nm = name.trim() || S.classPack.defaultName;
   const out = buildClassBundle(await store.list(), state.classSelected, { name: nm, teacherNote: note });
@@ -284,11 +314,15 @@ async function render() {
   }
   let body;
   if (state.tab === 'catalog') {
-    const visible = sortEntries(filterEntries(state.entries, state), state.sort);
+    const totals = Object.fromEntries(state.entries.map((e) => [e.work.id, spoutTotal(spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id]))]));
+    const visible = sortEntries(filterEntries(state.entries, state), state.sort, totals);
+    const pending = Object.values(state.mySpouts).filter((v) => !v.sent).length;
     body = catalogView({
       entries: state.entries, visible, state,
       onFilter: (p) => go({ ...p, notice: '' }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
       onRemix: startRemix, share: shareProps(), submit: submitProps(false),
+      spout: spoutProps(),
+      sendBar: spoutSendBar({ pending, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
     });
   } else if (state.tab === 'mypod') {
     const all = await store.list();
@@ -315,7 +349,7 @@ async function render() {
   }
   app.replaceChildren(
     topBar(state.mode, async () => {
-      // 아기고래로는 바로, 어미고래로는 암호를 거쳐서 바꾼다
+      // 학생고래로는 바로, 교사고래로는 암호를 거쳐서 바꾼다
       if (state.mode === 'mother') {
         await storage.set('mode', 'baby');
         return go({ mode: 'baby', notice: '', classOut: null });
@@ -329,7 +363,7 @@ async function render() {
 }
 
 state.mode = (await storage.get('mode')) || 'baby';
-// 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 아기고래 모드로 시작한다
+// 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 학생고래 모드로 시작한다
 if (state.mode === 'mother' && !(await hasPin(storage))) state.mode = 'baby';
 try {
   await loadAll();

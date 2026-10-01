@@ -1,4 +1,4 @@
-// 큰 곳간에 보내기: 네이버 폼에 붙여 넣을 글을 만든다 (DOM 없음, 어미고래 모드에서만 화면에 나온다)
+// 큰 곳간에 보내기: 네이버 폼에 붙여 넣을 글을 만든다 (DOM 없음, 교사고래 모드에서만 화면에 나온다)
 // 폼 항목: 제출 종류(작품·고래 노래) / 별명·학교급 / 꾸러미 또는 후기 / 개인정보 미포함 확인
 import { createPack, serializePack } from '../shared/pack.js';
 import { MAX_SONG_CHARS } from '../shared/review.js';

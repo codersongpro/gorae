@@ -10,6 +10,7 @@ import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
 import { normalizeWork } from './shared/taxonomy.js';
 import { signFeatured, MAX_FEATURED } from './shared/featured.js';
+import { parseSpoutReports, applySpoutReports } from './shared/spout.js';
 
 // 작품 미리보기 실행용 정책 (뷰어와 같은 뜻: 바깥 통신 차단)
 const CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; media-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
@@ -312,11 +313,36 @@ async function editList(change) {
   }
 }
 
+// ---------- D. 물뿜기 집계 (서버 없이: 네이버 폼 응답 → catalog.json의 spouts) ----------
+function viewSpout() {
+  const paste = h('textarea', { placeholder: '네이버 폼의 물뿜기 응답들을 한꺼번에 붙여 넣으세요', 'aria-label': '물뿜기 응답 붙여넣기' });
+  const top = Object.entries((state.catalog && state.catalog.spouts) || {}).sort((a, b) => b[1].teacher + b[1].student - (a[1].teacher + a[1].student)).slice(0, 10);
+  const title = (id) => ((state.catalog.items || []).find((w) => w.id === id) || { title: id }).title;
+  return h('div', { class: 'section' },
+    h('div', { class: 'card' },
+      h('h2', {}, '4. 물뿜기 집계'),
+      h('p', { class: 'muted' }, '폼 응답의 [고래곳간 물뿜기] 보고를 붙여 넣으면 작품별 교사·학생 숫자를 더해요. 같은 보고 번호는 두 번 더하지 않아요. 서명은 필요 없어요.'),
+      paste,
+      h('button', { onclick: async () => {
+        await ensureSiteData();
+        const reports = parseSpoutReports(paste.value);
+        if (!reports.length) return say('물뿜기 보고를 찾지 못했어요.', true);
+        const r = applySpoutReports(state.catalog, reports);
+        state.catalog = r.catalog;
+        state.spoutDone = true;
+        say(`보고 ${reports.length - r.skippedReports}개, 물뿜기 ${r.added}번을 더했어요.` + (r.skippedReports ? ` (이미 더한 보고 ${r.skippedReports}개는 건너뜀)` : '') + (r.unknownIds.length ? ` 목록에 없는 작품: ${r.unknownIds.join(', ')}` : ''));
+      } }, '집계하기')),
+    top.length ? h('div', { class: 'card' }, h('h3', {}, '많이 뿜은 작품'),
+      h('table', {}, h('tr', {}, h('th', {}, '작품'), h('th', {}, '교사'), h('th', {}, '학생')),
+        top.map(([id, c]) => h('tr', {}, h('td', {}, title(id)), h('td', {}, String(c.teacher)), h('td', {}, String(c.student)))))) : null,
+    state.spoutDone ? catalogOut() : null);
+}
+
 // ---------- 화면 ----------
-const TABS = [['make', '1. 검수 서명 만들기'], ['desk', '2. 검수대'], ['root', '3. 고래 족보 관리']];
+const TABS = [['make', '1. 검수 서명 만들기'], ['desk', '2. 검수대'], ['root', '3. 고래 족보 관리'], ['spout', '4. 물뿜기 집계']];
 function render() {
   tabsEl.replaceChildren(...TABS.map(([k, t]) => h('button', { role: 'tab', 'aria-selected': String(state.tab === k), onclick: () => { state.tab = k; state.msg = ''; state.err = ''; render(); } }, t)));
-  const body = state.tab === 'make' ? viewMake() : state.tab === 'desk' ? viewDesk() : viewRoot();
+  const body = state.tab === 'make' ? viewMake() : state.tab === 'desk' ? viewDesk() : state.tab === 'spout' ? viewSpout() : viewRoot();
   const root = state.newRootJwk && state.tab === 'root'
     ? h('div', { class: 'card' }, h('h3', {}, '새 대왕고래 공개키 (extension/core/rootkey.js의 ROOT_PUBLIC_JWK에 넣기)'), h('textarea', { readonly: true, 'aria-label': '대왕고래 공개키' }, JSON.stringify(state.newRootJwk)))
     : null;

@@ -24,8 +24,8 @@ export function filterEntries(entries, c = {}) {
   return entries.filter((e) => {
     const m = metaOf(e);
     const badge = displayBadge(e);
-    if (c.mode === 'baby' && badge !== 'clear') return false; // 아기고래 모드: 맑은 바다만
-    if (c.mode === 'baby' && m.artifactType === 'exe') return false; // EXE는 어미고래 모드에서만
+    if (c.mode === 'baby' && badge !== 'clear') return false; // 학생고래 모드: 맑은 바다만
+    if (c.mode === 'baby' && m.artifactType === 'exe') return false; // EXE는 교사고래 모드에서만
     if (c.domain && m.domain !== c.domain) return false;
     if (c.category && m.category !== c.category) return false;
     if (c.subcategory && m.subcategory !== c.subcategory) return false;

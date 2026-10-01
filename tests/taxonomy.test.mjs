@@ -126,7 +126,7 @@ test('찾기: "10분 안에 쓸 수 있는 초4 수학 활동"과 태그·대상
   assert.equal(topTags(list)[0], '분수');
 });
 
-test('아기고래 모드에서는 EXE가 보이지 않는다', () => {
+test('학생고래 모드에서는 EXE가 보이지 않는다', () => {
   const exe = createWork(toolInput({ artifactType: 'exe', html: undefined, url: 'https://e.x/a.exe', sourceRepo: 'https://e.x/s', sha256: 'a'.repeat(64), scanResult: 'ok', environment: 'win' }));
   const signedLike = { work: exe, status: { ok: true, badge: 'clear', pick: false, songs: [], reviewer: { id: 'g', nickname: 'g' }, signedAt: 'x' } };
   assert.equal(filterEntries([signedLike], { mode: 'baby' }).length, 0);

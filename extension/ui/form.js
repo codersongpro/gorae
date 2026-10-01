@@ -36,7 +36,7 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
   const cat = findCategory(v.domain, v.category);
   const level = levelOf(v.schoolLevel);
   const subjectsFor = level ? SUBJECTS_BY_LEVEL[level.id] : SUBJECTS;
-  const types = ARTIFACT_TYPES.filter((a) => a.id !== 'exe' || mode === 'mother'); // EXE는 어미고래 모드에서만
+  const types = ARTIFACT_TYPES.filter((a) => a.id !== 'exe' || mode === 'mother'); // EXE는 교사고래 모드에서만
 
   // 1. 형태
   const typeBlock = section(F().step1,

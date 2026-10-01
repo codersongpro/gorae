@@ -66,7 +66,7 @@ test('AC-003 초4·수학 3건 중 고래 픽 1건을 필터하면 1건만 나�
   assert.deepEqual(picked.map((e) => e.work.id), ['sample-fraction-pizza']);
 });
 
-test('아기고래 모드는 맑은 바다(검증 통과)만 보인다', async () => {
+test('학생고래 모드는 맑은 바다(검증 통과)만 보인다', async () => {
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const baby = filterEntries(entries, { mode: 'baby' });

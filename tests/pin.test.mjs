@@ -1,4 +1,4 @@
-// 8단계 일부: 어미고래 암호(PIN) — FR-010, AC-015
+// 8단계 일부: 교사고래 암호(PIN) — FR-010, AC-015
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { setPin, checkPin, hasPin, resetPin, validPin, MAX_TRIES, LOCK_MS } from '../extension/core/pin.js';
@@ -43,7 +43,7 @@ test('연속으로 5번 틀리면 30초 잠기고, 잠긴 동안은 맞는 암�
   assert.equal((await checkPin(st, '2580', t0 + LOCK_MS + 1)).ok, true);
 });
 
-test('잊었을 때 초기화하면 암호가 지워지고 아기고래 모드로 돌아간다', async () => {
+test('잊었을 때 초기화하면 암호가 지워지고 학생고래 모드로 돌아간다', async () => {
   const st = createMemoryStorage();
   await setPin(st, '2580', '2580');
   await st.set('mode', 'mother');

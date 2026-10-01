@@ -1,4 +1,4 @@
-// 어미고래 암호(PIN): 기기별 4자리 이상 숫자, 해시(PBKDF2-SHA256 + 소금값)로만 저장한다 (DOM 없음)
+// 교사고래 암호(PIN): 기기별 4자리 이상 숫자, 해시(PBKDF2-SHA256 + 소금값)로만 저장한다 (DOM 없음)
 // 학생 앞 '실수 방지' 수준의 잠금이다. 진짜 권한 경계는 검수 서명이다.
 import { toB64u, fromB64u } from '../shared/tailprint.js';
 
@@ -44,7 +44,7 @@ export async function checkPin(storage, pin, now = Date.now()) {
   return locked ? { ok: false, error: 'LOCKED', waitMs: LOCK_MS } : { ok: false, error: 'WRONG', left: MAX_TRIES - fails };
 }
 
-// 잊었을 때: 암호를 지우고 아기고래 모드로 돌아간다 (다시 정해야 어미고래 모드를 쓸 수 있다)
+// 잊었을 때: 암호를 지우고 학생고래 모드로 돌아간다 (다시 정해야 교사고래 모드를 쓸 수 있다)
 export async function resetPin(storage) {
   await storage.set(KEY, null);
   await storage.set('mode', 'baby');

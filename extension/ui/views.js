@@ -93,7 +93,7 @@ function metaLine(entry) {
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
 
-// 이달의 고래자리 띠: 서명이 맞을 때만, 아기고래 모드에서는 맑은 바다 작품만
+// 이달의 고래자리 띠: 서명이 맞을 때만, 학생고래 모드에서는 맑은 바다 작품만
 function featuredBand(entries, state, onRun) {
   const f = state.featured;
   if (!f || !f.ok || !f.items.length) return null;
@@ -106,20 +106,21 @@ function featuredBand(entries, state, onRun) {
     shown.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run))));
 }
 
-export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit }) {
+export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
     featuredBand(entries, state, onRun),
+    sendBar || null,
     h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
     findBar({ entries, state, onFilter, sortSel }),
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
-    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
+    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
 }
 
-function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share, submit }) {
+function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share, submit, spout }) {
   const w = entry.work;
   const run = canRun(entry);
   return h('article', { class: 'card' },
@@ -130,6 +131,7 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
     w.author ? h('p', { class: 'muted' }, w.author) : null,
     verifyLine(entry),
     w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
+    spout ? spoutRow(entry, spout) : null,
     extra || null,
     h('div', { class: 'row' },
       h('button', { class: 'primary', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run),
@@ -150,7 +152,26 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
       submit ? submitPanel(entry, submit) : null) : null);
 }
 
-// 큰 곳간에 보내기 (어미고래 모드에서만 만들어진다): 개인정보 확인 → 복사 + 네이버 폼 열기
+// 물뿜기: 교사·학생 숫자를 그대로 보여 주고, 기기당 한 번 누를 수 있다
+function spoutRow(entry, { countsOf, mineOf, onSpout }) {
+  const c = countsOf(entry);
+  const mine = mineOf(entry);
+  return h('div', { class: 'row' },
+    h('span', { 'aria-label': S.spout.hint, title: S.spout.hint }, S.spout.counts(c.teacher, c.student)),
+    h('button', { class: 'chip', disabled: !!mine, onclick: () => onSpout(entry) }, mine ? S.spout.done : S.spout.button));
+}
+
+// 보내지 않은 물뿜기 띠
+export function spoutSendBar({ pending, waiting, onSend, onSent }) {
+  if (!pending && !waiting) return null;
+  return h('div', { class: 'notice' },
+    h('p', {}, S.spout.pending(pending)),
+    h('div', { class: 'row' },
+      h('button', { onclick: onSend }, S.spout.send),
+      waiting ? h('button', { class: 'primary', onclick: onSent }, S.spout.sent) : null));
+}
+
+// 큰 곳간에 보내기 (교사고래 모드에서만 만들어진다): 개인정보 확인 → 복사 + 네이버 폼 열기
 function submitPanel(entry, { allowRecommend, onRecommend, onSong }) {
   // 보내는 사람(교사) 자신의 별명을 쓴다. 작품 작성자 별명을 미리 채우지 않는다.
   const author = h('input', { 'aria-label': S.submit.author, placeholder: S.submit.author });
@@ -286,7 +307,7 @@ export function urlConfirmView({ info, onOpen, onCancel }) {
         h('button', { onclick: onCancel }, S.run.confirmCancel))));
 }
 
-// 어미고래 암호 화면: 처음이면 정하기, 아니면 넣기
+// 교사고래 암호 화면: 처음이면 정하기, 아니면 넣기
 export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onForgot, onReset }) {
   const P = S.pin;
   const pin = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'off', 'aria-label': P.pin, placeholder: P.pin, maxlength: '8' });

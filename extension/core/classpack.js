@@ -1,4 +1,4 @@
-// 학급 꾸러미: 어미고래 모드에서 작품을 골라 꾸러미와 웨일 클래스 공지 문구를 함께 만든다 (DOM 없음)
+// 학급 꾸러미: 교사고래 모드에서 작품을 골라 꾸러미와 웨일 클래스 공지 문구를 함께 만든다 (DOM 없음)
 import { createPack, serializePack, MAX_ITEMS } from '../shared/pack.js';
 import { normalizeWork } from '../shared/taxonomy.js';
 

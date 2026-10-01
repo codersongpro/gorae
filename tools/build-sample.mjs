@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
 import { works, exeItems } from '../tests/sample-works.mjs';
 import { tools } from '../samples/tools/index.mjs';
 import * as tp from '../shared/tailprint.js';
+import { signFeatured } from '../shared/featured.js';
 
 const KEYS = new URL('../tests/keys/', import.meta.url);
 const exists = (u) => access(u).then(() => true, () => false);
@@ -51,7 +52,11 @@ for (const { file, ...card } of tools) {
   signed.push(await tp.signWork({ ...card, html }, guard.privateKey, { ...signOpts, badge: 'clear', pick: false }));
 }
 
-const catalog = { updatedAt: '2026-10-01T02:00:00Z', items: signed, exeItems, featured: null };
+const featured = await signFeatured(
+  { month: '2026-10', title: '10월의 고래자리', note: '새 학기 수업을 여는 도구와 분수 활동', items: ['sample-fraction-pizza', 'tool-lucky-draw', 'tool-scoreboard'], issuedAt: '2026-10-01T02:00:00Z' },
+  root.privateKey,
+);
+const catalog = { updatedAt: '2026-10-01T02:00:00Z', items: signed, exeItems, featured };
 await writeFile(new URL('../site/catalog.json', import.meta.url), JSON.stringify(catalog, null, 2));
 await writeFile(new URL('../site/reviewers.json', import.meta.url), JSON.stringify(list, null, 2));
 await writeFile(

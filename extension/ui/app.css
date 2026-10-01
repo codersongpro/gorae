@@ -72,3 +72,6 @@ fieldset.card { margin: 0; }
 fieldset.card legend { font-weight: var(--font-weight-bold); padding: 0 var(--space-1); }
 .chip { min-height: var(--touch-min); border-radius: var(--radius-pill); padding: 0 var(--space-3); font-size: var(--font-size-xs); }
 details > summary { cursor: pointer; min-height: var(--touch-min); display: flex; align-items: center; }
+
+/* 이달의 고래자리 띠 */
+.card.featured { border-color: var(--color-primary); background: var(--color-catalog-soft); }

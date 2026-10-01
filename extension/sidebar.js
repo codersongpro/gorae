@@ -10,6 +10,7 @@ import { buildWorkSubmission, buildSongSubmission, validFormUrl } from './core/s
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
+import { verifyFeatured } from './shared/featured.js';
 import { checkWork } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
 import { createStore } from './core/store.js';
@@ -52,6 +53,8 @@ async function loadAll() {
   state.source = res.source;
   state.listRejected = !trusted.accepted && trusted.reason === 'LIST_OLD';
   state.entries = await buildEntries({ works: res.catalog.items, list: trusted.list, storage, rootJwk: ROOT_PUBLIC_JWK });
+  // 이달의 고래자리: 대왕고래 서명이 맞을 때만 띠를 보인다
+  state.featured = await verifyFeatured(res.catalog.featured, ROOT_PUBLIC_JWK, res.catalog.items);
 }
 
 const verifyWorks = (works) => buildEntries({ works, list: state.list, storage, rootJwk: ROOT_PUBLIC_JWK });

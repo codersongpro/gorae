@@ -133,6 +133,7 @@ export const S = {
     forgot: '암호를 잊었어요', forgotConfirm: '암호를 지우고 아기고래 모드로 돌아갈까요? 다시 정하면 어미고래 모드를 쓸 수 있어요. (내 곳간 작품은 그대로예요)',
     reset: '암호 지우기', resetDone: '암호를 지웠어요. 새로 정해 주세요.',
   },
+  featured: { title: '이달의 고래자리', hint: '(대왕고래가 고른 이달의 작품)' },
   lineage: (title) => `이 작품은 ‘${title}’을(를) 리믹스했습니다.`,
   share: {
     title: '웨일 스페이스에 공유 (붙여넣기용으로 복사돼요)',

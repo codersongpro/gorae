@@ -93,11 +93,25 @@ function metaLine(entry) {
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
 
+// 이달의 고래자리 띠: 서명이 맞을 때만, 아기고래 모드에서는 맑은 바다 작품만
+function featuredBand(entries, state, onRun) {
+  const f = state.featured;
+  if (!f || !f.ok || !f.items.length) return null;
+  const byId = new Map(entries.map((e) => [e.work.id, e]));
+  const shown = f.items.map((id) => byId.get(id)).filter((e) => e && (state.mode !== 'baby' || displayBadge(e) === 'clear'));
+  if (!shown.length) return null;
+  return h('div', { class: 'card featured' },
+    h('p', {}, h('strong', {}, `🌟 ${f.title || S.featured.title}`), ' ', h('span', { class: 'muted' }, S.featured.hint)),
+    f.note ? h('p', { class: 'muted' }, f.note) : null,
+    shown.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run))));
+}
+
 export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
+    featuredBand(entries, state, onRun),
     h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
     findBar({ entries, state, onFilter, sortSel }),

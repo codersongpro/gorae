@@ -46,7 +46,7 @@
         ],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "pvUY4F5qa-gD-il-LIgy77UXB3MFlIw50Q2ENZRcSjimoVOH1ULl2u2lAdbrnlfHa3_b2IDXojea-XXUrzP4bA"
+        "sig": "EjxD_M1HojSWT_RJNPMluULay0qtP5i4OVJOxv4etDki2Zd5cYDURUcFVI9ZknaI10EuLTedvoZdUUo4x8PC5A"
       }
     },
     {
@@ -146,7 +146,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "J5j44fjzPlYURS7iezQ2pVna0t7gpkaJ3H0n13wUYkGWLCPF_y5-u_ZM7PyNXOJBoWd4lYLqdXh0rgFPgTqY6w"
+        "sig": "JNc-Cn0zGpVK6fLV8NvpExiE_OZRvO4LrFH9dlbVB4LXkQgJq-u4todaueL7ZQsRjG1rXUNRR4Kn1604itJa1g"
       }
     },
     {
@@ -231,7 +231,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "l1bzveUZcdVkEiOirJXv09wFd9ds1ljTaGWjKiQ9R1h6Jd94qozkARlTm078uZ889XnaFNpF3fq0qcQQX_ai4Q"
+        "sig": "RHEbZBy_wmwGYgFoL5bDacfhd0uBtYPbGddHJMsfB-00Q2MxFIlzvGqO9eA89W80hW70LcgWrumUk4npCY6TIg"
       }
     },
     {
@@ -266,7 +266,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "dQIjxEylqzH3fPaQQvSPw1sXM849AXQPR6C1z0ERAgrxNt-mZMFde51baj5IDAUVj1ktGJjEoYNqsnsjgy2wTg"
+        "sig": "kTZMNFnbY3PWPZJ1ez6B5s6lAMzh2rlPCosCzcqjcxpPZ9vM7iScVF8ee05iZuwIvqQE2p5BqjaidVheX2CQqg"
       }
     },
     {
@@ -301,7 +301,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "9Tdmpxw6m_ZiShyaZS136Kvh1TNB7YVD2jL5MSWTal7xudd_5ZmH38LeQj-GbgkCEIP2fMirhVDy9xHd7FYGVw"
+        "sig": "WrwtWokeWKUJ3sCuDklJx7fDbwmlprURripiBmCFQRmkriLarHezGdrN-y2EfOo7TI5M5jlIr1bzuHUIPgx-aA"
       }
     },
     {
@@ -337,7 +337,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "iqKcYJmcGwV5iP6bIn_hEFh9tGGKAtU6XjriSx5jSJzIrKmmsEGgEMYpUDNzpTpPEoIYsj2EuT6429D5UL6rEg"
+        "sig": "hjTIKdvUwoMiOagertYpLObV62qTr_xZgD7KL1tUrNqxbU4-jspOUBDoorasThEbrOLt8ESkmxHBwT4Ojn8WQw"
       }
     },
     {
@@ -372,7 +372,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "dmey7zqUzRzMH1w_l7Hs672jgR7Y6Ty6jQLBnXBG_tHjgFUm0UDFLXJclyhtPHMa5L9ofkmwCs7ZtdACa0HsRA"
+        "sig": "mC_fSe7ZZgPYLljd2Pdwda9HlAOjaztIEKuojrHgp8t4l0zGPo9qZljRp0on6MlPaALputHTvUf087N-kYtFSQ"
       }
     },
     {
@@ -408,7 +408,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "vcIZvADFY5ltvhrI20xSTNtxDkA3ktQgMtRlvXJsrE7cPVB2yyLm8ZhEcmAUJgPBCWySnBeP4wgo7hdQX35uXw"
+        "sig": "jK6xI7EU-Cm5uLWYSPJqZB4OkZP6FaZoVJto8JVORN9TUTuyQs4W25ZDl35mFue4DxQPTNAtZGr6P2QIGGlPaA"
       }
     },
     {
@@ -443,7 +443,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "kenjivct7etqVga-0v6_4Vb_N32SHBKlcly-5CIY6p5KXiDxNUBb0h0ZHVjLAfzeZXxIjgXX17KkJ4b9Lzf6bg"
+        "sig": "q8p3KGhjaena-S-tWseKLXE5F-s8gqEgjJMpDekZHbxXKE3a6UtIzvWDK7ImD71rT3j3aVmCvw9DWx1d83CQqA"
       }
     }
   ],
@@ -478,5 +478,16 @@
       "environment": "Windows 10 이상"
     }
   ],
-  "featured": null
+  "featured": {
+    "month": "2026-10",
+    "title": "10월의 고래자리",
+    "note": "새 학기 수업을 여는 도구와 분수 활동",
+    "items": [
+      "sample-fraction-pizza",
+      "tool-lucky-draw",
+      "tool-scoreboard"
+    ],
+    "issuedAt": "2026-10-01T02:00:00Z",
+    "sig": "Rt7zPRI7ieamayHssKlXS5zJuQm2LD05I5w6vV3bc8FatCWOSTA3Beim1WVfr17NNt36NroxY5WM_YDf4Qbxrg"
+  }
 }

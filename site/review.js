@@ -9,6 +9,7 @@ import { checkWork } from './shared/checker.js';
 import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
 import { normalizeWork } from './shared/taxonomy.js';
+import { signFeatured, MAX_FEATURED } from './shared/featured.js';
 
 // 작품 미리보기 실행용 정책 (뷰어와 같은 뜻: 바깥 통신 차단)
 const CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; media-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
@@ -239,6 +240,8 @@ function viewRoot() {
       h('button', { onclick: () => editList(() => addReviewer(state.list, JSON.parse(bundle.value))) }, '추가하고 서명'),
       h('h3', {}, '파수꾼 말소 (검수 서명 말소)'), revokeSel, reasonSel,
       h('button', { class: 'danger', onclick: () => editList(() => revokeReviewer(state.list, revokeSel.value, reasonSel.value)) }, '말소하고 서명')),
+    featuredCard(),
+    state.featuredSigned ? catalogOut() : null,
     listText ? h('div', { class: 'card' },
       h('h3', {}, `새 reviewers.json (버전 ${L.version})`),
       h('p', { class: 'muted' }, '내려받은 파일을 저장소의 site/reviewers.json에 덮어쓰고 올리면 반영돼요.'),
@@ -246,6 +249,34 @@ function viewRoot() {
       h('div', { class: 'row' },
         h('button', { class: 'secondary', onclick: () => copy(listText) }, '복사'),
         h('button', { class: 'secondary', onclick: () => download('reviewers.json', listText) }, '내려받기'))) : null);
+}
+
+// 이달의 고래자리 선정: 큰 곳간 작품 중 골라 뿌리 열쇠로 서명 → catalog.json의 featured
+function featuredCard() {
+  const items = (state.catalog && state.catalog.items) || [];
+  const now = new Date();
+  const month = h('input', { value: state.catalog && state.catalog.featured ? state.catalog.featured.month : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`, 'aria-label': '달 (YYYY-MM)' });
+  const title = h('input', { placeholder: '띠 제목 (예: 10월의 고래자리)', value: (state.catalog && state.catalog.featured && state.catalog.featured.title) || '' });
+  const note = h('input', { placeholder: '한 줄 소개 (선택)', value: (state.catalog && state.catalog.featured && state.catalog.featured.note) || '' });
+  const current = new Set((state.catalog && state.catalog.featured && state.catalog.featured.items) || []);
+  const boxes = items.map((w) => h('label', { class: 'check' }, h('input', { type: 'checkbox', value: w.id, checked: current.has(w.id) }), w.title));
+  return h('div', { class: 'card' },
+    h('h3', {}, `이달의 고래자리 선정 (최대 ${MAX_FEATURED}개)`),
+    h('p', { class: 'muted' }, '큰 곳간 맨 위 띠에 보일 작품을 고르고 뿌리 열쇠로 서명해요. 서명이 틀리면 띠가 숨겨져요.'),
+    month, title, note, ...boxes,
+    h('button', { onclick: async () => {
+      if (!state.root) return say('먼저 뿌리 열쇠를 불러와 주세요.', true);
+      try {
+        await ensureSiteData();
+        const picked = boxes.map((b) => b.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
+        const featured = await signFeatured({ month: month.value.trim(), title: title.value.trim(), note: note.value.trim(), items: picked }, state.root.privateKey);
+        state.catalog = { ...state.catalog, featured, updatedAt: new Date().toISOString() };
+        state.featuredSigned = true;
+        say('이달의 고래자리에 서명했어요. 아래 catalog.json을 내려받아 올려 주세요.');
+      } catch (e) {
+        say(e.message, true);
+      }
+    } }, '고래자리 서명하기'));
 }
 
 async function makeRoot(password) {

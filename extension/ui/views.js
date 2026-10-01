@@ -143,7 +143,7 @@ export function createView({ onSubmit, onCancel, errors, warnings, report, value
     field('howToUse', S.create.howTo, h('textarea', {})),
     field('promptRecipe', S.create.recipe, h('textarea', {})),
     h('div', { class: 'row' },
-      h('button', { class: 'primary', onclick: () => onSubmit(collect()) }, S.create.save),
+      h('button', { class: 'primary', onclick: () => onSubmit(collect()) }, S.actions.save),
       h('button', { onclick: onCancel }, S.actions.back)));
   // 오류로 다시 그릴 때 입력값을 되살린다
   for (const [k, v] of Object.entries(values)) if (f[k] && f[k].type !== 'file' && v != null) f[k].value = v;

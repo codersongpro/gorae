@@ -7,7 +7,7 @@ import { filterEntries, sortEntries } from './core/filter.js';
 import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
 import { buildShare } from './core/share.js';
 import { buildSharePackage, buildSongSubmission, validFormUrl } from './core/submit.js';
-import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
+import { detectService, orderShareKinds, SERVICE_LABEL, isExamLocked } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
 import { seedMypod, samplesInMypod } from './core/seed.js';
@@ -28,7 +28,7 @@ import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
-import { pinView, marketView, marketRunConfirm } from './ui/views.js';
+import { pinView, marketView, marketRunConfirm, examLockView } from './ui/views.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
@@ -385,6 +385,8 @@ async function confirmImport() {
 const toggleIn = (arr, id, on) => (on ? [...new Set([...arr, id])] : arr.filter((x) => x !== id));
 
 async function render() {
+  // 시험 잠금: 학생고래 모드에서 메인 탭이 UBT면 다른 화면을 모두 가린다 (벗어나면 refreshService가 다시 그림)
+  if (isExamLocked(state.service, state.mode)) return app.replaceChildren(examLockView());
   if (state.screen === 'run') return;
   if (state.screen === 'create') {
     const k = state.create.kind;

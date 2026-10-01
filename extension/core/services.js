@@ -1,6 +1,6 @@
 // 메인 탭이 어떤 웨일 서비스인지 도메인만 보고 판별한다 (주소는 저장·전송하지 않는다).
 // 도메인은 웨일 퀘스트 개발 때 실제 화면에서 확인한 값이다. 확인되지 않은 서비스는 추가하지 않는다.
-// UBT 시험 화면의 정확한 주소 형태는 미확인 — 시험 잠금(FR-018)은 확인 후 구현한다.
+// UBT 시험 화면의 정확한 주소 형태는 미확인 — 그래서 시험 잠금(FR-018)은 UBT 도메인 전체에서 보수적으로 건다(웨일 퀘스트와 같은 방식).
 import { SHARE_KINDS } from './share.js';
 
 export const SERVICE_RULES = [
@@ -24,6 +24,10 @@ export function detectService(url, rules = SERVICE_RULES) {
     return null;
   }
 }
+
+// 시험 잠금(FR-018): 학생고래 모드에서 메인 탭이 UBT이면 사이드바를 잠근다.
+// 교사고래 모드(PIN)는 출제·평가 자료 복사를 써야 하므로 잠그지 않는다. UBT를 벗어나면 자동으로 풀린다.
+export const isExamLocked = (service, mode) => service === 'ubt' && mode !== 'mother';
 
 // 지금 화면의 서비스에 맞는 공유 버튼을 맨 앞으로 보낸다
 export function orderShareKinds(service) {

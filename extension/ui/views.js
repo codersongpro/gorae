@@ -395,3 +395,12 @@ export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onF
       hasPin && !askReset ? h('button', { onclick: onForgot }, P.forgot) : null,
       askReset ? h('div', { class: 'notice' }, h('p', {}, P.forgotConfirm), h('button', { class: 'danger', onclick: onReset }, P.reset)) : null));
 }
+
+// 시험 잠금 화면 (학생고래 모드 + 메인 탭이 UBT)
+export function examLockView() {
+  return h('section', { class: 'section exam-lock', role: 'alert' },
+    h('p', { class: 'lock-whale', 'aria-hidden': 'true' }, '🐳'),
+    h('h2', {}, S.exam.title),
+    h('p', {}, S.exam.body),
+    h('p', { class: 'muted' }, S.exam.hint));
+}

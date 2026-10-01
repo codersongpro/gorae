@@ -75,3 +75,7 @@ details > summary { cursor: pointer; min-height: var(--touch-min); display: flex
 
 /* 이달의 고래자리 띠 */
 .card.featured { border-color: var(--color-primary); background: var(--color-catalog-soft); }
+
+/* 시험 잠금 화면 */
+.exam-lock { text-align: center; padding-top: var(--space-6); }
+.lock-whale { font-size: calc(var(--font-size-xl) * 3); margin: 0; }

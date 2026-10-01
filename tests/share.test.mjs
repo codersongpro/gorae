@@ -82,3 +82,11 @@ test('지금 서비스에 맞는 공유 버튼이 맨 앞에 온다', () => {
   assert.deepEqual(orderShareKinds(null), SHARE_KINDS);
   assert.deepEqual(orderShareKinds('remote'), SHARE_KINDS);
 });
+
+test('AC-023 시험 잠금: 학생고래 모드에서 메인 탭이 UBT면 잠그고, 벗어나거나 교사고래면 풀린다', async () => {
+  const { isExamLocked } = await import('../extension/core/services.js');
+  assert.equal(isExamLocked(detectService('https://ubt.whalespace.io/exam/123'), 'baby'), true);
+  assert.equal(isExamLocked(detectService('https://ubt.whalespace.io/exam/123'), 'mother'), false); // 교사는 출제·평가 자료 복사
+  assert.equal(isExamLocked(detectService('https://class.whalespace.io/'), 'baby'), false); // 시험 화면을 벗어나면 해제
+  assert.equal(isExamLocked(null, 'baby'), false);
+});

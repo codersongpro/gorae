@@ -7,9 +7,8 @@ export const CONFIG = {
   sampleReviewersPath: 'sample/reviewers.json',
   // 바로 실행 뷰어 주소 (GitHub Pages로 site/를 공개한 뒤 확인)
   viewerUrl: 'https://codersongpro.github.io/gorae/viewer.html',
-  // 작품 공유 설문(구글 설문) 주소. 설문을 만든 뒤 https 주소를 넣는다. (네이버 폼은 파일 업로드 제한으로 쓰지 않음)
-  formUrl: '',
-  // 고래 노래·물뿜기를 받는 의견 설문 (아직 없음 — 만들면 https 주소를 넣는다)
+  // 작품 공유(나눔 곳간) 설문·시트는 core/market-config.js에 있다.
+  // 물뿜기·고래 노래를 받는 의견 설문: 누르면 자동 제출, 숫자는 아래 응답 시트에서 센다
   feedbackFormUrl: 'https://docs.google.com/forms/d/e/1FAIpQLScN5ZZHyI8b7widyMS6uFky2y7hFcgFmmTiVQNuDA-jbTHi8w/viewform', // '고래곳간 물뿜기' (로그인 없이 응답)
   // 물뿜기 숫자를 읽을 응답 시트 ('고래곳간 물뿜기' 설문 → 응답 → 스프레드시트 연결 → 링크가 있는 모든 사용자 뷰어)
   spoutSheetId: '1n7ShMAZkcCgxdMfxg7DTTUnZJpjbkHgHhF3_6b-T3Ug', // '고래곳간 물뿜기' 응답 시트

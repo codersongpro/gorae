@@ -173,7 +173,7 @@ export const S = {
   },
   market: {
     title: '나눔 곳간', hint: '선생님과 학생이 구글 폼으로 올린 작품이에요. 검수 전이라 모두 얕은 바다(미검수)예요.',
-    kind: '앱 종류', refresh: '새로고침', import: '가져오기', preview: '▶ 미리 실행', sampleTag: '샘플', importing: '가져오는 중…', imported: '내 곳간에 담음',
+    kind: '앱 종류', refresh: '새로고침', import: '가져오기', preview: '미리 보기', previewed: (t) => `‘${t}’을(를) 새 창에서 미리 보고 있어요. 마음에 들면 [가져오기]로 내 곳간에 담으세요.`, sampleTag: '샘플', importing: '가져오는 중…', imported: '내 곳간에 담음',
     loading: '목록을 불러오는 중이에요…', empty: '아직 올라온 작품이 없어요.', none: '조건에 맞는 작품이 없어요.',
     count: (n) => `작품 ${n}개`, cache: '인터넷이 안 돼서 마지막으로 받은 목록을 보여 줘요.',
     by: (nick, whale) => [nick, whale].filter(Boolean).join(' · '),

@@ -214,7 +214,7 @@ async function refreshMarket() {
   render();
 }
 
-// 미리 실행: 내 곳간에 담지 않고 바로 실행한다 (내려받기·검증은 가져오기와 같고, 실행 전 출처 확인)
+// 미리 보기: 내 곳간에 담지 않고 바로 새 창에서 연다 (내려받기·검증은 가져오기와 같다)
 async function previewFromMarket(entry) {
   state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: true }, notice: '' };
   render();
@@ -222,7 +222,16 @@ async function previewFromMarket(entry) {
     const { works } = await fetchEntryWorks(entry, { fetchFn: fetch, config: MARKET });
     const [e] = await verifyWorks([works[0]]);
     state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false } };
-    return run({ ...e, source: 'market' });
+    // 미리 보기는 확인창 없이 바로 새 창에서 연다. HTML은 격리된 실행 창, 웹앱은 주소창이 보이는 일반 창.
+    const c = canRun(e);
+    if (!c.ok) return go({ notice: S.run[c.reason] });
+    if (c.kind === 'url') openInWindow(c.url, 'normal');
+    else {
+      state.marketRunOk[e.work.id] = true;
+      await run({ ...e, source: 'market' });
+    }
+    state.market = { ...state.market, notice: S.market.previewed(e.work.title) }; // 나눔 곳간 화면에 안내
+    return render();
   } catch (err) {
     state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, notice: (S.market.error[err.code] || S.market.error.NETWORK) + (err.detail ? ` (${err.detail})` : '') };
   }

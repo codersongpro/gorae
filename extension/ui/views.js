@@ -232,7 +232,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview }) {
       e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
       e.files.length || e.payload ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),
       h('div', { class: 'row' },
-        // 미리 실행: 내 곳간에 담지 않고 바로 실행 (실행 전 출처 확인)
+        // 미리 보기: 내 곳간에 담지 않고 바로 새 창에서 연다
         h('button', { disabled: !!(m.busy && m.busy[e.id]), onclick: () => onPreview(e) }, M.preview),
         h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
           m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import)))));

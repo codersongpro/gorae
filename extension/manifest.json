@@ -3,7 +3,7 @@
   "name": "고래곳간",
   "description": "로그인 없이 바이브코딩 작품을 꾸러미로 주고받고, 웨일 사이드바에서 안전하게 실행하는 곳간",
   "version": "0.1.0",
-  "permissions": ["storage"],
+  "permissions": ["storage", "clipboardWrite"],
   "host_permissions": ["https://codersongpro.github.io/*"],
   "sidebar_action": {
     "default_page": "sidebar.html",

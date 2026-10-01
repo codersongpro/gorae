@@ -33,11 +33,12 @@ export function tabsBar(current, onSelect) {
         S.tabs[k], h('small', {}, S.tabHints[k]))));
 }
 
-export function topBar(mode, onToggle, onCreate) {
+export function topBar(mode, onToggle, onCreate, onImport) {
   return h('header', { class: `topbar ${mode === 'mother' ? 'mother' : ''}` },
     h('div', {}, h('h1', {}, S.appName), h('p', { class: 'muted' }, S.mode[mode])),
     h('div', { class: 'row' },
       h('button', { onclick: onCreate }, S.actions.create),
+      h('button', { onclick: onImport }, S.actions.import),
       h('button', { onclick: onToggle }, mode === 'baby' ? S.mode.toggleToMother : S.mode.toggleToBaby)));
 }
 
@@ -64,10 +65,11 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
 }
 
-function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, open, report, extra }) {
+function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra }) {
   const w = entry.work;
   const run = canRun(entry);
   return h('article', { class: 'card' },
+    selectBox || null,
     h('h3', {}, w.title),
     h('div', { class: 'row' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge shallow' }, S.pick) : null),
     h('p', { class: 'muted' }, `${w.grade} · ${w.subject} · ${w.author}`),
@@ -76,6 +78,8 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, open, report,
     h('div', { class: 'row' },
       h('button', { class: 'primary', disabled: !run.ok && w.type === 'html', onclick: () => onRun(entry) }, S.actions.run),
       onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
+      onEdit ? h('button', { onclick: () => onEdit(entry) }, S.actions.edit) : null,
+      onRemix ? h('button', { onclick: () => onRemix(entry) }, S.actions.remix) : null,
       onRemove ? h('button', { class: 'danger', onclick: () => onRemove(entry) }, S.actions.remove) : null,
       h('button', { onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details)),
     !run.ok && w.type === 'html' ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
@@ -86,13 +90,29 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, open, report,
       checkList(report)) : null);
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy }) {
+  const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
-    records.length ? records.map((r) => workCard(entriesById.get(r.id), {
-      onRun, onRemove, onToggleDetail, open: state.openId === r.id, report: r.checkReport,
-      extra: h('p', { class: 'muted' }, `출처: ${S.source[r.source] || r.source}${r.checkReport && !r.checkReport.ok ? ` · 점검 경고 ${r.checkReport.warnings.length}개` : ''}`),
-    })) : h('p', { class: 'muted' }, S.empty.mypod));
+    records.length ? h('div', { class: 'card' },
+      h('p', {}, S.bundle.exportTitle),
+      nameInput,
+      h('button', { onclick: () => onExport(nameInput.value) }, S.bundle.exportBtn),
+      exportOut ? h('div', { class: 'detail' }, h('p', {}, S.bundle.madeN(exportOut.count, exportOut.fileName)),
+        h('div', { class: 'row' }, h('button', { onclick: onSaveFile }, S.bundle.saveFile), h('button', { onclick: onCopy }, S.bundle.copy))) : null) : null,
+    records.length ? records.map((r) => {
+      const w = r.work;
+      const tags = [`출처: ${S.source[r.source] || r.source}`, `버전 ${w.version}`];
+      if (w.remixOf) tags.push(`${S.edit.remixOfLabel}: ${w.remixOf}`);
+      if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
+      if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
+      return workCard(entriesById.get(r.id), {
+        onRun, onRemove, onToggleDetail, onEdit, onRemix, open: state.openId === r.id, report: r.checkReport,
+        selectBox: h('label', { class: 'check' },
+          h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
+        extra: h('p', { class: 'muted' }, tags.join(' · ')),
+      });
+    }) : h('p', { class: 'muted' }, S.empty.mypod));
 }
 
 export function classView() {
@@ -112,7 +132,7 @@ export function runView({ entry, onBack, onOpenTab }) {
   };
 }
 
-export function createView({ onSubmit, onCancel, errors, warnings, report, values = {} }) {
+export function createView({ onSubmit, onCancel, errors, warnings, report, values = {}, heading = S.create.title, hint }) {
   const f = {};
   const field = (key, label, el) => h('label', { class: 'field' }, h('span', {}, label), (f[key] = el));
   const kind = h('select', { onchange: () => sync() }, h('option', { value: 'html' }, S.create.kindHtml), h('option', { value: 'url' }, S.create.kindUrl));
@@ -125,9 +145,11 @@ export function createView({ onSubmit, onCancel, errors, warnings, report, value
   const collect = () => ({
     title: f.title.value, type: kind.value, html: f.html.value, url: f.url.value, grade: f.grade.value, subject: f.subject.value,
     standard: f.standard.value, author: f.author.value, howToUse: f.howToUse.value, promptRecipe: f.promptRecipe.value,
+    remixOf: values.remixOf,
   });
   const root = h('section', { class: 'section' },
-    h('h2', {}, S.create.title),
+    h('h2', {}, heading),
+    hint ? h('p', { class: 'notice' }, hint) : null,
     h('p', { class: 'notice' }, S.create.privacyNote),
     errors && errors.length ? h('div', { class: 'notice error', role: 'alert' }, errors.map((e) => h('p', {}, e.message))) : null,
     warnings && warnings.length ? h('div', { class: 'notice' }, warnings.map((e) => h('p', {}, e.message))) : null,
@@ -149,4 +171,30 @@ export function createView({ onSubmit, onCancel, errors, warnings, report, value
   for (const [k, v] of Object.entries(values)) if (f[k] && f[k].type !== 'file' && v != null) f[k].value = v;
   if (values.type) { kind.value = values.type; sync(); }
   return root;
+}
+
+export function importView({ preview, errors, onCheck, onToggle, selected, onConfirm, onCancel }) {
+  const text = h('textarea', { 'aria-label': S.bundle.pasteLabel, placeholder: S.bundle.pasteLabel });
+  const file = h('input', { type: 'file', accept: '.json,application/json' });
+  file.addEventListener('change', async () => { const f = file.files[0]; if (f) text.value = await f.text(); });
+  return h('section', { class: 'section' },
+    h('h2', {}, S.bundle.importTitle),
+    h('p', { class: 'muted' }, S.bundle.importHint),
+    file, text,
+    h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => onCheck(text.value) }, S.bundle.check), h('button', { onclick: onCancel }, S.actions.back)),
+    errors && errors.length ? h('div', { class: 'notice error', role: 'alert' }, errors.map((e) => h('p', {}, e.index === undefined ? e.message : `${e.index + 1}번째 작품: ${e.message}`))) : null,
+    preview ? h('div', { class: 'section' },
+      h('h3', {}, S.bundle.previewTitle(preview.name, preview.items.length)),
+      h('p', { class: 'muted' }, S.bundle.pickWorks),
+      preview.items.map((it) => {
+        const entry = { work: it.work, status: it.status };
+        return h('article', { class: 'card' },
+          h('label', { class: 'check' }, h('input', { type: 'checkbox', disabled: it.duplicate, checked: selected.includes(it.work.id), onchange: (e) => onToggle(it.work.id, e.target.checked) }), h('strong', {}, it.work.title)),
+          badgeEl(entry),
+          h('p', { class: 'muted' }, `${it.work.grade || ''} · ${it.work.subject || ''} · ${it.work.author || ''}`),
+          it.status.ok ? verifyLine(entry) : h('p', { class: 'muted' }, `${S.reason[it.status.reason] || it.status.reason} → ${S.bundle.notVerified}`),
+          it.duplicate ? h('p', { class: 'muted' }, S.bundle.dup) : null,
+          checkList(it.report));
+      }),
+      h('button', { class: 'primary', onclick: onConfirm }, S.bundle.confirm)) : null);
 }

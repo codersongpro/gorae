@@ -45,7 +45,7 @@ export const S = {
   },
   actions: {
     run: '실행', add: '내 곳간에 담기', remove: '삭제', back: '← 돌아가기', openTab: '새 탭에서 열기',
-    create: '만들기', save: '내 곳간에 저장', details: '자세히', close: '접기',
+    create: '만들기', import: '가져오기', edit: '수정', remix: '리믹스', save: '내 곳간에 저장', details: '자세히', close: '접기',
   },
   detail: { howTo: '사용 방법', recipe: '프롬프트 레시피', check: '자동 점검', checkOk: '걸린 항목이 없어요' },
   run: {
@@ -61,6 +61,23 @@ export const S = {
     author: '별명 · 학교급 (예: 푸른 고래 · 초등)', howTo: '사용 방법', recipe: '프롬프트 레시피 (선택)',
     privacyNote: '이름·학교명·연락처는 쓰지 마세요. 별명과 학교급만 써요.',
     saved: '저장했어요.', checkTitle: '자동 점검 결과',
+  },
+  bundle: {
+    exportTitle: '꾸러미로 내보내기 (작품 1~10개를 골라 주세요)',
+    packName: '꾸러미 이름', exportBtn: '꾸러미 만들기', saveFile: '파일로 저장', copy: '복사', copied: '복사했어요.',
+    madeN: (n, file) => `작품 ${n}개를 꾸러미(${file})로 만들었어요.`,
+    pickFirst: '내보낼 작품을 먼저 골라 주세요.', tooMany: '꾸러미에는 작품을 10개까지 담을 수 있어요.',
+    importTitle: '꾸러미 가져오기', importHint: '.gorae.json 파일을 고르거나 내용을 붙여 넣어 주세요.', pasteLabel: '꾸러미 내용 붙여넣기',
+    check: '확인하기', previewTitle: (name, n) => `꾸러미 "${name}" · 작품 ${n}개`, pickWorks: '담을 작품을 골라 주세요. (이미 있는 작품은 건너뛰어요)',
+    confirm: '선택한 작품 담기', dup: '이미 내 곳간에 있어요', nonePicked: '담을 작품을 하나 이상 골라 주세요.',
+    imported: (a, b) => `작품 ${a}개를 담았어요.${b ? ` (이미 있어서 ${b}개는 건너뜀)` : ''}`,
+    notVerified: '얕은 바다(미검수)로 표시돼요',
+  },
+  edit: {
+    titleEdit: '작품 수정', titleRemix: '리믹스', remixHint: '원본의 내용과 프롬프트 레시피를 복사했어요. 새 작품은 미검수로 시작해요.',
+    separate: '큰 곳간·꾸러미 작품은 원본을 그대로 두고 "내 수정본(미검수)"으로 따로 저장했어요.',
+    versionUp: (v) => `버전 ${v}으로 저장했어요.`, remixSaved: '리믹스를 저장했어요. 새 작품은 미검수예요.',
+    editedFrom: '내 수정본', remixOfLabel: '리믹스 원본',
   },
   grades: ['초1', '초2', '초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'],
   subjects: ['국어', '수학', '사회', '과학', '영어', '정보', '미술', '음악', '체육', '도덕', '기타'],

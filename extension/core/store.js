@@ -4,6 +4,7 @@ export function createStore(backend, { now = () => new Date() } = {}) {
     list: async () => (await backend.getAll()).sort((a, b) => b.importedAt.localeCompare(a.importedAt)),
     get: (id) => backend.get(id),
     remove: (id) => backend.delete(id),
+    put: (rec) => backend.put(rec), // 기존 기록 갱신(수정 저장)
     clear: async () => {
       for (const r of await backend.getAll()) await backend.delete(r.id);
     },

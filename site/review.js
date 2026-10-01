@@ -169,7 +169,7 @@ function draftCard(d) {
       h('details', {}, h('summary', {}, '코드 보기'), h('pre', {}, w.html))) : null,
     preview,
     field('배지', badge),
-    h('label', { class: 'check' }, pick, '🐋 고래 픽 (찜)'),
+    h('label', { class: 'check' }, pick, '🐋 고래 픽 (카드에 "파수꾼 고래 검수 완료" 표시)'),
     songs,
     h('button', { onclick: () => sign(d) }, '검수 서명 찍기'),
     d.signed ? h('div', {},

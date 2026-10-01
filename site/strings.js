@@ -17,7 +17,7 @@ export const S = {
     shallow: '🟡 얕은 바다 (교사용 또는 미검수)',
     whirlpool: '🔴 소용돌이 (보류)',
   },
-  pick: '🐋 고래 픽 (파수꾼이 찜했어요)',
+  pick: '🐋 파수꾼 고래 검수 완료',
   tailprintOk: (name, date) => `검수 서명 확인됨 · 파수꾼 ${name} · ${date}`,
   reason: {
     NO_TAILPRINT: '검수 서명이 없어요',

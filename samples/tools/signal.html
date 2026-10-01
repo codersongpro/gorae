@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>집중 신호등</title>
+<style>
+  html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }
+  body { display: grid; grid-template-rows: auto 1fr; transition: background 0.3s; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; background: rgba(255,255,255,0.85); }
+  button { font-size: 1.1rem; padding: 10px 16px; border-radius: 10px; border: 0; cursor: pointer; color: #fff; }
+  #msg { display: grid; place-items: center; text-align: center; font-size: clamp(2.5rem, 11vw, 7rem); font-weight: 800; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.25); padding: 16px; }
+  .edit { flex: 1 1 200px; font-size: 1rem; padding: 8px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button style="background:#2e7d32" data-c="green">초록: 자유롭게</button>
+  <button style="background:#c99a06" data-c="yellow">노랑: 작게 말해요</button>
+  <button style="background:#c62828" data-c="red">빨강: 모두 집중!</button>
+  <input class="edit" id="custom" aria-label="안내 문구 바꾸기" placeholder="안내 문구를 직접 적어도 돼요">
+</div>
+<div id="msg" aria-live="polite">자유롭게 이야기해요</div>
+<script>
+  const S = { green: ['#2e7d32', '자유롭게 이야기해요'], yellow: ['#c99a06', '옆 친구에게만 작게'], red: ['#c62828', '모두 집중! 🤫'] };
+  const msg = document.getElementById('msg');
+  function set(c) { document.body.style.background = S[c][0]; msg.textContent = document.getElementById('custom').value.trim() || S[c][1]; }
+  document.querySelectorAll('button[data-c]').forEach((b) => (b.onclick = () => set(b.dataset.c)));
+  // 키보드: 1·2·3
+  document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; ({ 1: 'green', 2: 'yellow', 3: 'red' })[e.key] && set({ 1: 'green', 2: 'yellow', 3: 'red' }[e.key]); });
+  set('green');
+</script>
+</body>
+</html>

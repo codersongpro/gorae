@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>찬반 의견 모으기</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6f8; color: #1f2328; }
+  h1 { margin: 0 0 8px; font-size: 1.4rem; }
+  #q { width: 100%; box-sizing: border-box; font-size: 1.3rem; padding: 10px; font-weight: 700; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0; }
+  .opt { border: 0; border-radius: 18px; padding: 18px; color: #fff; font-size: 1.4rem; font-weight: 800; cursor: pointer; }
+  .opt span { display: block; font-size: 3rem; }
+  .bar { height: 28px; display: flex; border-radius: 14px; overflow: hidden; background: #ddd; }
+  .bar div { transition: width 0.3s; }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .sub { font-size: 1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #dde5ee; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>🙋 찬반 의견 모으기</h1>
+<input id="q" aria-label="질문" value="급식 시간에 음악을 틀어도 될까요?">
+<div class="opts" id="opts"></div>
+<div class="bar" id="bar" aria-hidden="true"></div>
+<p id="sum"></p>
+<div class="row">
+  <button class="sub" id="undo">한 표 취소</button>
+  <button class="sub" id="reset">처음부터</button>
+  <label><input type="checkbox" id="hide"> 결과 가리기</label>
+</div>
+<script>
+  const O = [{ k: '찬성', c: '#2e7d32', n: 0 }, { k: '반대', c: '#c62828', n: 0 }, { k: '잘 모르겠어요', c: '#6b7480', n: 0 }];
+  const hist = [];
+  function render() {
+    const total = O.reduce((a, o) => a + o.n, 0);
+    const hide = document.getElementById('hide').checked;
+    const opts = document.getElementById('opts'); opts.textContent = '';
+    O.forEach((o, i) => {
+      const b = document.createElement('button'); b.className = 'opt'; b.style.background = o.c;
+      b.innerHTML = '<span></span>'; b.firstChild.textContent = hide ? '?' : o.n; b.append(o.k);
+      b.onclick = () => { o.n++; hist.push(i); render(); };
+      opts.appendChild(b);
+    });
+    const bar = document.getElementById('bar'); bar.textContent = '';
+    if (!hide) O.forEach((o) => { const d = document.createElement('div'); d.style.background = o.c; d.style.width = (total ? (o.n / total) * 100 : 0) + '%'; bar.appendChild(d); });
+    document.getElementById('sum').textContent = '모두 ' + total + '표' + (hide ? ' (결과 가림)' : '');
+  }
+  document.getElementById('undo').onclick = () => { const i = hist.pop(); if (i !== undefined) O[i].n--; render(); };
+  document.getElementById('reset').onclick = () => { O.forEach((o) => (o.n = 0)); hist.length = 0; render(); };
+  document.getElementById('hide').onchange = render;
+  render();
+</script>
+</body>
+</html>

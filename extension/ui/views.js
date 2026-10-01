@@ -164,10 +164,14 @@ function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
     h('p', { class: 'muted' }, S.share.hint));
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total }) {
+  const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
+  q.addEventListener('change', () => onSearch(q.value.trim()));
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
+    total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
+    state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
     records.length ? h('div', { class: 'card' },
       h('p', {}, S.bundle.exportTitle),
       nameInput,
@@ -185,7 +189,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),
       });
-    }) : h('p', { class: 'muted' }, S.empty.mypod));
+    }) : state.mypodQuery ? null : h('p', { class: 'muted' }, S.empty.mypod));
 }
 
 export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass }) {

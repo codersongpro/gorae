@@ -46,7 +46,7 @@
         ],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "GV73c-S8_y8-Jj6pXmf47qu_CY6P5ap82AqLc0FHUPC4lye7yzBx-EVHv72VhLo7zUkGa5tZkWNUnmWV41KKgw"
+        "sig": "pvUY4F5qa-gD-il-LIgy77UXB3MFlIw50Q2ENZRcSjimoVOH1ULl2u2lAdbrnlfHa3_b2IDXojea-XXUrzP4bA"
       }
     },
     {
@@ -146,7 +146,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "emPvPIXWW8TgZLL6GbgL0kKLrvzlkN4RDeVJ1zKRp195-Bwyq-10opYeq9B_mp7L_acRMZAy-aCkD62dGLCq5w"
+        "sig": "J5j44fjzPlYURS7iezQ2pVna0t7gpkaJ3H0n13wUYkGWLCPF_y5-u_ZM7PyNXOJBoWd4lYLqdXh0rgFPgTqY6w"
       }
     },
     {
@@ -198,6 +198,253 @@
       "version": 1,
       "addedAt": "2026-09-12T00:00:00Z",
       "html": "<!doctype html><html lang=\"ko\"><meta charset=\"utf-8\"><title>CSV 집계</title><body style=\"font-family:sans-serif;padding:12px\"><textarea id=\"c\" rows=\"6\" cols=\"40\" aria-label=\"CSV\"></textarea><br><button id=\"b\">집계</button><pre id=\"o\"></pre><script>document.getElementById(\"b\").onclick=()=>{const rows=document.getElementById(\"c\").value.trim().split(/\\n/).map(r=>r.split(\",\"));const head=rows.shift()||[];document.getElementById(\"o\").textContent=head.map((h,i)=>{const n={};rows.forEach(r=>{const v=(r[i]||\"\").trim();n[v]=(n[v]||0)+1});return h+\": \"+Object.entries(n).map(([k,v])=>k+\" \"+v).join(\", \")}).join(\"\\n\")}</script></body></html>"
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-lucky-draw",
+      "title": "럭키 뽑기",
+      "subcategory": "lucky_draw",
+      "audience": [
+        "teacher"
+      ],
+      "groupType": "whole_class",
+      "estimatedMinutes": 5,
+      "tags": [
+        "랜덤",
+        "뽑기",
+        "전체활동"
+      ],
+      "description": "목록에서 무작위로 뽑아요. 뽑힌 항목 빼기, 여러 개 한 번에 뽑기가 돼요.",
+      "howToUse": "번호나 별명을 한 줄에 하나씩 적고 [뽑기!]를 누르세요. 전자칠판에 띄우면 크게 보여요.",
+      "promptRecipe": "교실용 랜덤 뽑기 도구를 만들어 줘. 목록은 한 줄에 하나, 뽑힌 항목 제외 옵션, 여러 개 뽑기, 결과를 크게 보여 주는 애니메이션. 외부 통신과 저장소는 쓰지 마.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>럭키 뽑기</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f7fb; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }\n  button.sub { background: #dde5ee; color: #1f2328; }\n  #stage { margin: 16px 0; min-height: 30vh; display: grid; place-items: center; background: #fff; border-radius: 16px; font-size: clamp(2.5rem, 12vw, 6rem); font-weight: 800; text-align: center; }\n  #stage.spin { color: #8a94a0; }\n  #log { color: #5b636b; }\n</style>\n</head>\n<body>\n<h1>🎲 럭키 뽑기</h1>\n<p>한 줄에 하나씩 적어요. 학생 번호나 별명을 쓰면 개인정보 걱정이 없어요.</p>\n<textarea id=\"list\" aria-label=\"뽑기 목록\">1번\n2번\n3번\n4번\n5번\n6번</textarea>\n<div class=\"row\">\n  <label><input type=\"checkbox\" id=\"remove\" checked> 뽑힌 항목은 빼기</label>\n  <label>한 번에 <input type=\"number\" id=\"count\" min=\"1\" max=\"20\" value=\"1\" style=\"width:4em\"> 개</label>\n</div>\n<div class=\"row\">\n  <button id=\"draw\">뽑기!</button>\n  <button class=\"sub\" id=\"reset\">처음부터</button>\n</div>\n<div id=\"stage\" aria-live=\"polite\">?</div>\n<p id=\"log\"></p>\n<script>\n  const listEl = document.getElementById('list');\n  const stage = document.getElementById('stage');\n  const log = document.getElementById('log');\n  let pool = null; const picked = [];\n  const items = () => listEl.value.split('\\n').map((s) => s.trim()).filter(Boolean);\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  document.getElementById('reset').onclick = () => { pool = null; picked.length = 0; stage.textContent = '?'; log.textContent = ''; };\n  document.getElementById('draw').onclick = () => {\n    if (!pool || !document.getElementById('remove').checked) pool = items().filter((x) => !(document.getElementById('remove').checked && picked.includes(x)));\n    if (!pool.length) { stage.textContent = '다 뽑았어요!'; return; }\n    const n = Math.min(pool.length, Math.max(1, +document.getElementById('count').value || 1));\n    stage.classList.add('spin');\n    let t = 0;\n    const iv = setInterval(() => { stage.textContent = pool[rand(pool.length)]; if (++t > 15) finish(); }, 60);\n    function finish() {\n      clearInterval(iv);\n      stage.classList.remove('spin');\n      const result = [];\n      for (let i = 0; i < n; i++) {\n        const k = rand(pool.length);\n        result.push(pool[k]);\n        if (document.getElementById('remove').checked) pool.splice(k, 1);\n      }\n      picked.push(...result);\n      stage.textContent = result.join(', ');\n      log.textContent = '지금까지: ' + picked.join(', ');\n    }\n  };\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "61cb4cbe997d0a873af801fd572952730b77359ed200d06beec3105f9e662c7d",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "l1bzveUZcdVkEiOirJXv09wFd9ds1ljTaGWjKiQ9R1h6Jd94qozkARlTm078uZ889XnaFNpF3fq0qcQQX_ai4Q"
+      }
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-groups",
+      "title": "모둠 편성기",
+      "subcategory": "seating",
+      "audience": [
+        "teacher"
+      ],
+      "groupType": "group",
+      "estimatedMinutes": 5,
+      "tags": [
+        "모둠활동",
+        "랜덤",
+        "자리배치"
+      ],
+      "description": "모둠 수나 모둠당 인원을 정하면 고르게 무작위로 나눠 줘요.",
+      "howToUse": "번호나 별명을 적고 모둠 수(또는 인원)를 정한 뒤 [편성하기]를 누르세요. 다시 누르면 새로 섞여요.",
+      "promptRecipe": "목록을 받아 모둠 수 또는 모둠당 인원 기준으로 고르게 무작위 편성하는 도구를 만들어 줘. 결과는 모둠 카드로 보여 줘.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>모둠 편성기</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f3f8f6; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3f7a76; color: #fff; cursor: pointer; }\n  #out { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }\n  .g { background: #fff; border-radius: 12px; padding: 10px; border-top: 6px solid #3f7a76; }\n  .g h2 { margin: 0 0 6px; font-size: 1.1rem; }\n  .g li { font-size: 1.1rem; }\n</style>\n</head>\n<body>\n<h1>👥 모둠 편성기</h1>\n<p>한 줄에 하나씩(번호나 별명) 적고, 모둠 수 또는 모둠당 인원을 고르세요.</p>\n<textarea id=\"list\" aria-label=\"편성할 목록\">1번\n2번\n3번\n4번\n5번\n6번\n7번\n8번\n9번\n10번\n11번\n12번</textarea>\n<div class=\"row\">\n  <label><input type=\"radio\" name=\"by\" value=\"groups\" checked> 모둠 수</label>\n  <label><input type=\"radio\" name=\"by\" value=\"size\"> 모둠당 인원</label>\n  <input type=\"number\" id=\"n\" min=\"1\" max=\"30\" value=\"4\" style=\"width:4em\" aria-label=\"숫자\">\n  <button id=\"go\">편성하기</button>\n</div>\n<div id=\"out\" aria-live=\"polite\"></div>\n<script>\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }\n  document.getElementById('go').onclick = () => {\n    const people = shuffle(document.getElementById('list').value.split('\\n').map((s) => s.trim()).filter(Boolean));\n    const n = Math.max(1, +document.getElementById('n').value || 1);\n    const by = document.querySelector('input[type=radio]:checked').value;\n    const groups = Math.max(1, Math.min(people.length, by === 'groups' ? n : Math.ceil(people.length / n)));\n    const out = Array.from({ length: groups }, () => []);\n    people.forEach((p, i) => out[i % groups].push(p)); // 고르게 나눈다\n    const box = document.getElementById('out');\n    box.textContent = '';\n    out.forEach((members, i) => {\n      const card = document.createElement('div'); card.className = 'g';\n      const h = document.createElement('h2'); h.textContent = (i + 1) + '모둠 (' + members.length + ')';\n      const ul = document.createElement('ul');\n      members.forEach((m) => { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); });\n      card.append(h, ul); box.appendChild(card);\n    });\n  };\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "e99d9270def33524ec52432dbb7fceb3b657b8086913da1f85bc16dbf971908f",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "dQIjxEylqzH3fPaQQvSPw1sXM849AXQPR6C1z0ERAgrxNt-mZMFde51baj5IDAUVj1ktGJjEoYNqsnsjgy2wTg"
+      }
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-order",
+      "title": "발표 순서 정하기",
+      "subcategory": "random_order",
+      "audience": [
+        "teacher"
+      ],
+      "groupType": "whole_class",
+      "estimatedMinutes": 5,
+      "tags": [
+        "발표",
+        "랜덤",
+        "전체활동"
+      ],
+      "description": "발표 순서를 섞고, [다음]을 누를 때마다 지금 발표할 차례를 크게 보여 줘요.",
+      "howToUse": "모둠이나 번호를 적고 [순서 섞기] → [다음 발표!]를 누르세요.",
+      "promptRecipe": "발표 순서를 무작위로 섞고 다음 버튼으로 현재 발표자를 크게 보여 주는 도구를 만들어 줘. 끝난 순서는 회색으로.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>발표 순서 정하기</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #fbf7f1; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  textarea { width: 100%; box-sizing: border-box; min-height: 100px; font-size: 1rem; padding: 8px; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #8a6d3b; color: #fff; cursor: pointer; }\n  #now { font-size: clamp(2.5rem, 12vw, 5.5rem); font-weight: 800; text-align: center; background: #fff; border-radius: 16px; padding: 20px; margin: 12px 0; }\n  ol { font-size: 1.15rem; columns: 2; }\n  li.done { color: #9aa3ab; text-decoration: line-through; }\n  li.cur { font-weight: 800; color: #8a6d3b; }\n</style>\n</head>\n<body>\n<h1>🎤 발표 순서 정하기</h1>\n<textarea id=\"list\" aria-label=\"발표할 목록\">1모둠\n2모둠\n3모둠\n4모둠\n5모둠</textarea>\n<div class=\"row\">\n  <button id=\"shuffle\">순서 섞기</button>\n  <button id=\"next\">다음 발표!</button>\n</div>\n<div id=\"now\" aria-live=\"polite\">순서를 섞어 주세요</div>\n<ol id=\"order\"></ol>\n<script>\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  let order = []; let cur = -1;\n  function draw() {\n    const ol = document.getElementById('order'); ol.textContent = '';\n    order.forEach((x, i) => { const li = document.createElement('li'); li.textContent = x; if (i < cur) li.className = 'done'; if (i === cur) li.className = 'cur'; ol.appendChild(li); });\n    document.getElementById('now').textContent = cur < 0 ? '준비!' : cur < order.length ? order[cur] : '모두 발표했어요 👏';\n  }\n  document.getElementById('shuffle').onclick = () => {\n    order = document.getElementById('list').value.split('\\n').map((s) => s.trim()).filter(Boolean);\n    for (let i = order.length - 1; i > 0; i--) { const j = rand(i + 1); [order[i], order[j]] = [order[j], order[i]]; }\n    cur = -1; draw();\n  };\n  document.getElementById('next').onclick = () => { if (order.length && cur < order.length) cur++; draw(); };\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "c34b8477ebe3e33b0ecd0e38664e880160a9e39403718c66e2116df8980b4ac3",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "9Tdmpxw6m_ZiShyaZS136Kvh1TNB7YVD2jL5MSWTal7xudd_5ZmH38LeQj-GbgkCEIP2fMirhVDy9xHd7FYGVw"
+      }
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-scoreboard",
+      "title": "모둠 점수판",
+      "subcategory": "scoreboard",
+      "audience": [
+        "teacher"
+      ],
+      "groupType": "group",
+      "estimatedMinutes": 45,
+      "tags": [
+        "점수",
+        "보상",
+        "모둠활동",
+        "게임"
+      ],
+      "description": "모둠별 점수를 크게 보여 주고, 1등 모둠을 표시해요.",
+      "howToUse": "모둠 수를 정하고 [점수판 만들기]. 모둠 이름을 눌러 바꿀 수 있고 +1·+5·−1 버튼으로 점수를 줘요.",
+      "promptRecipe": "모둠 수를 정하면 점수 카드가 생기는 점수판을 만들어 줘. +1, +5, −1 버튼, 모둠 이름 수정, 1등 강조.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>모둠 점수판</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f5f3fb; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #5b4a8a; color: #fff; cursor: pointer; }\n  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }\n  .t { background: #fff; border-radius: 16px; padding: 12px; text-align: center; }\n  .t input { font-size: 1.1rem; width: 100%; box-sizing: border-box; text-align: center; border: 0; border-bottom: 2px solid #ddd; }\n  .s { font-size: 3.5rem; font-weight: 800; margin: 6px 0; }\n  .t.top { outline: 4px solid #e2b33c; }\n</style>\n</head>\n<body>\n<h1>🏆 모둠 점수판</h1>\n<div class=\"row\">\n  <label>모둠 수 <input type=\"number\" id=\"n\" min=\"2\" max=\"12\" value=\"4\" style=\"width:4em\"></label>\n  <button id=\"make\">점수판 만들기</button>\n  <button id=\"zero\">모두 0점</button>\n</div>\n<div id=\"board\"></div>\n<script>\n  let teams = [];\n  function render() {\n    const max = Math.max(...teams.map((t) => t.score));\n    const board = document.getElementById('board'); board.textContent = '';\n    teams.forEach((t) => {\n      const box = document.createElement('div'); box.className = 't' + (t.score === max && max > 0 ? ' top' : '');\n      const title = document.createElement('input'); title.value = t.label; title.setAttribute('aria-label', '모둠 표시'); title.oninput = (e) => { t.label = e.target.value; };\n      const s = document.createElement('div'); s.className = 's'; s.textContent = t.score;\n      const row = document.createElement('div'); row.className = 'row'; row.style.justifyContent = 'center';\n      [[-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, label]) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { t.score += d; render(); }; row.appendChild(b); });\n      box.append(title, s, row); board.appendChild(box);\n    });\n  }\n  document.getElementById('make').onclick = () => { const n = Math.min(12, Math.max(2, +document.getElementById('n').value || 4)); teams = Array.from({ length: n }, (_, i) => ({ label: (i + 1) + '모둠', score: 0 })); render(); };\n  document.getElementById('zero').onclick = () => { teams.forEach((t) => (t.score = 0)); render(); };\n  document.getElementById('make').click();\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "88eb1277c3048dae6a5a475b14a02f773b93553ae16e5948c907dd52545d0ceb",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "iqKcYJmcGwV5iP6bIn_hEFh9tGGKAtU6XjriSx5jSJzIrKmmsEGgEMYpUDNzpTpPEoIYsj2EuT6429D5UL6rEg"
+      }
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-signal",
+      "title": "집중 신호등",
+      "subcategory": "noise",
+      "audience": [
+        "teacher"
+      ],
+      "groupType": "whole_class",
+      "estimatedMinutes": 45,
+      "tags": [
+        "집중",
+        "생활지도",
+        "전체활동"
+      ],
+      "description": "초록·노랑·빨강 화면으로 지금 말할 수 있는 크기를 알려 줘요. 마이크는 쓰지 않아요.",
+      "howToUse": "버튼(또는 키보드 1·2·3)으로 색을 바꾸세요. 안내 문구를 직접 적을 수도 있어요.",
+      "promptRecipe": "교실 소음 관리용 신호등 화면을 만들어 줘. 초록/노랑/빨강 버튼과 1,2,3 단축키, 큰 안내 문구, 문구 직접 입력.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>집중 신호등</title>\n<style>\n  html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }\n  body { display: grid; grid-template-rows: auto 1fr; transition: background 0.3s; }\n  .bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; background: rgba(255,255,255,0.85); }\n  button { font-size: 1.1rem; padding: 10px 16px; border-radius: 10px; border: 0; cursor: pointer; color: #fff; }\n  #msg { display: grid; place-items: center; text-align: center; font-size: clamp(2.5rem, 11vw, 7rem); font-weight: 800; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.25); padding: 16px; }\n  .edit { flex: 1 1 200px; font-size: 1rem; padding: 8px; }\n</style>\n</head>\n<body>\n<div class=\"bar\">\n  <button style=\"background:#2e7d32\" data-c=\"green\">초록: 자유롭게</button>\n  <button style=\"background:#c99a06\" data-c=\"yellow\">노랑: 작게 말해요</button>\n  <button style=\"background:#c62828\" data-c=\"red\">빨강: 모두 집중!</button>\n  <input class=\"edit\" id=\"custom\" aria-label=\"안내 문구 바꾸기\" placeholder=\"안내 문구를 직접 적어도 돼요\">\n</div>\n<div id=\"msg\" aria-live=\"polite\">자유롭게 이야기해요</div>\n<script>\n  const S = { green: ['#2e7d32', '자유롭게 이야기해요'], yellow: ['#c99a06', '옆 친구에게만 작게'], red: ['#c62828', '모두 집중! 🤫'] };\n  const msg = document.getElementById('msg');\n  function set(c) { document.body.style.background = S[c][0]; msg.textContent = document.getElementById('custom').value.trim() || S[c][1]; }\n  document.querySelectorAll('button[data-c]').forEach((b) => (b.onclick = () => set(b.dataset.c)));\n  // 키보드: 1·2·3\n  document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; ({ 1: 'green', 2: 'yellow', 3: 'red' })[e.key] && set({ 1: 'green', 2: 'yellow', 3: 'red' }[e.key]); });\n  set('green');\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "ac8882ce004d8f7e75aea4085dcc5745a33fb4e55ee8b9be21835449072bfd4e",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "dmey7zqUzRzMH1w_l7Hs672jgR7Y6Ty6jQLBnXBG_tHjgFUm0UDFLXJclyhtPHMa5L9ofkmwCs7ZtdACa0HsRA"
+      }
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-vote",
+      "title": "찬반 의견 모으기",
+      "subcategory": "opinion",
+      "audience": [
+        "teacher",
+        "student"
+      ],
+      "groupType": "whole_class",
+      "estimatedMinutes": 10,
+      "tags": [
+        "토론",
+        "투표",
+        "전체활동"
+      ],
+      "description": "질문을 띄우고 찬성·반대·모르겠어요를 눌러 바로 결과 막대로 보여 줘요. 결과 가리기도 돼요.",
+      "howToUse": "질문을 고쳐 쓰고, 학생이 나와서 버튼을 누르거나 손든 수를 교사가 눌러 세요.",
+      "promptRecipe": "토론 수업용 찬반 투표판을 만들어 줘. 질문 입력, 찬성/반대/모르겠어요 큰 버튼, 비율 막대, 한 표 취소, 결과 가리기.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>찬반 의견 모으기</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6f8; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  #q { width: 100%; box-sizing: border-box; font-size: 1.3rem; padding: 10px; font-weight: 700; }\n  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0; }\n  .opt { border: 0; border-radius: 18px; padding: 18px; color: #fff; font-size: 1.4rem; font-weight: 800; cursor: pointer; }\n  .opt span { display: block; font-size: 3rem; }\n  .bar { height: 28px; display: flex; border-radius: 14px; overflow: hidden; background: #ddd; }\n  .bar div { transition: width 0.3s; }\n  .row { display: flex; gap: 8px; margin-top: 10px; }\n  .sub { font-size: 1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #dde5ee; cursor: pointer; }\n</style>\n</head>\n<body>\n<h1>🙋 찬반 의견 모으기</h1>\n<input id=\"q\" aria-label=\"질문\" value=\"급식 시간에 음악을 틀어도 될까요?\">\n<div class=\"opts\" id=\"opts\"></div>\n<div class=\"bar\" id=\"bar\" aria-hidden=\"true\"></div>\n<p id=\"sum\"></p>\n<div class=\"row\">\n  <button class=\"sub\" id=\"undo\">한 표 취소</button>\n  <button class=\"sub\" id=\"reset\">처음부터</button>\n  <label><input type=\"checkbox\" id=\"hide\"> 결과 가리기</label>\n</div>\n<script>\n  const O = [{ k: '찬성', c: '#2e7d32', n: 0 }, { k: '반대', c: '#c62828', n: 0 }, { k: '잘 모르겠어요', c: '#6b7480', n: 0 }];\n  const hist = [];\n  function render() {\n    const total = O.reduce((a, o) => a + o.n, 0);\n    const hide = document.getElementById('hide').checked;\n    const opts = document.getElementById('opts'); opts.textContent = '';\n    O.forEach((o, i) => {\n      const b = document.createElement('button'); b.className = 'opt'; b.style.background = o.c;\n      b.innerHTML = '<span></span>'; b.firstChild.textContent = hide ? '?' : o.n; b.append(o.k);\n      b.onclick = () => { o.n++; hist.push(i); render(); };\n      opts.appendChild(b);\n    });\n    const bar = document.getElementById('bar'); bar.textContent = '';\n    if (!hide) O.forEach((o) => { const d = document.createElement('div'); d.style.background = o.c; d.style.width = (total ? (o.n / total) * 100 : 0) + '%'; bar.appendChild(d); });\n    document.getElementById('sum').textContent = '모두 ' + total + '표' + (hide ? ' (결과 가림)' : '');\n  }\n  document.getElementById('undo').onclick = () => { const i = hist.pop(); if (i !== undefined) O[i].n--; render(); };\n  document.getElementById('reset').onclick = () => { O.forEach((o) => (o.n = 0)); hist.length = 0; render(); };\n  document.getElementById('hide').onchange = render;\n  render();\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "d62c123df67785836d4be8d2a228944ace7e1ba6fc73b2b39f9b98afc6937c5d",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "vcIZvADFY5ltvhrI20xSTNtxDkA3ktQgMtRlvXJsrE7cPVB2yyLm8ZhEcmAUJgPBCWySnBeP4wgo7hdQX35uXw"
+      }
+    },
+    {
+      "type": "html",
+      "artifactType": "html",
+      "domain": "lesson",
+      "category": "classroom_tool",
+      "author": "고래곳간 · 기본 도구",
+      "version": 1,
+      "addedAt": "2026-10-01T03:00:00Z",
+      "id": "tool-ox-quiz",
+      "title": "OX 퀴즈 판",
+      "subcategory": "quiz_game",
+      "audience": [
+        "teacher"
+      ],
+      "groupType": "whole_class",
+      "estimatedMinutes": 10,
+      "tags": [
+        "퀴즈",
+        "게임",
+        "형성평가"
+      ],
+      "description": "문제를 한 장씩 크게 보여 주고 정답(⭕/❌)을 공개해요.",
+      "howToUse": "[문제 바꾸기]에서 \"문제 | O\" 형식으로 적고 [문제 적용]. 학생이 O·X를 고르면 [정답 보기]를 누르세요.",
+      "promptRecipe": "전자칠판용 OX 퀴즈 판을 만들어 줘. \"문제 | O\" 형식으로 문제 입력, 이전/다음, 정답 공개.",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>OX 퀴즈 판</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #eef4fb; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  textarea { width: 100%; box-sizing: border-box; min-height: 100px; font-size: 1rem; padding: 8px; }\n  details { margin: 8px 0; }\n  .card { background: #fff; border-radius: 18px; padding: 20px; text-align: center; margin: 12px 0; }\n  #qno { color: #5b636b; }\n  #qtext { font-size: clamp(1.6rem, 6vw, 3rem); font-weight: 800; margin: 12px 0; }\n  #ans { font-size: clamp(4rem, 20vw, 9rem); font-weight: 900; min-height: 1.2em; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }\n  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }\n  button.sub { background: #dde5ee; color: #1f2328; }\n</style>\n</head>\n<body>\n<h1>⭕❌ OX 퀴즈 판</h1>\n<details>\n  <summary>문제 바꾸기 (한 줄에 하나: 문제 | O 또는 X)</summary>\n  <textarea id=\"src\" aria-label=\"문제 목록\">고래는 물고기이다 | X\n고래는 폐로 숨을 쉰다 | O\n대왕고래는 지구에서 가장 큰 동물이다 | O</textarea>\n  <button class=\"sub\" id=\"load\">문제 적용</button>\n</details>\n<div class=\"card\">\n  <div id=\"qno\"></div>\n  <div id=\"qtext\"></div>\n  <div id=\"ans\" aria-live=\"polite\"></div>\n</div>\n<div class=\"row\">\n  <button class=\"sub\" id=\"prev\">◀ 이전</button>\n  <button id=\"show\">정답 보기</button>\n  <button class=\"sub\" id=\"next\">다음 ▶</button>\n</div>\n<script>\n  let qs = []; let i = 0;\n  function load() {\n    qs = document.getElementById('src').value.split('\\n').map((l) => l.split('|')).filter((p) => p[0].trim())\n      .map(([q, a]) => ({ q: q.trim(), a: (a || '').trim().toUpperCase() === 'O' ? 'O' : 'X' }));\n    i = 0; draw();\n  }\n  function draw(show) {\n    const q = qs[i];\n    document.getElementById('qno').textContent = qs.length ? (i + 1) + ' / ' + qs.length : '문제를 넣어 주세요';\n    document.getElementById('qtext').textContent = q ? q.q : '';\n    const ans = document.getElementById('ans');\n    ans.textContent = show && q ? (q.a === 'O' ? '⭕' : '❌') : '';\n  }\n  document.getElementById('load').onclick = load;\n  document.getElementById('show').onclick = () => draw(true);\n  document.getElementById('next').onclick = () => { if (i < qs.length - 1) i++; draw(); };\n  document.getElementById('prev').onclick = () => { if (i > 0) i--; draw(); };\n  load();\n</script>\n</body>\n</html>\n",
+      "tailprint": {
+        "contentHash": "96298f0213cd6fb85501649d6bd63dd6c5720c050edbf36045b18e36197a8406",
+        "badge": "clear",
+        "pick": false,
+        "songs": [],
+        "reviewer": "guard-1",
+        "signedAt": "2026-10-01T01:00:00Z",
+        "sig": "kenjivct7etqVga-0v6_4Vb_N32SHBKlcly-5CIY6p5KXiDxNUBb0h0ZHVjLAfzeZXxIjgXX17KkJ4b9Lzf6bg"
+      }
     }
   ],
   "exeItems": [

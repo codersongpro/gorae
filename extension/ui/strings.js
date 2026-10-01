@@ -60,6 +60,8 @@ export const S = {
     confirmUnverified: '검수 서명이 없는 미검수 작품이에요.',
     confirmOpen: '새 탭에서 열기', confirmCancel: '취소',
     running: '격리된 공간에서 실행 중이에요 (외부 통신 차단)',
+    openedTab: (t) => `‘${t}’을(를) 새 탭에서 열었어요.`,
+    ticketGone: '실행할 작품을 찾을 수 없어요. 사이드바에서 [실행]을 다시 눌러 주세요.',
     external: '외부 사이트입니다. 새 탭에서 열려요.',
   },
   add: { done: '내 곳간에 담았어요.', dup: '이미 내 곳간에 있어요.', warn: (n) => `점검에서 ${n}개 항목이 걸렸어요. 얕은 바다(미검수)로 표시돼요.` },
@@ -118,6 +120,7 @@ export const S = {
   find: {
     search: '찾기 (제목·주제·성취기준·#태그)', more: '자세한 조건', domainAll: '수업 + 업무', categoryAll: '모든 카테고리', subAll: '모든 하위',
     grade: '학교급·학년', audience: '대상', group: '활동 형태', time: '이 시간 안에', tag: '태그', reset: '조건 지우기',
+    found: (n, total) => `${total}개 중 ${n}개를 찾았어요.`,
   },
   cardMeta: { webapp: '🌐 외부 웹앱입니다', exe: '⚠️ 실행형 프로그램(EXE)', legacy: '예전 작품 (분류 없음)' },
   lineage: (title) => `이 작품은 ‘${title}’을(를) 리믹스했습니다.`,

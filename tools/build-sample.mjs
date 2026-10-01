@@ -2,6 +2,7 @@
 // 개인 열쇠는 tests/keys/ 에만 저장한다 (.gitignore 대상).
 import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
 import { works, exeItems } from '../tests/sample-works.mjs';
+import { tools } from '../samples/tools/index.mjs';
 import * as tp from '../shared/tailprint.js';
 
 const KEYS = new URL('../tests/keys/', import.meta.url);
@@ -43,6 +44,12 @@ const signed = [
   await tp.signWork(works[3], guard.privateKey, { ...signOpts, badge: 'clear', pick: false }),
   ...works.slice(4), // 수업도구·업무자동화 샘플은 미검수
 ];
+
+// 기본 수업도구: HTML 파일을 읽어 작품 카드로 만들고 맑은 바다로 서명한다 (지금은 테스트 열쇠)
+for (const { file, ...card } of tools) {
+  const html = await readFile(new URL(`../samples/tools/${file}`, import.meta.url), 'utf8');
+  signed.push(await tp.signWork({ ...card, html }, guard.privateKey, { ...signOpts, badge: 'clear', pick: false }));
+}
 
 const catalog = { updatedAt: '2026-10-01T02:00:00Z', items: signed, exeItems, featured: null };
 await writeFile(new URL('../site/catalog.json', import.meta.url), JSON.stringify(catalog, null, 2));

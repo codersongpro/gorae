@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OX 퀴즈 판</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #eef4fb; color: #1f2328; }
+  h1 { margin: 0 0 8px; font-size: 1.4rem; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 100px; font-size: 1rem; padding: 8px; }
+  details { margin: 8px 0; }
+  .card { background: #fff; border-radius: 18px; padding: 20px; text-align: center; margin: 12px 0; }
+  #qno { color: #5b636b; }
+  #qtext { font-size: clamp(1.6rem, 6vw, 3rem); font-weight: 800; margin: 12px 0; }
+  #ans { font-size: clamp(4rem, 20vw, 9rem); font-weight: 900; min-height: 1.2em; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }
+  button.sub { background: #dde5ee; color: #1f2328; }
+</style>
+</head>
+<body>
+<h1>⭕❌ OX 퀴즈 판</h1>
+<details>
+  <summary>문제 바꾸기 (한 줄에 하나: 문제 | O 또는 X)</summary>
+  <textarea id="src" aria-label="문제 목록">고래는 물고기이다 | X
+고래는 폐로 숨을 쉰다 | O
+대왕고래는 지구에서 가장 큰 동물이다 | O</textarea>
+  <button class="sub" id="load">문제 적용</button>
+</details>
+<div class="card">
+  <div id="qno"></div>
+  <div id="qtext"></div>
+  <div id="ans" aria-live="polite"></div>
+</div>
+<div class="row">
+  <button class="sub" id="prev">◀ 이전</button>
+  <button id="show">정답 보기</button>
+  <button class="sub" id="next">다음 ▶</button>
+</div>
+<script>
+  let qs = []; let i = 0;
+  function load() {
+    qs = document.getElementById('src').value.split('\n').map((l) => l.split('|')).filter((p) => p[0].trim())
+      .map(([q, a]) => ({ q: q.trim(), a: (a || '').trim().toUpperCase() === 'O' ? 'O' : 'X' }));
+    i = 0; draw();
+  }
+  function draw(show) {
+    const q = qs[i];
+    document.getElementById('qno').textContent = qs.length ? (i + 1) + ' / ' + qs.length : '문제를 넣어 주세요';
+    document.getElementById('qtext').textContent = q ? q.q : '';
+    const ans = document.getElementById('ans');
+    ans.textContent = show && q ? (q.a === 'O' ? '⭕' : '❌') : '';
+  }
+  document.getElementById('load').onclick = load;
+  document.getElementById('show').onclick = () => draw(true);
+  document.getElementById('next').onclick = () => { if (i < qs.length - 1) i++; draw(); };
+  document.getElementById('prev').onclick = () => { if (i > 0) i--; draw(); };
+  load();
+</script>
+</body>
+</html>

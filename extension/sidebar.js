@@ -9,6 +9,7 @@ import { buildShare } from './core/share.js';
 import { buildWorkSubmission, buildSongSubmission, validFormUrl } from './core/submit.js';
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
+import { putRunTicket } from './core/runtab.js';
 import { checkWork } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
 import { createStore } from './core/store.js';
@@ -62,6 +63,13 @@ async function run(entry) {
   const c = canRun(entry);
   if (!c.ok) return go({ notice: S.run[c.reason], confirmUrl: null });
   if (c.kind === 'url') return go({ confirmUrl: describeExternalOpen(entry), notice: '' });
+  // HTML 작품은 지금 보고 있는 웨일 창의 새 탭에서 연다 (확장앱 실행 화면 → sandbox 페이지, 격리 방식은 같다)
+  if (chrome.tabs && chrome.tabs.create) {
+    const id = await putRunTicket(storage, entry);
+    chrome.tabs.create({ url: chrome.runtime.getURL('run.html#' + id) });
+    return go({ notice: S.run.openedTab(w.title), confirmUrl: null });
+  }
+  // 탭을 열 수 없는 환경이면 예전처럼 패널 안에서 실행한다
   const view = runView({ entry, onBack: () => { window.removeEventListener('message', onReady); go({ screen: 'main' }); } });
   // sandbox 페이지가 준비되면 작품을 보낸다 (보낸 쪽이 그 iframe일 때만 응답)
   function onReady(e) {
@@ -244,8 +252,11 @@ async function render() {
       onRemix: startRemix, share: shareProps(), submit: submitProps(false),
     });
   } else if (state.tab === 'mypod') {
-    const records = await store.list();
-    const entries = await verifyWorks(records.map((r) => r.work));
+    const all = await store.list();
+    const entries = await verifyWorks(all.map((r) => r.work));
+    // 내 곳간 찾기: 큰 곳간과 같은 검색 규칙(제목·주제·성취기준·태그·분류)
+    const hit = state.mypodQuery ? new Set(filterEntries(entries, { query: state.mypodQuery }).map((e) => e.work.id)) : null;
+    const records = hit ? all.filter((r) => hit.has(r.id)) : all;
     body = mypodView({
       records, entriesById: new Map(entries.map((e) => [e.work.id, e])), state,
       onRun: run, onRemove: removeRecord, onToggleDetail: toggleDetail,
@@ -253,6 +264,7 @@ async function render() {
       onSelect: (id, on) => { state.selected = toggleIn(state.selected, id, on); },
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
       share: shareProps(), submit: submitProps(true),
+      onSearch: (q) => go({ mypodQuery: q }), total: all.length,
     });
   } else {
     body = classView({

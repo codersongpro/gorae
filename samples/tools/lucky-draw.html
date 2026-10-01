@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>럭키 뽑기</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f7fb; color: #1f2328; }
+  h1 { margin: 0 0 8px; font-size: 1.4rem; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }
+  button.sub { background: #dde5ee; color: #1f2328; }
+  #stage { margin: 16px 0; min-height: 30vh; display: grid; place-items: center; background: #fff; border-radius: 16px; font-size: clamp(2.5rem, 12vw, 6rem); font-weight: 800; text-align: center; }
+  #stage.spin { color: #8a94a0; }
+  #log { color: #5b636b; }
+</style>
+</head>
+<body>
+<h1>🎲 럭키 뽑기</h1>
+<p>한 줄에 하나씩 적어요. 학생 번호나 별명을 쓰면 개인정보 걱정이 없어요.</p>
+<textarea id="list" aria-label="뽑기 목록">1번
+2번
+3번
+4번
+5번
+6번</textarea>
+<div class="row">
+  <label><input type="checkbox" id="remove" checked> 뽑힌 항목은 빼기</label>
+  <label>한 번에 <input type="number" id="count" min="1" max="20" value="1" style="width:4em"> 개</label>
+</div>
+<div class="row">
+  <button id="draw">뽑기!</button>
+  <button class="sub" id="reset">처음부터</button>
+</div>
+<div id="stage" aria-live="polite">?</div>
+<p id="log"></p>
+<script>
+  const listEl = document.getElementById('list');
+  const stage = document.getElementById('stage');
+  const log = document.getElementById('log');
+  let pool = null; const picked = [];
+  const items = () => listEl.value.split('\n').map((s) => s.trim()).filter(Boolean);
+  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  document.getElementById('reset').onclick = () => { pool = null; picked.length = 0; stage.textContent = '?'; log.textContent = ''; };
+  document.getElementById('draw').onclick = () => {
+    if (!pool || !document.getElementById('remove').checked) pool = items().filter((x) => !(document.getElementById('remove').checked && picked.includes(x)));
+    if (!pool.length) { stage.textContent = '다 뽑았어요!'; return; }
+    const n = Math.min(pool.length, Math.max(1, +document.getElementById('count').value || 1));
+    stage.classList.add('spin');
+    let t = 0;
+    const iv = setInterval(() => { stage.textContent = pool[rand(pool.length)]; if (++t > 15) finish(); }, 60);
+    function finish() {
+      clearInterval(iv);
+      stage.classList.remove('spin');
+      const result = [];
+      for (let i = 0; i < n; i++) {
+        const k = rand(pool.length);
+        result.push(pool[k]);
+        if (document.getElementById('remove').checked) pool.splice(k, 1);
+      }
+      picked.push(...result);
+      stage.textContent = result.join(', ');
+      log.textContent = '지금까지: ' + picked.join(', ');
+    }
+  };
+</script>
+</body>
+</html>

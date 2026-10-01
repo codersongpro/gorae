@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모둠 점수판</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f5f3fb; color: #1f2328; }
+  h1 { margin: 0 0 8px; font-size: 1.4rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  button { font-size: 1.1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #5b4a8a; color: #fff; cursor: pointer; }
+  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .t { background: #fff; border-radius: 16px; padding: 12px; text-align: center; }
+  .t input { font-size: 1.1rem; width: 100%; box-sizing: border-box; text-align: center; border: 0; border-bottom: 2px solid #ddd; }
+  .s { font-size: 3.5rem; font-weight: 800; margin: 6px 0; }
+  .t.top { outline: 4px solid #e2b33c; }
+</style>
+</head>
+<body>
+<h1>🏆 모둠 점수판</h1>
+<div class="row">
+  <label>모둠 수 <input type="number" id="n" min="2" max="12" value="4" style="width:4em"></label>
+  <button id="make">점수판 만들기</button>
+  <button id="zero">모두 0점</button>
+</div>
+<div id="board"></div>
+<script>
+  let teams = [];
+  function render() {
+    const max = Math.max(...teams.map((t) => t.score));
+    const board = document.getElementById('board'); board.textContent = '';
+    teams.forEach((t) => {
+      const box = document.createElement('div'); box.className = 't' + (t.score === max && max > 0 ? ' top' : '');
+      const title = document.createElement('input'); title.value = t.label; title.setAttribute('aria-label', '모둠 표시'); title.oninput = (e) => { t.label = e.target.value; };
+      const s = document.createElement('div'); s.className = 's'; s.textContent = t.score;
+      const row = document.createElement('div'); row.className = 'row'; row.style.justifyContent = 'center';
+      [[-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, label]) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { t.score += d; render(); }; row.appendChild(b); });
+      box.append(title, s, row); board.appendChild(box);
+    });
+  }
+  document.getElementById('make').onclick = () => { const n = Math.min(12, Math.max(2, +document.getElementById('n').value || 4)); teams = Array.from({ length: n }, (_, i) => ({ label: (i + 1) + '모둠', score: 0 })); render(); };
+  document.getElementById('zero').onclick = () => { teams.forEach((t) => (t.score = 0)); render(); };
+  document.getElementById('make').click();
+</script>
+</body>
+</html>

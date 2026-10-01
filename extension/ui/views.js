@@ -42,14 +42,14 @@ export function topBar(mode, onToggle, onCreate, onImport) {
       h('button', { onclick: onToggle }, mode === 'baby' ? S.mode.toggleToMother : S.mode.toggleToBaby)));
 }
 
-function select(label, value, options, onChange) {
+function select(label, value, options, onChange, labels = {}) {
   return h('label', {}, label,
     h('select', { onchange: (e) => onChange(e.target.value) },
       h('option', { value: '' }, S.filter.all),
-      options.map((o) => h('option', { value: o, selected: o === value }, o))));
+      options.map((o) => h('option', { value: o, selected: o === value }, labels[o] || o))));
 }
 
-export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share }) {
+export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
@@ -59,14 +59,14 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     h('div', { class: 'filters' },
       select(S.filter.grade, state.grade, facetValues(entries, 'grade'), (v) => onFilter({ grade: v })),
       select(S.filter.subject, state.subject, facetValues(entries, 'subject'), (v) => onFilter({ subject: v })),
-      select(S.filter.badge, state.badge, ['clear', 'shallow', 'whirlpool'], (v) => onFilter({ badge: v })),
+      select(S.filter.badge, state.badge, ['clear', 'shallow', 'whirlpool'], (v) => onFilter({ badge: v }), S.badge),
       sortSel,
       h('label', { class: 'check wide' }, h('input', { type: 'checkbox', checked: state.pickOnly, onchange: (e) => onFilter({ pickOnly: e.target.checked }) }), S.filter.pickOnly)),
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
-    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
+    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
 }
 
-function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share }) {
+function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share, submit }) {
   const w = entry.work;
   const run = canRun(entry);
   return h('article', { class: 'card' },
@@ -90,7 +90,25 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
       w.promptRecipe ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
       entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎵 ${s.text} — ${s.author}`)) : null,
       checkList(report),
-      share ? sharePanel(entry, share) : null) : null);
+      share ? sharePanel(entry, share) : null,
+      submit ? submitPanel(entry, submit) : null) : null);
+}
+
+// 큰 곳간에 보내기 (어미고래 모드에서만 만들어진다): 개인정보 확인 → 복사 + 네이버 폼 열기
+function submitPanel(entry, { allowRecommend, onRecommend, onSong }) {
+  // 보내는 사람(교사) 자신의 별명을 쓴다. 작품 작성자 별명을 미리 채우지 않는다.
+  const author = h('input', { 'aria-label': S.submit.author, placeholder: S.submit.author });
+  const privacy = h('input', { type: 'checkbox' });
+  const song = h('input', { 'aria-label': S.submit.songLabel, placeholder: S.submit.songLabel, maxlength: '120' });
+  const vals = () => ({ author: author.value, privacyChecked: privacy.checked, text: song.value });
+  return h('div', { class: 'detail' },
+    h('p', { class: 'muted' }, S.submit.title),
+    author,
+    h('label', { class: 'check' }, privacy, S.submit.privacy),
+    allowRecommend ? h('button', { onclick: () => onRecommend(entry, vals()) }, S.submit.recommend) : null,
+    song,
+    h('button', { onclick: () => onSong(entry, vals()) }, S.submit.song),
+    h('p', { class: 'muted' }, S.submit.how));
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다
@@ -104,7 +122,7 @@ function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
     h('p', { class: 'muted' }, S.share.hint));
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit }) {
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
@@ -120,7 +138,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
       if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
       if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
       return workCard(entriesById.get(r.id), {
-        onRun, onRemove, onToggleDetail, onEdit, onRemix, share, open: state.openId === r.id, report: r.checkReport,
+        onRun, onRemove, onToggleDetail, onEdit, onRemix, share, submit, open: state.openId === r.id, report: r.checkReport,
         selectBox: h('label', { class: 'check' },
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),

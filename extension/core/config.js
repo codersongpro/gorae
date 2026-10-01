@@ -7,6 +7,8 @@ export const CONFIG = {
   sampleReviewersPath: 'sample/reviewers.json',
   // 바로 실행 뷰어 주소 (GitHub Pages로 site/를 공개한 뒤 확인)
   viewerUrl: 'https://codersongpro.github.io/gorae/viewer.html',
+  // 네이버 폼 주소 (큰 곳간 추천·고래 노래 접수). 폼을 만든 뒤 여기에 https 주소를 넣는다.
+  formUrl: '',
   fetchTimeoutMs: 4000,
   maxHtmlBytes: 1024 * 1024, // 1MB
 };

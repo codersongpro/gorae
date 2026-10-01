@@ -6,6 +6,7 @@ import { resolveTrustedList, buildEntries } from './core/trust.js';
 import { filterEntries, sortEntries } from './core/filter.js';
 import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
 import { buildShare } from './core/share.js';
+import { buildWorkSubmission, buildSongSubmission, validFormUrl } from './core/submit.js';
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
 import { checkHtml } from './core/checker.js';
@@ -108,6 +109,24 @@ const shareProps = () => ({
   onShare: shareWork,
   onLink: copyViewerLink,
 });
+
+// ----- 큰 곳간에 보내기: 어미고래 모드에서만. 글을 복사하고 네이버 폼을 연다
+async function sendToForm(result) {
+  if (!result.ok) return go({ notice: result.errors.join(' ') });
+  await navigator.clipboard.writeText(result.text);
+  const url = validFormUrl(CONFIG.formUrl);
+  if (url) chrome.tabs.create({ url });
+  const long = result.length > 3000 ? ' ' + S.submit.longWarn(result.length) : '';
+  go({ notice: (url ? S.submit.copiedOpen : S.submit.copiedNoForm) + long });
+}
+const submitProps = (allowRecommend) =>
+  state.mode === 'mother'
+    ? {
+        allowRecommend,
+        onRecommend: (entry, v) => sendToForm(buildWorkSubmission(entry.work, { author: v.author, privacyChecked: v.privacyChecked })),
+        onSong: (entry, v) => sendToForm(buildSongSubmission(entry.work, { text: v.text, author: v.author, privacyChecked: v.privacyChecked })),
+      }
+    : null; // 아기고래 모드에서는 메뉴 자체를 만들지 않는다
 
 async function addToMypod(entry) {
   const w = entry.work;
@@ -218,7 +237,7 @@ async function render() {
     body = catalogView({
       entries: state.entries, visible, state,
       onFilter: (p) => go({ ...p, notice: '' }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
-      onRemix: startRemix, share: shareProps(),
+      onRemix: startRemix, share: shareProps(), submit: submitProps(false),
     });
   } else if (state.tab === 'mypod') {
     const records = await store.list();
@@ -229,7 +248,7 @@ async function render() {
       onEdit: startEdit, onRemix: startRemix,
       onSelect: (id, on) => { state.selected = toggleIn(state.selected, id, on); },
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
-      share: shareProps(),
+      share: shareProps(), submit: submitProps(true),
     });
   } else {
     body = classView({

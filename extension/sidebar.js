@@ -57,6 +57,19 @@ const verifyWorks = (works) => buildEntries({ works, list: state.list, storage, 
 function go(patch) { Object.assign(state, patch); render(); }
 const toggleDetail = (id) => go({ openId: state.openId === id ? null : id });
 
+// 실행 창이 열리며 초점이 옮겨 가도 사이드바가 닫히지 않게 한다.
+// 웨일 전용 API(whale.sidebarAction)가 있으면 사이드바를 다시 띄운다. 공식 문서로 이름을 확인하지 못해 있는 것만 조심스럽게 부른다.
+function keepSidebarOpen() {
+  try {
+    const sa = globalThis.whale && globalThis.whale.sidebarAction;
+    if (!sa) return;
+    const fn = sa.show || sa.open;
+    if (typeof fn === 'function') fn.call(sa);
+  } catch {
+    /* 지원하지 않으면 그대로 둔다 */
+  }
+}
+
 // 실행 관문: HTML·URL 작품 모두 canRun을 통과해야 한다. URL 작품은 확인 카드를 거친 뒤에만 새 탭으로 연다.
 async function run(entry) {
   const w = entry.work;
@@ -67,7 +80,9 @@ async function run(entry) {
   if ((chrome.windows && chrome.windows.create) || (chrome.tabs && chrome.tabs.create)) {
     const id = await putRunTicket(storage, entry);
     const url = chrome.runtime.getURL('run.html#' + id);
-    if (chrome.windows && chrome.windows.create) chrome.windows.create({ url, type: 'popup', width: 1024, height: 768, focused: true });
+    if (chrome.windows && chrome.windows.create) {
+      chrome.windows.create({ url, type: 'popup', width: 1024, height: 768, focused: true }, () => keepSidebarOpen());
+    }
     else chrome.tabs.create({ url }); // 창을 못 열면 새 탭으로
     return go({ notice: S.run.openedTab(w.title), confirmUrl: null });
   }

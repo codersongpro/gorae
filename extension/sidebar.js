@@ -148,25 +148,34 @@ const shareProps = () => ({
   onLink: copyViewerLink,
 });
 
-// ----- 큰 곳간에 보내기: 교사고래 모드에서만. 글을 복사하고 네이버 폼을 연다
-async function sendToForm(result) {
-  if (!result.ok) return go({ notice: result.errors.join(' ') });
-  await navigator.clipboard.writeText(result.text);
-  const url = validFormUrl(CONFIG.formUrl);
+// ----- 큰 곳간에 공유하기: 설문 문항(1~6)에 맞춘 답과 업로드 파일을 만든다. 학생고래·교사고래 모두 쓸 수 있다
+const openForm = (u) => {
+  const url = validFormUrl(u);
   if (url) chrome.tabs.create({ url });
-  const long = result.length > 3000 ? ' ' + S.submit.longWarn(result.length) : '';
-  go({ notice: (url ? S.submit.copiedOpen : S.submit.copiedNoForm) + long });
-}
-const submitProps = (allowRecommend) =>
-  state.mode === 'mother'
-    ? {
-        allowRecommend,
-        onRecommend: (entry, v) => sendToForm(buildWorkSubmission(entry.work, { author: v.author, privacyChecked: v.privacyChecked })),
-        onSong: (entry, v) => sendToForm(buildSongSubmission(entry.work, { text: v.text, author: v.author, privacyChecked: v.privacyChecked })),
-      }
-    : null; // 학생고래 모드에서는 메뉴 자체를 만들지 않는다
+  return !!url;
+};
+const submitProps = (allowRecommend) => ({
+  allowRecommend,
+  draft: null, // 카드마다 workCard에서 덮어쓴다
+  draftOf: (entry) => (state.submitDraft && state.submitDraft.workId === entry.work.id ? state.submitDraft : null),
+  onPrepare: (entry, v) => {
+    const result = buildWorkSubmission(entry.work, { nickname: v.nickname, role: spoutRole(), privacyChecked: v.privacyChecked });
+    if (!result.ok) return go({ notice: result.errors.join(' ') });
+    go({ submitDraft: { workId: entry.work.id, nickname: v.nickname, result }, notice: '' });
+  },
+  onCopy: async (text) => { await navigator.clipboard.writeText(text); go({ notice: S.submit.copied }); },
+  onSaveFile: (file) => saveTextFile(file.text, file.name, file.type),
+  onOpenForm: () => { if (!openForm(CONFIG.formUrl)) go({ notice: S.submit.noForm }); },
+  showSong: state.mode === 'mother', // 고래 노래(수업 활용 후기)는 교사고래만
+  onSong: async (entry, v) => {
+    const r = buildSongSubmission(entry.work, { text: v.text, author: v.author, privacyChecked: v.privacyChecked });
+    if (!r.ok) return go({ notice: r.errors.join(' ') });
+    await navigator.clipboard.writeText(r.text);
+    go({ notice: openForm(CONFIG.feedbackFormUrl) ? S.submit.songCopied : S.submit.songNoForm });
+  },
+});
 
-// ----- 물뿜기 (서버 없음): 기기에 기록 → 모아서 네이버 폼으로 보냄 → 파수꾼이 집계해 catalog에 반영
+// ----- 물뿜기 (서버 없음): 기기에 기록 → 모아서 의견 설문으로 보냄 → 파수꾼이 집계해 catalog에 반영
 const spoutRole = () => (state.mode === 'mother' ? 'teacher' : 'student');
 const spoutProps = () => ({
   countsOf: (e) => spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id]),
@@ -181,9 +190,8 @@ async function sendSpouts() {
   const rep = await pendingReport(storage);
   if (!rep.count) return;
   await navigator.clipboard.writeText(rep.text);
-  const url = validFormUrl(CONFIG.formUrl);
-  if (url) chrome.tabs.create({ url });
-  go({ spoutWaiting: rep.ids, notice: url ? S.spout.copiedOpen : S.spout.copiedNoForm });
+  const opened = openForm(CONFIG.feedbackFormUrl); // 물뿜기는 작품 폼이 아니라 의견 폼으로
+  go({ spoutWaiting: rep.ids, notice: opened ? S.spout.copiedOpen : S.spout.copiedNoForm });
 }
 async function confirmSpoutsSent() {
   await markSent(storage, state.spoutWaiting || []);
@@ -233,8 +241,8 @@ async function doExport(name) {
   const out = exportBundle(await store.list(), state.selected, { name });
   go({ exportOut: out, packName: name, notice: '' });
 }
-function saveTextFile(text, fileName) {
-  const blob = new Blob([text], { type: 'application/json' });
+function saveTextFile(text, fileName, type = 'application/json') {
+  const blob = new Blob([text], { type });
   const a = h('a', { href: URL.createObjectURL(blob), download: fileName });
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);

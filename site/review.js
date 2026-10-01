@@ -4,7 +4,7 @@ import { h } from './dom.js';
 import * as tp from './shared/tailprint.js';
 import { encryptJwk, decryptJwk, checkPassword } from './shared/keybackup.js';
 import { signForCatalog, addReviewer, revokeReviewer, signList, emptyList, upsertCatalogItem } from './shared/review.js';
-import { parsePack, extractPackText } from './shared/pack.js';
+import { readSubmission } from './shared/submission.js';
 import { checkWork } from './shared/checker.js';
 import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
@@ -119,25 +119,29 @@ async function restoreReviewer(text, password) {
 // ---------- B. 검수대 ----------
 function viewDesk() {
   if (!state.reviewer) return h('div', { class: 'notice' }, '먼저 [1. 검수 서명 만들기]에서 열쇠를 만들거나 되살려 주세요.');
-  const paste = h('textarea', { placeholder: '네이버 폼 응답(꾸러미 포함)을 그대로 붙여 넣으세요', 'aria-label': '폼 응답 붙여넣기' });
+  const upload = h('input', { type: 'file', accept: '.html,.htm,.json,text/html,application/json' });
+  const paste = h('textarea', { placeholder: '설문 응답(주소 칸 내용·꾸러미)을 붙여 넣거나 아래에서 업로드된 파일을 고르세요', 'aria-label': '설문 응답 붙여넣기' });
   return h('div', { class: 'section' },
     h('div', { class: 'card' },
       h('h2', {}, '2. 검수대'),
       h('p', { class: 'muted' }, `파수꾼: ${state.reviewer.nickname}. 응답을 붙여 넣으면 자동 점검 결과를 보여 줘요. 코드를 직접 보고 실행해 본 뒤 배지를 골라 서명하세요.`),
       paste,
-      h('button', { onclick: () => loadDrafts(paste.value) }, '확인하기')),
+      h('p', { class: 'muted' }, '또는 설문으로 올라온 파일(.html·.gorae.json)을 고르세요. 구글 드라이브의 설문 응답 폴더에서 내려받으면 돼요.'),
+      upload,
+      h('button', { onclick: async () => loadDrafts(paste.value || (await readFile(upload)), upload.files[0] ? upload.files[0].name : '') }, '확인하기')),
     ...state.drafts.map(draftCard),
     state.drafts.length || state.catalog ? catalogOut() : null);
 }
 
-function loadDrafts(text) {
-  const res = parsePack(extractPackText(text));
+function loadDrafts(text, fileName = '') {
+  // 업로드된 HTML(작품 정보 주석 포함)·주소 칸 내용·꾸러미·일반 HTML을 모두 읽는다
+  const res = readSubmission(text, { fileName });
   if (!res.ok) { state.drafts = []; return say(res.errors.map((e) => e.message).join(' '), true); }
-  state.drafts = res.pack.items.map((work) => {
+  state.drafts = res.works.map((work) => {
     const report = checkWork(work);
     return { work, report, badge: report && !report.ok ? 'shallow' : 'clear', pick: false, songs: '', signed: null, check: null };
   });
-  say(`작품 ${state.drafts.length}개를 읽었어요.`);
+  say(`작품 ${state.drafts.length}개를 읽었어요.` + (res.warnings.length ? ' ' + res.warnings.join(' ') : ''));
 }
 
 function parseSongs(text) {
@@ -313,9 +317,9 @@ async function editList(change) {
   }
 }
 
-// ---------- D. 물뿜기 집계 (서버 없이: 네이버 폼 응답 → catalog.json의 spouts) ----------
+// ---------- D. 물뿜기 집계 (서버 없이: 의견 설문 응답 → catalog.json의 spouts) ----------
 function viewSpout() {
-  const paste = h('textarea', { placeholder: '네이버 폼의 물뿜기 응답들을 한꺼번에 붙여 넣으세요', 'aria-label': '물뿜기 응답 붙여넣기' });
+  const paste = h('textarea', { placeholder: '의견 설문의 물뿜기 응답들을 한꺼번에 붙여 넣으세요', 'aria-label': '물뿜기 응답 붙여넣기' });
   const top = Object.entries((state.catalog && state.catalog.spouts) || {}).sort((a, b) => b[1].teacher + b[1].student - (a[1].teacher + a[1].student)).slice(0, 10);
   const title = (id) => ((state.catalog.items || []).find((w) => w.id === id) || { title: id }).title;
   return h('div', { class: 'section' },

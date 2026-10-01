@@ -149,7 +149,7 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
       entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎵 ${s.text} — ${s.author}`)) : null,
       checkList(report),
       share ? sharePanel(entry, share) : null,
-      submit ? submitPanel(entry, submit) : null) : null);
+      submit ? submitPanel(entry, { ...submit, draft: submit.draftOf ? submit.draftOf(entry) : null }) : null) : null);
 }
 
 // 물뿜기: 교사·학생 숫자를 그대로 보여 주고, 기기당 한 번 누를 수 있다
@@ -171,21 +171,35 @@ export function spoutSendBar({ pending, waiting, onSend, onSent }) {
       waiting ? h('button', { class: 'primary', onclick: onSent }, S.spout.sent) : null));
 }
 
-// 큰 곳간에 보내기 (교사고래 모드에서만 만들어진다): 개인정보 확인 → 복사 + 네이버 폼 열기
-function submitPanel(entry, { allowRecommend, onRecommend, onSong }) {
-  // 보내는 사람(교사) 자신의 별명을 쓴다. 작품 작성자 별명을 미리 채우지 않는다.
-  const author = h('input', { 'aria-label': S.submit.author, placeholder: S.submit.author });
-  const privacy = h('input', { type: 'checkbox' });
-  const song = h('input', { 'aria-label': S.submit.songLabel, placeholder: S.submit.songLabel, maxlength: '120' });
-  const vals = () => ({ author: author.value, privacyChecked: privacy.checked, text: song.value });
+// 큰 곳간에 보내기 (교사고래 모드에서만 만들어진다): 개인정보 확인 → 설문 문항별 답·업로드 파일 → 구글 설문 열기
+function submitPanel(entry, { allowRecommend, draft, onPrepare, onCopy, onSaveFile, onOpenForm, showSong, onSong }) {
+  const Sb = S.submit;
+  const nick = h('input', { 'aria-label': Sb.nickname, placeholder: Sb.nickname, value: (draft && draft.nickname) || '' });
+  const privacy = h('input', { type: 'checkbox', checked: !!draft });
+  const song = h('input', { 'aria-label': Sb.songLabel, placeholder: Sb.songLabel, maxlength: '120' });
+  const ans = draft && draft.result && draft.result.answers;
+  const row = (q, value, copyable = true) => h('div', { class: 'field' }, h('span', {}, q),
+    h('div', { class: 'row' }, h('strong', {}, value), copyable ? h('button', { class: 'chip', onclick: () => onCopy(value) }, Sb.copy) : null));
   return h('div', { class: 'detail' },
-    h('p', { class: 'muted' }, S.submit.title),
-    author,
-    h('label', { class: 'check' }, privacy, S.submit.privacy),
-    allowRecommend ? h('button', { onclick: () => onRecommend(entry, vals()) }, S.submit.recommend) : null,
-    song,
-    h('button', { onclick: () => onSong(entry, vals()) }, S.submit.song),
-    h('p', { class: 'muted' }, S.submit.how));
+    h('p', { class: 'muted' }, Sb.title),
+    allowRecommend ? h('div', { class: 'section' },
+      nick,
+      h('label', { class: 'check' }, privacy, Sb.privacy),
+      h('button', { onclick: () => onPrepare(entry, { nickname: nick.value, privacyChecked: privacy.checked }) }, Sb.prepare)) : null,
+    ans ? h('div', { class: 'card' },
+      h('p', {}, Sb.guide),
+      h('button', { class: 'primary', onclick: onOpenForm }, Sb.openForm),
+      row(Sb.q1, ans.whale, false),
+      row(Sb.q2, ans.nickname),
+      row(Sb.q3, ans.title),
+      row(Sb.q4, ans.isFile, false),
+      entry.work.type === 'exe-link' ? h('p', { class: 'notice' }, Sb.exeHint) : null,
+      ans.address ? h('div', { class: 'field' }, h('span', {}, Sb.q5), h('pre', {}, ans.address), h('button', { onclick: () => onCopy(ans.address) }, Sb.copy)) : null,
+      draft.result.file ? h('div', { class: 'field' }, h('span', {}, Sb.q6),
+        h('button', { onclick: () => onSaveFile(draft.result.file) }, Sb.saveFile(draft.result.file.name)),
+        h('p', { class: 'muted' }, Sb.fileHint)) : null,
+      (draft.result.warnings || []).map((w) => h('p', { class: 'notice' }, w))) : null,
+    showSong ? h('div', { class: 'section' }, song, h('button', { onclick: () => onSong(entry, { text: song.value, author: nick.value, privacyChecked: privacy.checked }) }, Sb.song)) : null);
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다

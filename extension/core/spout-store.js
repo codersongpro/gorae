@@ -1,5 +1,5 @@
 // 이 기기의 물뿜기 기록 (DOM 없음). storage 키 'spouts': { [workId]: { role, at, sent } }
-// 서버 없이: 누르면 기기에 기록 → 모아서 네이버 폼으로 보냄 → 보냈다고 표시
+// 서버 없이: 누르면 기기에 기록 → 모아서 의견 설문으로 보냄 → 보냈다고 표시
 import { buildSpoutReport, ROLES } from '../shared/spout.js';
 
 const KEY = 'spouts';

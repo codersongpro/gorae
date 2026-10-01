@@ -4,7 +4,7 @@
 //   site/{catalog,reviewers}.json → extension/sample/   (배포 전 번들 샘플 목록)
 //   extension/core/rootkey.js     → site/rootkey.js     (대왕고래 공개키)
 //   extension/ui/strings.js       → site/strings.js     (화면 문구 한 곳 유지)
-//   extension/ui/dom.js, core/checker.js → site/dom.js, site/checker.js
+//   extension/ui/dom.js           → site/dom.js
 // `--check` 를 주면 복사하지 않고 어긋난 파일이 있는지만 확인한다.
 import { copyFile, mkdir, readdir, readFile } from 'node:fs/promises';
 
@@ -22,7 +22,6 @@ for (const f of ['catalog.json', 'reviewers.json']) jobs.push([`site/${f}`, `ext
 jobs.push(['extension/core/rootkey.js', 'site/rootkey.js']);
 jobs.push(['extension/ui/strings.js', 'site/strings.js']);
 jobs.push(['extension/ui/dom.js', 'site/dom.js']); // 뷰어·검수 도구가 쓰는 작은 DOM 도우미
-jobs.push(['extension/core/checker.js', 'site/checker.js']); // 검수 도구의 자동 점검
 
 const check = process.argv.includes('--check');
 let stale = 0;

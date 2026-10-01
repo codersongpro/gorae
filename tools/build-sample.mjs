@@ -41,6 +41,7 @@ const signed = [
   works[1],
   works[2],
   await tp.signWork(works[3], guard.privateKey, { ...signOpts, badge: 'clear', pick: false }),
+  ...works.slice(4), // 수업도구·업무자동화 샘플은 미검수
 ];
 
 const catalog = { updatedAt: '2026-10-01T02:00:00Z', items: signed, exeItems, featured: null };

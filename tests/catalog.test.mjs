@@ -38,7 +38,7 @@ test('AC-001 인터넷이 되면 목록과 족보를 받아 작품 카드를 만
   assert.equal(res.source, 'network');
   assert.equal(res.offline, false);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.length, 4);
+  assert.equal(entries.length, 6);
   assert.equal(entries.filter((e) => e.status.ok).length, 2); // 서명된 샘플 2개만 검증 통과
 });
 

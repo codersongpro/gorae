@@ -2,7 +2,8 @@
 import { h } from './dom.js';
 import { S } from './strings.js';
 import { displayBadge } from '../core/trust.js';
-import { facetValues } from '../core/filter.js';
+import { facetValues, metaOf, topTags } from '../core/filter.js';
+import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
 
 const dateOnly = (iso) => String(iso || '').slice(0, 10);
@@ -42,11 +43,54 @@ export function topBar(mode, onToggle, onCreate, onImport) {
       h('button', { onclick: onToggle }, mode === 'baby' ? S.mode.toggleToMother : S.mode.toggleToBaby)));
 }
 
-function select(label, value, options, onChange, labels = {}) {
+function select(label, value, options, onChange, labels = {}, allLabel = S.filter.all) {
   return h('label', {}, label,
     h('select', { onchange: (e) => onChange(e.target.value) },
-      h('option', { value: '' }, S.filter.all),
-      options.map((o) => h('option', { value: o, selected: o === value }, labels[o] || o))));
+      h('option', { value: '' }, allLabel),
+      options.map((o) => {
+        const id = typeof o === 'object' ? String(o.id) : o;
+        const text = typeof o === 'object' ? o.label : labels[o] || o;
+        return h('option', { value: id, selected: id === String(value || '') }, text);
+      })));
+}
+
+// 찾기: 검색어·수업/업무·카테고리는 늘 보이고, 나머지는 '자세한 조건' 안에
+function findBar({ entries, state, onFilter, sortSel }) {
+  const Fd = S.find;
+  const cat = findCategory(state.domain, state.category);
+  const q = h('input', { type: 'search', placeholder: Fd.search, 'aria-label': Fd.search, value: state.query || '' });
+  q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
+  const tags = topTags(entries);
+  return h('div', { class: 'filters' },
+    h('label', { class: 'wide' }, Fd.search, q),
+    select(S.form.domain, state.domain, DOMAINS, (v) => onFilter({ domain: v, category: '', subcategory: '' }), {}, Fd.domainAll),
+    state.domain ? select(S.form.category, state.category, categoriesOf(state.domain), (v) => onFilter({ category: v, subcategory: '' }), {}, Fd.categoryAll) : null,
+    cat ? select(cat.detail ? S.form.activityType : S.form.subcategory, state.subcategory, cat.subs, (v) => onFilter({ subcategory: v }), {}, Fd.subAll) : null,
+    sortSel,
+    h('details', { class: 'wide', open: state.moreOpen || null, ontoggle: (e) => { state.moreOpen = e.target.open; } },
+      h('summary', {}, Fd.more),
+      h('div', { class: 'filters' },
+        select(Fd.grade, state.grade, facetValues(entries, 'gradeLabel'), (v) => onFilter({ grade: v })),
+        select(S.filter.subject, state.subject, facetValues(entries, 'subject'), (v) => onFilter({ subject: v })),
+        select(Fd.audience, state.audience, AUDIENCES, (v) => onFilter({ audience: v })),
+        select(Fd.group, state.groupType, GROUP_TYPES, (v) => onFilter({ groupType: v })),
+        select(Fd.time, state.maxMinutes, TIME_OPTIONS.map((t) => ({ id: t.minutes, label: t.label })), (v) => onFilter({ maxMinutes: v })),
+        select(S.filter.badge, state.badge, ['clear', 'shallow', 'whirlpool'], (v) => onFilter({ badge: v }), S.badge),
+        h('label', { class: 'check wide' }, h('input', { type: 'checkbox', checked: state.pickOnly, onchange: (e) => onFilter({ pickOnly: e.target.checked }) }), S.filter.pickOnly),
+        tags.length ? h('div', { class: 'row wide' }, h('span', { class: 'muted' }, Fd.tag),
+          tags.map((t) => h('button', { class: state.tag === t ? 'chip primary' : 'chip', onclick: () => onFilter({ tag: state.tag === t ? '' : t }) }, '#' + t))) : null,
+        h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) }, Fd.reset))));
+}
+
+// 카드 한 줄 분류: 수업 › 교과활동 › 연습 · 초4 수학 · 10분 · 개인 · 교사+학생
+function metaLine(entry) {
+  const m = metaOf(entry);
+  const bits = [m.path.join(' › '), [m.gradeLabel, m.subject].filter(Boolean).join(' '), m.topic, timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
+  return h('div', {},
+    h('p', { class: 'muted' }, bits.join(' · ')),
+    m.tags.length ? h('p', { class: 'muted' }, m.tags.map((t) => '#' + t).join(' ')) : null,
+    m.artifactType === 'webapp' ? h('p', { class: 'notice' }, S.cardMeta.webapp) : null,
+    m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
 
 export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit }) {
@@ -56,12 +100,7 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
   return h('section', { class: 'section' },
     h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
-    h('div', { class: 'filters' },
-      select(S.filter.grade, state.grade, facetValues(entries, 'grade'), (v) => onFilter({ grade: v })),
-      select(S.filter.subject, state.subject, facetValues(entries, 'subject'), (v) => onFilter({ subject: v })),
-      select(S.filter.badge, state.badge, ['clear', 'shallow', 'whirlpool'], (v) => onFilter({ badge: v }), S.badge),
-      sortSel,
-      h('label', { class: 'check wide' }, h('input', { type: 'checkbox', checked: state.pickOnly, onchange: (e) => onFilter({ pickOnly: e.target.checked }) }), S.filter.pickOnly)),
+    findBar({ entries, state, onFilter, sortSel }),
     state.notice ? h('p', { class: 'notice' }, state.notice) : null,
     visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
 }
@@ -73,7 +112,8 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
     selectBox || null,
     h('h3', {}, w.title),
     h('div', { class: 'row' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge shallow' }, S.pick) : null),
-    h('p', { class: 'muted' }, `${w.grade} · ${w.subject} · ${w.author}`),
+    metaLine(entry),
+    w.author ? h('p', { class: 'muted' }, w.author) : null,
     verifyLine(entry),
     w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
     extra || null,
@@ -86,6 +126,8 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
       h('button', { onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
+      metaOf(entry).description ? h('p', {}, metaOf(entry).description) : null,
+      metaOf(entry).standard ? h('p', { class: 'muted' }, `성취기준: ${metaOf(entry).standard}`) : null,
       h('div', {}, h('p', { class: 'muted' }, S.detail.howTo), h('p', {}, w.howToUse)),
       w.promptRecipe ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
       entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎵 ${s.text} — ${s.author}`)) : null,
@@ -185,48 +227,6 @@ export function runView({ entry, onBack, onOpenTab }) {
         h('div', {}, h('strong', {}, w.title), h('p', { class: 'muted' }, S.run.running))),
       frame),
   };
-}
-
-export function createView({ onSubmit, onCancel, errors, warnings, report, values = {}, heading = S.create.title, hint }) {
-  const f = {};
-  const field = (key, label, el) => h('label', { class: 'field' }, h('span', {}, label), (f[key] = el));
-  const kind = h('select', { onchange: () => sync() }, h('option', { value: 'html' }, S.create.kindHtml), h('option', { value: 'url' }, S.create.kindUrl));
-  const htmlWrap = h('div', { class: 'field' },
-    h('span', {}, S.create.html), (f.html = h('textarea', { 'aria-label': S.create.html })),
-    h('span', {}, S.create.file), (f.file = h('input', { type: 'file', accept: '.html,text/html' })));
-  const urlWrap = h('div', { class: 'field', hidden: true }, h('span', {}, S.create.url), (f.url = h('input', { type: 'url', placeholder: 'https://' })));
-  function sync() { htmlWrap.hidden = kind.value !== 'html'; urlWrap.hidden = kind.value !== 'url'; }
-  f.file.addEventListener('change', async () => { const file = f.file.files[0]; if (file) f.html.value = await file.text(); });
-  const collect = () => ({
-    title: f.title.value, type: kind.value, html: f.html.value, url: f.url.value, grade: f.grade.value, subject: f.subject.value,
-    standard: f.standard.value, author: f.author.value, howToUse: f.howToUse.value, promptRecipe: f.promptRecipe.value,
-    remixOf: values.remixOf, remixOfTitle: values.remixOfTitle, minutes: f.minutes.value,
-  });
-  const root = h('section', { class: 'section' },
-    h('h2', {}, heading),
-    hint ? h('p', { class: 'notice' }, hint) : null,
-    h('p', { class: 'notice' }, S.create.privacyNote),
-    errors && errors.length ? h('div', { class: 'notice error', role: 'alert' }, errors.map((e) => h('p', {}, e.message))) : null,
-    warnings && warnings.length ? h('div', { class: 'notice' }, warnings.map((e) => h('p', {}, e.message))) : null,
-    report ? h('div', { class: 'notice' }, h('p', {}, S.create.checkTitle), checkList(report)) : null,
-    field('title', S.create.name, h('input', {})),
-    h('label', { class: 'field' }, h('span', {}, S.create.kind), kind),
-    htmlWrap, urlWrap,
-    h('div', { class: 'grid2' },
-      field('grade', S.create.grade, h('select', {}, h('option', { value: '' }, S.filter.all), S.grades.map((g) => h('option', { value: g }, g)))),
-      field('subject', S.create.subject, h('select', {}, h('option', { value: '' }, S.filter.all), S.subjects.map((g) => h('option', { value: g }, g))))),
-    field('standard', S.create.standard, h('input', {})),
-    field('minutes', S.create.minutes, h('input', { type: 'number', min: '1', max: '240' })),
-    field('author', S.create.author, h('input', {})),
-    field('howToUse', S.create.howTo, h('textarea', {})),
-    field('promptRecipe', S.create.recipe, h('textarea', {})),
-    h('div', { class: 'row' },
-      h('button', { class: 'primary', onclick: () => onSubmit(collect()) }, S.actions.save),
-      h('button', { onclick: onCancel }, S.actions.back)));
-  // 오류로 다시 그릴 때 입력값을 되살린다
-  for (const [k, v] of Object.entries(values)) if (f[k] && f[k].type !== 'file' && v != null) f[k].value = v;
-  if (values.type) { kind.value = values.type; sync(); }
-  return root;
 }
 
 export function importView({ preview, errors, onCheck, onToggle, selected, onConfirm, onCancel }) {

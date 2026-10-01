@@ -12,6 +12,9 @@
 <body>
 <div id="app"></div>
 <script>
+  // 공개 주소 대신 이 저장소의 site/ 파일을 쓴다 (배포 전 변경 확인용)
+  const realFetch = window.fetch.bind(window);
+  window.fetch = (url, opts) => realFetch(String(url).replace('https://codersongpro.github.io/gorae/', '/site/'), opts);
   // 목록 사본을 실제 확장앱처럼 localStorage에 보관하는 가짜 chrome
   window.chrome = {
     storage: { local: {

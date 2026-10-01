@@ -5,7 +5,9 @@ import { checkHtml, looksLikeRealName } from '../extension/core/checker.js';
 import { validateNewWork, createWork } from '../extension/core/work.js';
 import { createStore, createMemoryBackend } from '../extension/core/store.js';
 
-const base = { title: '내 퀴즈', type: 'html', html: '<p>hi</p>', grade: '초6', subject: '국어', howToUse: '풀어 보세요', author: '푸른 고래 · 초등' };
+import { lessonInput } from './fixtures.mjs';
+
+const base = lessonInput();
 
 test('AC-006 꾸러미에서 가져온 작품은 출처가 기록된다', async () => {
   const store = createStore(createMemoryBackend());
@@ -29,7 +31,7 @@ test('AC-007 1MB를 넘는 HTML은 거부한다', () => {
 });
 
 test('AC-008 http:// 주소는 거부하고 https만 받는다', () => {
-  const u = { ...base, type: 'url', html: undefined };
+  const u = { ...base, artifactType: 'webapp', html: undefined };
   assert.equal(validateNewWork({ ...u, url: 'http://example.com' }).errors[0].code, 'URL_NOT_HTTPS');
   assert.equal(validateNewWork({ ...u, url: 'javascript:alert(1)' }).ok, false);
   assert.equal(validateNewWork({ ...u, url: '아무말' }).ok, false);
@@ -38,7 +40,7 @@ test('AC-008 http:// 주소는 거부하고 https만 받는다', () => {
 
 test('분류·사용 방법·제목이 없으면 거부하고, 실명 같은 작성자는 경고한다', () => {
   const r = validateNewWork({ ...base, grade: '', howToUse: ' ', title: '' });
-  assert.deepEqual(r.errors.map((e) => e.code).sort(), ['CATEGORY', 'HOW_TO_USE', 'TITLE']);
+  assert.deepEqual(r.errors.map((e) => e.code).sort(), ['GRADE', 'HOW_TO_USE', 'TITLE']);
   assert.equal(validateNewWork({ ...base, author: '홍길동' }).warnings[0].code, 'REAL_NAME');
   assert.equal(looksLikeRealName('푸른 혹등고래 · 초등'), false);
 });

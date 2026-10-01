@@ -9,7 +9,7 @@ import { buildShare } from './core/share.js';
 import { buildWorkSubmission, buildSongSubmission, validFormUrl } from './core/submit.js';
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
-import { checkHtml } from './core/checker.js';
+import { checkWork } from './core/checker.js';
 import { validateNewWork, createWork } from './core/work.js';
 import { createStore } from './core/store.js';
 import { createIdbBackend } from './core/idb-backend.js';
@@ -19,7 +19,8 @@ import { S } from './ui/strings.js';
 import { exportBundle, previewImport, importSelected } from './core/bundle.js';
 import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
-import { topBar, tabsBar, catalogView, mypodView, classView, runView, createView, importView, urlConfirmView } from './ui/views.js';
+import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
+import { createView } from './ui/form.js';
 
 const app = document.getElementById('app');
 const storage = createChromeStorage();
@@ -31,12 +32,14 @@ const state = {
   grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
   source: 'network', listRejected: false, notice: '', openId: null,
   entries: [], list: null,
-  create: { kind: 'create', errors: [], warnings: [] }, // kind: create | edit | remix
+  create: { kind: 'create', errors: [], warnings: [], input: { artifactType: 'html', domain: '', category: '', subcategory: '', audience: [], tags: [] } }, // kind: create | edit | remix
   selected: [], packName: '', exportOut: null,
   classSelected: [], className: '', classNote: '', classOut: null,
   imp: { preview: null, errors: [], selected: [] },
 };
-const freshCreate = () => ({ kind: 'create', errors: [], warnings: [] });
+// 새 작품 입력 기본값: 형태는 HTML, 수업/업무·카테고리는 직접 고르게 비워 둔다
+const blankInput = () => ({ artifactType: 'html', domain: '', category: '', subcategory: '', audience: [], tags: [] });
+const freshCreate = () => ({ kind: 'create', errors: [], warnings: [], input: blankInput() });
 
 // 목록 받기 → 족보 고르기(낮은 버전 거부) → 작품 검증
 async function loadAll() {
@@ -130,7 +133,7 @@ const submitProps = (allowRecommend) =>
 
 async function addToMypod(entry) {
   const w = entry.work;
-  const report = w.type === 'html' ? checkHtml(w.html) : null;
+  const report = checkWork(w);
   const r = await store.add(w, { source: 'catalog', checkReport: report });
   const msg = !r.ok ? S.add.dup : report && !report.ok ? `${S.add.done} ${S.add.warn(report.warnings.length)}` : S.add.done;
   go({ notice: msg });
@@ -153,7 +156,7 @@ async function submitCreate(input) {
   const v = validateNewWork(input);
   if (!v.ok) return go({ create: { ...c, errors: v.errors, warnings: v.warnings, input } });
   const work = createWork(input);
-  const report = work.type === 'html' ? checkHtml(work.html) : null;
+  const report = checkWork(work);
   await store.add(work, { source: 'maker', checkReport: report });
   const extra = report && !report.ok ? ` ${S.add.warn(report.warnings.length)}` : '';
   const base = c.kind === 'remix' ? S.edit.remixSaved : S.create.saved;
@@ -217,7 +220,8 @@ async function render() {
     return app.replaceChildren(createView({
       onSubmit: submitCreate,
       onCancel: () => go({ screen: 'main', create: freshCreate() }),
-      errors: state.create.errors, warnings: state.create.warnings, values: state.create.input || {},
+      errors: state.create.errors, warnings: state.create.warnings, values: state.create.input || blankInput(), mode: state.mode,
+      onChange: (patch) => { Object.assign(state.create.input, patch); render(); },
       heading: k === 'edit' ? S.edit.titleEdit : k === 'remix' ? S.edit.titleRemix : S.create.title,
       hint: k === 'remix' ? S.edit.remixHint : null,
     }));

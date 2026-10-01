@@ -4,6 +4,7 @@ import { readViewerFragment } from './shared/link.js';
 import { createVerifier } from './shared/tailprint.js';
 import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
+import { normalizeWork } from './shared/taxonomy.js';
 
 const $ = (id) => document.getElementById(id);
 const status = $('status');
@@ -76,6 +77,7 @@ async function main() {
     return;
   }
   const work = parsed.work;
+  const meta = normalizeWork(work); // 예전 작품도 같은 모양으로
   const st = await verify(work);
   const badge = st.ok ? st.badge : 'shallow';
   const whirlpool = st.ok && st.badge === 'whirlpool';
@@ -86,10 +88,14 @@ async function main() {
     el('div', { class: 'row' },
       el('span', { class: `badge ${badge}` }, S.badge[badge]),
       st.ok && st.pick ? el('span', { class: 'badge shallow' }, S.pick) : null),
-    el('p', { class: 'muted' }, [work.grade, work.subject, work.author].filter(Boolean).join(' · ')),
+    el('p', { class: 'muted' }, meta.path.join(' › ')),
+    el('p', { class: 'muted' }, [meta.gradeLabel, meta.subject, meta.topic, work.author].filter(Boolean).join(' · ')),
+    meta.artifactType === 'webapp' ? el('p', { class: 'notice' }, '🌐 외부 웹앱입니다') : null,
+    meta.tags.length ? el('p', { class: 'muted' }, meta.tags.map((t) => '#' + t).join(' ')) : null,
     el('p', { class: 'muted' }, st.ok ? S.tailprintOk(st.reviewer.nickname, String(st.signedAt).slice(0, 10)) : (S.reason[st.reason] || st.reason)),
     work.remixOf ? el('p', { class: 'muted' }, '🔄 ' + S.lineage(work.remixOfTitle || work.remixOf)) : null,
-    work.standard ? el('p', {}, `성취기준: ${work.standard}`) : null,
+    meta.description ? el('p', {}, meta.description) : null,
+    meta.standard ? el('p', {}, `성취기준: ${meta.standard}`) : null,
     el('p', {}, el('strong', {}, S.detail.howTo + ': '), work.howToUse || ''),
     work.promptRecipe ? el('div', {}, el('p', { class: 'muted' }, S.detail.recipe), el('pre', {}, work.promptRecipe)) : null,
   ].filter(Boolean)); // replaceChildren는 null을 글자 "null"로 넣으므로 걸러 낸다

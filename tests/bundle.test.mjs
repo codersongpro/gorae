@@ -8,7 +8,9 @@ import { remixInput, editInput, saveEdit } from '../extension/core/remix.js';
 import { createWork } from '../extension/core/work.js';
 import { createStore, createMemoryBackend } from '../extension/core/store.js';
 
-const base = { type: 'html', html: '<p>a</p>', grade: '초4', subject: '수학', howToUse: '해 보세요', author: '푸른 고래 · 초등' };
+import { lessonInput } from './fixtures.mjs';
+
+const base = lessonInput({ html: '<p>a</p>', grade: '4', subject: '수학', topic: '분수', howToUse: '해 보세요' });
 const mk = (title, extra = {}) => createWork({ ...base, title, ...extra }, { idGen: () => title });
 
 async function env() {

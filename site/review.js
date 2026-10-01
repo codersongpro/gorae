@@ -5,9 +5,10 @@ import * as tp from './shared/tailprint.js';
 import { encryptJwk, decryptJwk, checkPassword } from './shared/keybackup.js';
 import { signForCatalog, addReviewer, revokeReviewer, signList, emptyList, upsertCatalogItem } from './shared/review.js';
 import { parsePack, extractPackText } from './shared/pack.js';
-import { checkHtml } from './checker.js';
+import { checkWork } from './shared/checker.js';
 import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
+import { normalizeWork } from './shared/taxonomy.js';
 
 // 작품 미리보기 실행용 정책 (뷰어와 같은 뜻: 바깥 통신 차단)
 const CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; media-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
@@ -131,7 +132,7 @@ function loadDrafts(text) {
   const res = parsePack(extractPackText(text));
   if (!res.ok) { state.drafts = []; return say(res.errors.map((e) => e.message).join(' '), true); }
   state.drafts = res.pack.items.map((work) => {
-    const report = work.type === 'html' ? checkHtml(work.html) : null;
+    const report = checkWork(work);
     return { work, report, badge: report && !report.ok ? 'shallow' : 'clear', pick: false, songs: '', signed: null, check: null };
   });
   say(`작품 ${state.drafts.length}개를 읽었어요.`);
@@ -154,7 +155,7 @@ function draftCard(d) {
   const songs = h('textarea', { placeholder: '고래 노래: 한 줄에 하나 — 작성자 별명·학교급 | 후기 (80자 이하)', 'aria-label': '고래 노래', oninput: (e) => { d.songs = e.target.value; } }, d.songs);
   return h('div', { class: 'card' },
     h('h3', {}, w.title),
-    h('p', { class: 'muted' }, `${w.type} · ${w.grade || ''} ${w.subject || ''} · ${w.author || ''} · 버전 ${w.version || 1}`),
+    h('p', { class: 'muted' }, (() => { const m = normalizeWork(w); return [m.path.join(' › '), m.gradeLabel, m.subject, m.topic, w.author, `버전 ${w.version || 1}`].filter(Boolean).join(' · '); })()),
     h('p', {}, h('strong', {}, '사용 방법: '), w.howToUse || ''),
     d.report ? (d.report.ok ? h('p', { class: 'ok' }, '자동 점검: 걸린 항목이 없어요') : h('div', {}, h('p', { class: 'notice error' }, '자동 점검에서 걸렸어요'), h('ul', { class: 'warn-list' }, d.report.warnings.map((x) => h('li', {}, `${x.label} — ${x.reason}`))))) : h('p', { class: 'muted' }, '외부 주소 작품이에요: ' + (w.url || '')),
     w.type === 'html' ? h('div', {},

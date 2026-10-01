@@ -1,6 +1,6 @@
 // 꾸러미 내보내기·가져오기 (DOM 없음)
 import { createPack, parsePack, serializePack } from '../shared/pack.js';
-import { checkHtml } from './checker.js';
+import { checkWork } from './checker.js';
 
 // 내 곳간 기록 중 고른 것만 꾸러미 텍스트로 만든다. 반환: { text, count, fileName }
 export function exportBundle(records, ids, { name, now = new Date() } = {}) {
@@ -22,7 +22,7 @@ export async function previewImport(text, { verifyWorks, existingIds }) {
     items: entries.map((e) => ({
       work: e.work,
       status: e.status,
-      report: e.work.type === 'html' ? checkHtml(e.work.html) : null,
+      report: checkWork(e.work),
       duplicate: existingIds.has(e.work.id),
     })),
   };

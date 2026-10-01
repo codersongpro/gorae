@@ -6,9 +6,10 @@ import { parsePack } from '../shared/pack.js';
 import { buildClassBundle, LONG_TEXT_CHARS } from '../extension/core/classpack.js';
 import { previewImport } from '../extension/core/bundle.js';
 import { createWork } from '../extension/core/work.js';
+import { lessonInput } from './fixtures.mjs';
 
 const mk = (title, extra = {}) =>
-  createWork({ type: 'html', html: '<p>a</p>', grade: '초4', subject: '수학', howToUse: '해 보세요', author: '푸른 고래 · 초등', title, ...extra }, { idGen: () => title });
+  createWork(lessonInput({ html: '<p>a</p>', grade: '4', subject: '수학', topic: '분수', howToUse: '해 보세요', title, ...extra }), { idGen: () => title });
 const rec = (w) => ({ id: w.id, work: w, source: 'maker' });
 const verifyNone = async (works) => works.map((work) => ({ work, status: { ok: false, reason: tp.REASON.NO_TAILPRINT } }));
 

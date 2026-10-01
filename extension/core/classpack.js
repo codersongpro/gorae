@@ -1,5 +1,6 @@
 // 학급 꾸러미: 어미고래 모드에서 작품을 골라 꾸러미와 웨일 클래스 공지 문구를 함께 만든다 (DOM 없음)
 import { createPack, serializePack, MAX_ITEMS } from '../shared/pack.js';
+import { normalizeWork } from '../shared/taxonomy.js';
 
 export const CLASS_URL = 'https://class.whalespace.io';
 // 공지·과제 글 길이 제한을 아직 확인하지 못해, 이 길이를 넘으면 파일 첨부를 권한다
@@ -7,7 +8,13 @@ export const LONG_TEXT_CHARS = 16000;
 
 // 학생에게 보여 줄 안내 공지 (붙여넣기용 텍스트)
 export function buildNotice({ name, works, teacherNote = '' }) {
-  const list = works.map((w, i) => `${i + 1}. ${w.title} (${[w.grade, w.subject].filter(Boolean).join('·')})`).join('\n');
+  const list = works
+    .map((w, i) => {
+      const m = normalizeWork(w); // 예전 '초4' 형식과 새 학교급+학년 형식을 함께 처리
+      const label = [m.gradeLabel, m.subject].filter(Boolean).join('·') || m.path.slice(1).join('·');
+      return `${i + 1}. ${w.title}${label ? ` (${label})` : ''}`;
+    })
+    .join('\n');
   return [
     `[고래곳간 꾸러미] ${name}`,
     teacherNote.trim() ? teacherNote.trim() : null,

@@ -32,7 +32,7 @@ export async function buildZip() {
     const comp = deflateRawSync(data, { level: 9 });
     const useDeflate = comp.length < data.length;
     const body = useDeflate ? comp : data;
-    const nameBuf = Buffer.from(name, 'utf8');
+    const nameBuf = Buffer.from('extension/' + name, 'utf8'); // 압축을 풀면 extension 폴더 아래에 파일이 들어간다
     const crc = crc32(data);
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4); local.writeUInt16LE(0x0800, 6); // UTF-8 이름

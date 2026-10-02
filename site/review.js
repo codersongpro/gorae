@@ -215,8 +215,7 @@ function catalogOut() {
     h('textarea', { readonly: true, 'aria-label': 'catalog.json' }, text),
     h('div', { class: 'row' },
       h('button', { class: 'secondary', onclick: () => copy(text) }, '복사'),
-      h('button', { class: 'secondary', onclick: () => download('catalog.json', text) }, '내려받기'),
-      h('a', { class: 'btn', href: 'https://github.com/codersongpro/gorae/edit/main/site/catalog.json', target: '_blank', rel: 'noopener noreferrer' }, '게시하기 (GitHub에서 catalog.json 편집 열기)')));
+      h('button', { class: 'secondary', onclick: () => download('catalog.json', text) }, '내려받기')));
 }
 
 // ---------- C. 고래 족보 관리 (파수꾼고래) ----------
@@ -397,7 +396,7 @@ function tokenCard() {
       : h('p', { class: 'notice' }, '토큰이 없어서 [검수 완료] 뒤에 catalog.json을 직접 올려야 해요. 아래 토큰을 한 번 저장하면 바로 올라가요.'),
     h('details', {}, h('summary', {}, '토큰 만드는 방법'),
       h('ol', { class: 'guide-list' },
-        h('li', {}, h('a', { href: 'https://github.com/settings/personal-access-tokens/new', target: '_blank', rel: 'noopener noreferrer' }, 'GitHub → Fine-grained token 만들기'), '를 열어요.'),
+        h('li', {}, 'GitHub 설정 → Developer settings → Fine-grained tokens에서 새 토큰을 만들어요.'),
         h('li', {}, 'Repository access는 [Only select repositories]에서 gorae 하나만 골라요.'),
         h('li', {}, 'Permissions → Repository permissions → [Contents]를 [Read and write]로 해요. 만료일은 짧게(예: 30일) 정해요.'),
         h('li', {}, '[Generate token]으로 나온 github_pat_… 값을 아래에 붙여 넣고 저장해요.'))),

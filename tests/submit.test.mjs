@@ -87,3 +87,11 @@ test('폼 주소는 https만 연다', () => {
   assert.equal(validFormUrl('https://naver.me/abcd'), 'https://naver.me/abcd');
   for (const bad of ['http://naver.me/a', 'javascript:alert(1)', '', undefined]) assert.equal(validFormUrl(bad), null, String(bad));
 });
+
+import { buildSharePackage } from '../extension/core/submit.js';
+test('나눔 곳간 공유(웹앱)는 주소 칸에 주소만 담는다', () => {
+  const web = { id: 'w1', title: '컷캡', type: 'url', artifactType: 'webapp', url: 'https://cutcap.vercel.app', howToUse: '쓰세요', description: '편집', domain: 'lesson', category: 'classroom_tool', subcategory: 'etc', audience: ['teacher'], tags: [], version: 1 };
+  const r = buildSharePackage(web, { nickname: '별빛 고래', role: 'teacher', privacyChecked: true });
+  assert.equal(r.ok, true);
+  assert.equal(r.prefill.address, 'https://cutcap.vercel.app');
+});

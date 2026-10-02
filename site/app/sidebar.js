@@ -487,7 +487,10 @@ function showToast() {
   toastTimer = setTimeout(() => { el.remove(); if (state.notice === msg) state.notice = ''; }, 2200);
 }
 
+let lastScreen = null;
 async function render() {
+  // 화면이 바뀌면(예: 사용 방법을 열면) 맨 위부터 보이게 한다
+  if (state.screen !== lastScreen) { lastScreen = state.screen; window.scrollTo(0, 0); }
   if (state.screen === 'run') return;
   if (state.screen === 'create') {
     const k = state.create.kind;

@@ -13,7 +13,8 @@ const nickOk = (a) => typeof a === 'string' && a.trim().length > 0;
 const safeName = (t) => String(t).replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 60) || '고래곳간_작품';
 
 // 반환: { ok, answers?: { whale, nickname, title, isFile, address? }, file?: { name, text, type }, warnings?, errors? }
-export function buildWorkSubmission(work, { nickname, role, privacyChecked } = {}) {
+// includeCard: 주소 칸 아래에 작품 정보 줄을 덧붙일지 (나눔 곳간 공유 폼은 주소만 깔끔하게 보낸다)
+export function buildWorkSubmission(work, { nickname, role, privacyChecked, includeCard = true } = {}) {
   const errors = [];
   const warnings = [];
   const nick = String(nickname || '').trim();
@@ -39,9 +40,11 @@ export function buildWorkSubmission(work, { nickname, role, privacyChecked } = {
   } else {
     address = work.url;
   }
-  const withCard = `${address}\n${cardLine(work)}`;
-  if (withCard.length <= FORM_LIMITS.address) address = withCard;
-  else warnings.push('작품 정보가 길어 주소만 보내요. 파수꾼고래가 분류를 직접 확인해야 해요.');
+  if (includeCard) {
+    const withCard = `${address}\n${cardLine(work)}`;
+    if (withCard.length <= FORM_LIMITS.address) address = withCard;
+    else warnings.push('작품 정보가 길어 주소만 보내요. 파수꾼고래가 분류를 직접 확인해야 해요.');
+  }
   if (address.length > FORM_LIMITS.address) return { ok: false, errors: [`주소 칸은 ${FORM_LIMITS.address}자까지예요.`] };
   return { ok: true, answers: { ...answers, address }, warnings };
 }
@@ -49,7 +52,7 @@ export function buildWorkSubmission(work, { nickname, role, privacyChecked } = {
 // 나눔 곳간 공유 묶음: 업로드 파일 + 구글 폼 미리 채우기 값 (에듀노트 스킬마켓의 ShareModal과 같은 흐름)
 // 반환: { ok, file?, prefill: { whale, nickname, title, description, category, address, comment }, warnings, errors? }
 export function buildSharePackage(work, { nickname, role, comment = '', privacyChecked } = {}) {
-  const base = buildWorkSubmission(work, { nickname, role, privacyChecked });
+  const base = buildWorkSubmission(work, { nickname, role, privacyChecked, includeCard: false });
   if (!base.ok) return base;
   const m = normalizeWork(work);
   // 폼 문항: 닉네임 · 앱 제목 · 앱 종류(복수) · 설명 · 자료 종류 · (웹 앱이면) 주소

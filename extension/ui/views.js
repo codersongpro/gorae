@@ -270,7 +270,7 @@ function spoutRow(entry, { countsOf, mineOf, onSpout }) {
     h('button', {
       'aria-pressed': String(!!mine), title: S.spout.hint, 'aria-label': `${mine ? S.spout.done : S.spout.button} ${S.spout.counts(c.teacher, c.student)}`,
       onclick: () => onSpout(entry),
-    }, h('span', { class: 'emoji', 'aria-hidden': 'true' }, '🐳'), ' ', mine ? S.spout.done : S.spout.button, ' ', S.spout.counts(c.teacher, c.student)));
+    }, h('span', { class: 'emoji', 'aria-hidden': 'true' }, mine ? '🐳' : '🐋'), ' ', mine ? S.spout.done : S.spout.button, ' ', S.spout.counts(c.teacher, c.student)));
 }
 
 // 보내지 않은 물뿜기 띠

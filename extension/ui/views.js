@@ -269,6 +269,7 @@ function workCard(entry, opts) {
       onRemix ? h('button', { onclick: () => onRemix(entry) }, S.actions.remix) : null,
       onRemove ? h('button', { class: 'danger', onclick: () => onRemove(entry) }, S.actions.remove) : null,
       onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
+      share && share.onClassNow ? h('button', { 'data-tour': 'class-now', title: S.share.classNowHint, onclick: () => share.onClassNow(entry) }, S.actions.classShare) : null,
       h('button', { 'data-tour': 'details', onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details),
       h('button', { class: 'primary', 'data-tour': 'run', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
@@ -397,12 +398,10 @@ export function marketRunConfirm({ title, onRun, onCancel }) {
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다
-function sharePanel(entry, { kinds, serviceLabel, onShare, onLink, onClassNow }) {
+function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
   return h('div', { class: 'detail' },
     h('p', { class: 'muted' }, S.share.title),
     serviceLabel ? h('p', { class: 'notice' }, S.share.nowOn(serviceLabel)) : null,
-    onClassNow ? h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'class-now', title: S.share.classNowHint, onclick: () => onClassNow(entry) }, S.share.classNow)) : null,
-    onClassNow ? h('p', { class: 'muted' }, S.share.classNowHint) : null,
     h('div', { class: 'row', 'data-tour': 'share-kinds' },
       kinds.map((k, i) => h('button', { class: i === 0 && serviceLabel ? 'primary' : '', onclick: () => onShare(entry, k) }, S.share.kinds[k])),
       h('button', { 'data-tour': 'share-link', onclick: () => onLink(entry) }, S.share.link)),

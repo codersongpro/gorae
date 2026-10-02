@@ -192,8 +192,8 @@ async function shareToClassNow(entry) {
   const w = entry.work;
   const link = await viewerLinkOf(w);
   let text = buildShare('class', w, { link, status: entry.status }).text;
-  if (!link || link.length > MAX_INLINE_LINK) text += '\n📎 첨부한 파일(.gorae.json)은 고래곳간 ↓ [가져오기]에서 열어요.';
-  else text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ↓ [가져오기]에서 열어요.';
+  // 링크가 길면 안내문에 이미 '파일을 첨부했어요' 줄이 있으므로, 링크가 짧을 때만 파일 안내 줄을 더한다
+  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ↓ [가져오기]에서 열어요.';
   await navigator.clipboard.writeText(text);
   const pack = createPack({ name: w.title, items: [w] });
   saveTextFile(serializePack(pack), `${String(w.title).replace(/[\/:*?"<>|\s]+/g, '_')}.gorae.json`);

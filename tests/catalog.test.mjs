@@ -61,7 +61,7 @@ test('AC-003 초4·수학 3건 중 고래 픽 1건을 필터하면 1건만 나�
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const g4 = filterEntries(entries, { grade: '초4', subject: '수학', mode: 'mother' });
-  assert.equal(g4.length, 4);
+  assert.equal(g4.length, 3);
   const picked = filterEntries(entries, { grade: '초4', subject: '수학', pickOnly: true, mode: 'mother' });
   assert.deepEqual(picked.map((e) => e.work.id), ['sample-fraction-pizza']);
 });

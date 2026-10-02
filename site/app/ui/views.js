@@ -100,7 +100,7 @@ function findBar({ entries, state, onFilter, sortSel }) {
 // 카드 한 줄 분류: 수업 › 교과활동 › 연습 · 초4 수학 · 10분 · 개인 · 교사+학생
 function metaLine(entry) {
   const m = metaOf(entry);
-  const items = [m.path.slice(1).join(' › '), [m.gradeLabel, m.subject].filter(Boolean).join(' '), m.topic, timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
+  const items = [m.path.slice(1).join(' › '), [m.gradeLabel, m.subject].filter(Boolean).join(' '), m.unit ? `단원 ${m.unit}` : '', m.topic, timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
   return h('div', { class: 'card-meta' },
     h('div', { class: 'meta' }, items.map((t) => h('span', {}, t))),
     m.tags.length ? h('div', { class: 'meta' }, m.tags.map((t) => h('span', {}, '#' + t))) : null,

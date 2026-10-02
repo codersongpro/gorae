@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>용해 가상 실험</title>
+<style>
+  :root { --b: #1b6ec2; --tx: #14213d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #eaf3ff; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 780px) { .wrap { grid-template-columns: 1fr 1fr; } header, .full { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #51607a; font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 8px; align-content: start; }
+  label { display: grid; gap: 2px; font-weight: 700; } input[type=range] { width: 100%; height: 34px; accent-color: var(--b); } select { font: inherit; padding: 8px; border-radius: 10px; border: 1px solid #c9d3f5; }
+  svg { width: 100%; height: auto; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 16px; border: 1px solid #c9d3f5; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; } th, td { border-bottom: 1px solid #e3e8f5; padding: 6px; text-align: center; } th { background: #f3f6ff; }
+  #msg { font-weight: 800; min-height: 1.6em; } .hint { background: #fff8e1; border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🧂 용해 가상 실험</h1><p class="sub">5학년 과학 · 용해와 용액. 물의 온도와 양을 바꿔 가며 설탕과 소금이 얼마나 녹는지 알아봐요. 실제 실험 전에 예상을 세워 보세요.</p></header>
+  <section class="card" aria-label="실험 조건">
+    <label>용질 <select id="who"><option value="sugar">설탕</option><option value="salt">소금</option></select></label>
+    <label>물의 온도: <span id="tv">20</span>℃<input type="range" id="temp" min="0" max="80" step="10" value="20"></label>
+    <label>물의 양: <span id="wv">100</span>mL<input type="range" id="water" min="50" max="200" step="50" value="100"></label>
+    <div class="r"><button class="p" id="add">한 숟가락(5g) 넣기</button><button id="stir">저어 주기</button><button id="reset">처음부터</button></div>
+    <div class="hint">예상해 보세요: 물이 따뜻해지면 더 많이 녹을까요? 물이 많아지면요?</div>
+  </section>
+  <section class="card" aria-label="비커">
+    <svg viewBox="0 0 240 220" role="img" aria-label="비커 그림. 녹지 않은 가루가 바닥에 쌓여요" id="bk"></svg>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </section>
+  <section class="card full" aria-label="결과 기록">
+    <strong>실험 결과 기록표</strong>
+    <table><thead><tr><th>용질</th><th>온도(℃)</th><th>물(mL)</th><th>넣은 양(g)</th><th>녹은 양(g)</th></tr></thead><tbody id="log"></tbody></table>
+    <div class="r"><button id="save">지금 결과 기록하기</button><button id="clear">기록표 지우기</button></div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  // 100mL 물에 녹는 최대량(g)의 단순한 값: 온도가 높을수록 더 녹는다
+  const BASE = { sugar: [180, 200, 230, 260, 300, 340, 380, 430, 480], salt: [35, 35, 36, 36, 37, 37, 38, 38, 39] };
+  const max = () => { const i = +$('temp').value / 10; return (BASE[$('who').value][i] * +$('water').value) / 100; };
+  let added = 0, stirred = false, log = [];
+  const NS = 'http://www.w3.org/2000/svg';
+  function draw() {
+    const mx = max(), dissolved = stirred ? Math.min(added, mx) : Math.min(added, mx) * 0.3, rest = Math.max(0, added - dissolved);
+    const bk = $('bk'); bk.textContent = '';
+    const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); bk.appendChild(e); return e; };
+    const h = 40 + (+$('water').value / 200) * 110, y = 200 - h;
+    const tint = Math.min(0.6, dissolved / (mx || 1) * 0.5);
+    el('rect', { x: 50, y: y, width: 140, height: h, fill: `rgba(60,130,220,${0.25 + tint * 0.5})`, rx: 6 });
+    el('path', { d: 'M45 30 V200 a8 8 0 0 0 8 8 H187 a8 8 0 0 0 8 -8 V30', fill: 'none', stroke: '#51607a', 'stroke-width': 4 });
+    const grains = Math.min(60, Math.round(rest / 2));
+    for (let k = 0; k < grains; k++) el('circle', { cx: 56 + ((k * 37) % 128), cy: 198 - Math.floor(k / 14) * 5 - ((k * 7) % 4), r: 3, fill: $('who').value === 'sugar' ? '#fff' : '#eceff5', stroke: '#9aa5bd', 'stroke-width': 0.8 });
+    $('msg').textContent = added === 0 ? '가루를 넣어 보세요.' : rest > 0.1 ? `바닥에 ${rest.toFixed(0)}g이 녹지 않고 남았어요.${stirred ? '' : ' 저어 주면 더 녹을 수 있어요.'}` : `${dissolved.toFixed(0)}g이 모두 녹았어요.`;
+  }
+  const upd = () => { $('tv').textContent = $('temp').value; $('wv').textContent = $('water').value; added = 0; stirred = false; draw(); };
+  ['temp', 'water', 'who'].forEach((id) => $(id).addEventListener('input', upd));
+  $('add').onclick = () => { added += 5; stirred = false; draw(); };
+  $('stir').onclick = () => { stirred = true; draw(); };
+  $('reset').onclick = upd;
+  $('save').onclick = () => { const mx = max(); log.push([$('who').selectedOptions[0].text, $('temp').value, $('water').value, added, Math.min(added, mx).toFixed(0)]); drawLog(); };
+  $('clear').onclick = () => { log = []; drawLog(); };
+  function drawLog() { const tb = $('log'); tb.textContent = ''; log.forEach((r) => { const tr = document.createElement('tr'); r.forEach((c) => { const td = document.createElement('td'); td.textContent = c; tr.appendChild(td); }); tb.appendChild(tr); }); }
+  upd();
+</script>
+</body>
+</html>

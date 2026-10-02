@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>볼록 렌즈 가상 실험</title>
+<style>
+  :root { --b: #6a3fd1; --tx: #1c1633; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #f1ecff; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #5d5380; font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 8px; }
+  svg { width: 100%; height: auto; background: #12102a; border-radius: 12px; touch-action: none; }
+  label { display: grid; gap: 2px; font-weight: 700; } input[type=range] { width: 100%; height: 34px; accent-color: var(--b); }
+  .res { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .res div { background: #f7f3ff; border-radius: 12px; padding: 8px 12px; } .res b { display: block; font-size: 1.2rem; color: var(--b); }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border: 1px solid #d8cdfa; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #a99af7; outline-offset: 2px; }
+  .hint { background: #fff8e1; border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🔍 볼록 렌즈 가상 실험</h1><p class="sub">6학년 과학 · 빛과 렌즈. 물체를 렌즈에서 멀리 또는 가까이 놓으면 상이 어떻게 달라지는지 살펴봐요.</p></header>
+  <section class="card" aria-label="광학대">
+    <svg viewBox="0 0 400 200" id="sv" role="img" aria-label="광학대 위의 물체, 볼록 렌즈, 스크린"></svg>
+    <label>물체와 렌즈 사이 거리: <span id="dv">60</span>cm<input type="range" id="d" min="10" max="120" step="1" value="60"></label>
+    <div class="r"><button data-d="25">초점 거리보다 가까이</button><button data-d="40">초점 거리의 두 배</button><button data-d="80">멀리</button></div>
+    <div class="hint">렌즈의 초점 거리는 20cm예요. 상은 스크린에 맺히는 실제 상일 때만 선명하게 보여요.</div>
+  </section>
+  <section class="card" aria-label="결과">
+    <div class="res" role="status" aria-live="polite">
+      <div>상의 위치<b id="ri">-</b></div><div>상의 모양<b id="rd">-</b></div><div>상의 크기<b id="rs">-</b></div>
+    </div>
+    <p id="why" class="sub"></p>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const F = 20, NS = 'http://www.w3.org/2000/svg';
+  const sx = 3; // 1cm = 3 단위
+  const LX = 200;
+  function draw() {
+    const d = +$('d').value; $('dv').textContent = d;
+    const sv = $('sv'); sv.textContent = '';
+    const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); sv.appendChild(e); return e; };
+    el('line', { x1: 0, y1: 100, x2: 400, y2: 100, stroke: '#49477a', 'stroke-width': 1, 'stroke-dasharray': '4 4' });
+    el('ellipse', { cx: LX, cy: 100, rx: 8, ry: 70, fill: 'rgba(120,180,255,.35)', stroke: '#9cc8ff', 'stroke-width': 2 });
+    [-F, F].forEach((f) => { el('circle', { cx: LX + f * sx / 1.5, cy: 100, r: 3, fill: '#ffd54f' }); });
+    const ox = LX - Math.min(d, 60) * sx * 0.55 - (d > 60 ? (d - 60) * 0.25 : 0);
+    const oH = 40;
+    el('line', { x1: ox, y1: 100, x2: ox, y2: 100 - oH, stroke: '#ff8a65', 'stroke-width': 5, 'stroke-linecap': 'round' });
+    el('polygon', { points: `${ox - 6},${100 - oH + 8} ${ox},${100 - oH - 6} ${ox + 6},${100 - oH + 8}`, fill: '#ff8a65' });
+    let msg;
+    if (Math.abs(d - F) < 0.5) { msg = ['상이 맺히지 않음', '-', '-', '물체가 초점에 있으면 빛이 나란히 나가서 상이 맺히지 않아요.']; }
+    else if (d < F) {
+      const v = (d * F) / (F - d), m = v / d; const ix = LX - Math.min(v, 120) * sx * 0.55;
+      el('line', { x1: ix, y1: 100, x2: ix, y2: 100 - oH * Math.min(m, 3), stroke: '#ffb199', 'stroke-width': 4, 'stroke-dasharray': '5 4' });
+      msg = ['렌즈와 같은 쪽 (스크린에 안 맺힘)', '바로 선 모양 (확대된 허상)', `${m.toFixed(1)}배`, '물체가 초점 안쪽에 있으면 렌즈로 들여다볼 때 확대되어 보이는 허상이 생겨요. (돋보기!)'];
+    } else {
+      const v = (d * F) / (d - F), m = v / d; const ix = LX + Math.min(v, 120) * sx * 0.55;
+      const h = oH * m;
+      el('rect', { x: ix - 2, y: 20, width: 4, height: 160, fill: '#2c2a52' });
+      el('line', { x1: ix, y1: 100, x2: ix, y2: 100 + Math.min(h, 70), stroke: '#ffd180', 'stroke-width': 5, 'stroke-linecap': 'round' });
+      msg = [`렌즈에서 ${v.toFixed(0)}cm 뒤`, '거꾸로 선 모양 (실제 상)', m < 0.95 ? `${m.toFixed(1)}배 (작아져요)` : m > 1.05 ? `${m.toFixed(1)}배 (커져요)` : '같은 크기', d >= 2 * F ? '물체가 초점 거리의 두 배보다 멀면 작고 거꾸로 선 상이 맺혀요.' : '물체가 초점과 두 배 거리 사이에 있으면 더 크고 거꾸로 선 상이 맺혀요.'];
+    }
+    $('ri').textContent = msg[0]; $('rd').textContent = msg[1]; $('rs').textContent = msg[2]; $('why').textContent = msg[3];
+  }
+  $('d').addEventListener('input', draw);
+  document.querySelectorAll('button[data-d]').forEach((b) => { b.onclick = () => { $('d').value = b.dataset.d; draw(); }; });
+  draw();
+</script>
+</body>
+</html>

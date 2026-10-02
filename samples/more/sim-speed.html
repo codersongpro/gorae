@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>속력 가상 실험</title>
+<style>
+  :root { --b: #e65100; --tx: #2b1a0f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #fff3e6; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #7a5a40; font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 8px; }
+  .track { position: relative; height: 150px; background: linear-gradient(#cfe8ff 0 55%, #7cb342 55% 62%, #8d6e63 62%); border-radius: 12px; overflow: hidden; }
+  .lane { position: absolute; left: 0; right: 0; height: 36px; } .lane span.car { position: absolute; font-size: 2rem; line-height: 1; transform: scaleX(-1); transition: none; }
+  .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,.25); } .mark i { position: absolute; top: 2px; left: 4px; font: 700 .7rem sans-serif; font-style: normal; color: #333; }
+  label { display: grid; gap: 2px; font-weight: 700; } input[type=range] { width: 100%; height: 34px; accent-color: var(--b); }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 16px; border: 1px solid #f1d2b3; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #ffb074; outline-offset: 2px; }
+  table { width: 100%; border-collapse: collapse; } th, td { border-bottom: 1px solid #f3e1cf; padding: 6px; text-align: center; } th { background: #fff7ef; }
+  .big { font-size: 1.4rem; font-weight: 800; color: var(--b); } .hint { background: #fff8e1; border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🚗 속력 가상 실험</h1><p class="sub">5학년 과학 · 물체의 운동. 두 자동차가 같은 거리를 달릴 때 걸린 시간을 비교해 속력을 구해요.</p></header>
+  <section class="card" aria-label="경기장">
+    <div class="track" id="track" role="img" aria-label="두 자동차가 달리는 길">
+      <div class="lane" style="top:30px"><span class="car" id="c1">🚗</span></div>
+      <div class="lane" style="top:84px"><span class="car" id="c2">🚙</span></div>
+    </div>
+    <label>🚗 빠르기: <span id="v1">5</span>m/s<input type="range" id="s1" min="1" max="10" value="5"></label>
+    <label>🚙 빠르기: <span id="v2">8</span>m/s<input type="range" id="s2" min="1" max="10" value="8"></label>
+    <label>달릴 거리: <span id="dv">40</span>m<input type="range" id="dist" min="20" max="100" step="20" value="40"></label>
+    <div class="r"><button class="p" id="go">출발!</button><button id="rs">다시 놓기</button></div>
+    <div class="hint">달린 거리가 같을 때는 걸린 시간이 짧을수록 속력이 빨라요. 속력 = 거리 ÷ 시간</div>
+  </section>
+  <section class="card" aria-label="기록">
+    <table><thead><tr><th></th><th>걸린 시간(초)</th><th>속력(m/s)</th><th>1분 동안 달리는 거리</th></tr></thead>
+      <tbody><tr><td>🚗</td><td id="t1">-</td><td id="r1">-</td><td id="m1">-</td></tr><tr><td>🚙</td><td id="t2">-</td><td id="r2">-</td><td id="m2">-</td></tr></tbody></table>
+    <div class="big" id="win" role="status" aria-live="polite"></div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let raf = 0, run = false, t0 = 0;
+  const dist = () => +$('dist').value;
+  function place(p1, p2) { const w = $('track').clientWidth - 40; $('c1').style.left = `${p1 * w}px`; $('c2').style.left = `${p2 * w}px`; }
+  function marks() { document.querySelectorAll('.mark').forEach((m) => m.remove()); const n = 4; for (let k = 1; k <= n; k++) { const m = document.createElement('div'); m.className = 'mark'; m.style.left = `${(k / n) * 100}%`; const i = document.createElement('i'); i.textContent = `${(dist() * k) / n}m`; m.appendChild(i); $('track').appendChild(m); } }
+  function upd() { $('v1').textContent = $('s1').value; $('v2').textContent = $('s2').value; $('dv').textContent = dist(); reset(); }
+  function reset() { cancelAnimationFrame(raf); run = false; place(0, 0); marks(); ['t1', 't2', 'r1', 'r2', 'm1', 'm2'].forEach((id) => { $(id).textContent = '-'; }); $('win').textContent = ''; }
+  $('go').onclick = () => {
+    reset(); run = true; t0 = performance.now();
+    const s1 = +$('s1').value, s2 = +$('s2').value, d = dist(), T1 = d / s1, T2 = d / s2, scale = 4; // 화면에서는 4배 느리게
+    let done1 = false, done2 = false;
+    const tick = (now) => {
+      const t = ((now - t0) / 1000) * scale;
+      place(Math.min(1, t * s1 / d), Math.min(1, t * s2 / d));
+      if (!done1 && t >= T1) { done1 = true; $('t1').textContent = T1.toFixed(1); $('r1').textContent = s1; $('m1').textContent = `${s1 * 60}m`; }
+      if (!done2 && t >= T2) { done2 = true; $('t2').textContent = T2.toFixed(1); $('r2').textContent = s2; $('m2').textContent = `${s2 * 60}m`; }
+      if (done1 && done2) { $('win').textContent = s1 === s2 ? '🤝 같은 속력이에요. 걸린 시간도 같아요.' : `${s1 > s2 ? '🚗' : '🚙'}가 먼저 도착했어요! 같은 거리를 더 짧은 시간에 달렸으니 속력이 더 빨라요.`; run = false; return; }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  };
+  $('rs').onclick = reset;
+  ['s1', 's2', 'dist'].forEach((id) => $(id).addEventListener('input', upd));
+  window.addEventListener('resize', () => { if (!run) place(0, 0); });
+  upd();
+</script>
+</body>
+</html>

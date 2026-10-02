@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전구 연결 가상 실험</title>
+<style>
+  :root { --b: #00796b; --tx: #11302c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #e6f6f3; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 780px) { .wrap { grid-template-columns: 1fr 1fr; } header, .full { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #4a6b66; font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 8px; align-content: start; }
+  svg { width: 100%; height: auto; background: #fbfffe; border-radius: 12px; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 16px; border: 1px solid #b9dcd6; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button[aria-pressed=true] { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #4db6ac; outline-offset: 2px; }
+  label { display: flex; align-items: center; gap: 8px; font-weight: 700; } input[type=range] { accent-color: var(--b); height: 34px; }
+  .bulb { transition: fill .2s; } #msg { font-weight: 800; min-height: 3em; } .hint { background: #fff8e1; border-radius: 12px; padding: 8px 12px; font-size: .92rem; }
+  @media (prefers-reduced-motion: reduce) { .bulb { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>💡 전구 연결 가상 실험</h1><p class="sub">6학년 과학 · 전기의 이용. 전지와 전구를 직렬 또는 병렬로 연결해 전구의 밝기를 비교해요.</p></header>
+  <section class="card" aria-label="회로">
+    <svg viewBox="0 0 320 220" id="sv" role="img" aria-label="전지와 전구 두 개로 이루어진 회로"></svg>
+    <div class="r">
+      <span class="r" role="group" aria-label="연결 방법"><button id="ser" aria-pressed="true">전구 직렬연결</button><button id="par" aria-pressed="false">전구 병렬연결</button></span>
+    </div>
+    <div class="r"><label>전지 수: <span id="nv">1</span>개<input type="range" id="n" min="1" max="3" value="1"></label></div>
+    <div class="r"><button id="sw" aria-pressed="true">스위치 닫힘(켜짐)</button><button id="rm">전구 하나 빼기</button></div>
+    <div class="hint">직렬연결은 전류가 지나는 길이 하나, 병렬연결은 갈래가 여러 개예요.</div>
+  </section>
+  <section class="card" aria-label="관찰">
+    <div id="msg" role="status" aria-live="polite"></div>
+    <table style="width:100%;border-collapse:collapse"><thead><tr><th>전구 1</th><th>전구 2</th></tr></thead><tbody><tr><td id="b1" style="text-align:center;font-size:1.3rem">-</td><td id="b2" style="text-align:center;font-size:1.3rem">-</td></tr></tbody></table>
+    <p class="sub" id="why"></p>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  let mode = 'ser', on = true, removed = false;
+  // 밝기 규칙(교육용 단순 모델): 전지 n개, 직렬은 n/2, 병렬은 n. 전구를 빼면 직렬은 모두 꺼지고 병렬은 나머지 전구만 켜져요.
+  function levels() {
+    const n = +$('n').value;
+    if (!on) return [0, 0];
+    if (mode === 'ser') return removed ? [0, 0] : [n / 2, n / 2];
+    return [n, removed ? 0 : n];
+  }
+  const fillOf = (lv) => (lv <= 0 ? '#e0e0e0' : `rgb(255, ${Math.round(245 - Math.min(lv, 3) * 28)}, ${Math.round(160 - Math.min(lv, 3) * 40)})`);
+  const label = (lv) => (lv <= 0 ? '꺼짐' : lv < 1 ? '어두움 🔅' : lv < 2 ? '보통 💡' : lv < 3 ? '밝음 💡💡' : '아주 밝음 💡💡💡');
+  function draw() {
+    const lv = levels(), sv = $('sv'); sv.textContent = '';
+    const el = (nm, a, txt) => { const e = document.createElementNS(NS, nm); for (const k in a) e.setAttribute(k, a[k]); if (txt) e.textContent = txt; sv.appendChild(e); return e; };
+    const wire = { stroke: '#37474f', 'stroke-width': 4, fill: 'none', 'stroke-linecap': 'round' };
+    // 전지
+    const n = +$('n').value;
+    for (let k = 0; k < n; k++) { el('rect', { x: 20, y: 80 + k * 28, width: 30, height: 22, rx: 4, fill: '#ffb300', stroke: '#6d4c00', 'stroke-width': 2 }); el('text', { x: 35, y: 96 + k * 28, 'text-anchor': 'middle', 'font-size': 12, fill: '#4e342e' }, '+ −'); }
+    const top = 80, bot = 80 + n * 28;
+    if (mode === 'ser') {
+      el('path', { d: `M35 ${top} V30 H120`, ...wire }); el('path', { d: `M200 30 H290 V190 H35 V${bot}`, ...wire });
+      el('path', { d: 'M120 30 H200', ...wire, stroke: on ? '#37474f' : '#b0bec5' });
+      [140, 230].forEach((cx, i) => { if (removed && i === 1) { el('circle', { cx: cx - 20, cy: 30, r: 9, fill: '#fff', stroke: '#e53935', 'stroke-width': 2 }); return; } el('circle', { cx: cx - 20 + (i ? 10 : 0), cy: 30, r: 18, class: 'bulb', fill: fillOf(lv[i]), stroke: '#37474f', 'stroke-width': 3 }); });
+    } else {
+      el('path', { d: `M35 ${top} V30 H290`, ...wire }); el('path', { d: `M35 ${bot} V190 H290`, ...wire });
+      [95, 215].forEach((cx, i) => { el('path', { d: `M${cx} 30 V72`, ...wire }); el('path', { d: `M${cx} 148 V190`, ...wire }); if (removed && i === 1) { el('circle', { cx, cy: 110, r: 9, fill: '#fff', stroke: '#e53935', 'stroke-width': 2 }); return; } el('circle', { cx, cy: 110, r: 36, class: 'bulb', fill: fillOf(lv[i]), stroke: '#37474f', 'stroke-width': 3 }); });
+    }
+    if (!on) el('text', { x: 160, y: 125, 'text-anchor': 'middle', 'font-size': 14, fill: '#78909c' }, '스위치 열림');
+    $('b1').textContent = label(lv[0]); $('b2').textContent = removed ? '(빼 놓음)' : label(lv[1]);
+    $('msg').textContent = !on ? '스위치가 열려 있어서 전류가 흐르지 않아요.' : mode === 'ser' ? (removed ? '직렬연결에서 전구를 빼면 길이 끊겨서 나머지 전구도 꺼져요.' : '직렬연결: 전구 2개가 전지를 나눠 써서 어두워요.') : (removed ? '병렬연결에서는 전구 하나를 빼도 다른 전구는 그대로 켜져 있어요.' : '병렬연결: 전구마다 따로 전지에 연결되어 밝아요.');
+    $('why').textContent = `전지 ${n}개 · ${mode === 'ser' ? '직렬' : '병렬'}연결`;
+    $('nv').textContent = n;
+    $('ser').setAttribute('aria-pressed', mode === 'ser'); $('par').setAttribute('aria-pressed', mode === 'par');
+    $('sw').setAttribute('aria-pressed', on); $('sw').textContent = on ? '스위치 닫힘(켜짐)' : '스위치 열림(꺼짐)'; $('rm').textContent = removed ? '전구 다시 끼우기' : '전구 하나 빼기';
+  }
+  $('ser').onclick = () => { mode = 'ser'; draw(); }; $('par').onclick = () => { mode = 'par'; draw(); };
+  $('sw').onclick = () => { on = !on; draw(); }; $('rm').onclick = () => { removed = !removed; draw(); }; $('n').addEventListener('input', draw);
+  draw();
+</script>
+</body>
+</html>

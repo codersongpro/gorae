@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공문 할 일 추출기</title>
+<style>
+  :root { --b: #3366ff; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #f7f7f8; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 800px) { .wrap { grid-template-columns: 1fr 1fr; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: var(--mu); font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; align-content: start; }
+  textarea { width: 100%; min-height: 260px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; resize: vertical; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  .item { display: grid; grid-template-columns: auto 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; } .item.d span.t { text-decoration: line-through; color: var(--mu); }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; margin-right: 6px; background: #eef2ff; color: #0054d1; }
+  .tag.due { background: #ffe9e9; color: #b00c0c; } .tag.who { background: #e6f8fc; color: #00788c; }
+  h2 { font-size: 1.05rem; margin: 6px 0 0; } .none { color: var(--mu); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>📑 공문 할 일 추출기</h1><p class="sub">공문 본문을 붙여 넣으면 기한·제출·대상이 들어 있는 문장을 골라 할 일 목록으로 만들어요. 내용은 이 화면 밖으로 나가지 않아요.</p></header>
+  <section class="card" aria-label="공문 붙여넣기">
+    <label for="src"><strong>공문 내용</strong></label>
+    <textarea id="src">1. 관련: 교육지원청 학교안전과-1234(2026. 9. 20.)
+2. 2026학년도 학생 안전교육 실시 결과를 아래와 같이 제출하여 주시기 바랍니다.
+가. 제출 기한: 2026. 10. 15.(수)까지
+나. 제출 방법: 업무관리시스템 문서 등록 및 결과표 첨부
+다. 대상: 전 학급 담임교사
+3. 안전교육은 10월 중 학급별로 2차시 이상 실시하여야 합니다.
+4. 결과표는 학년 부장이 취합하여 교무부에 제출하시기 바랍니다.
+붙임 결과표 서식 1부. 끝.</textarea>
+    <div class="r"><button class="p" id="go">할 일 뽑기</button><button id="copy">목록 복사</button></div>
+    <p class="sub">공문의 이름·학생 정보는 붙여 넣지 말고, 업무에 필요한 부분만 넣어 주세요.</p>
+  </section>
+  <section class="card" aria-label="할 일 목록"><div id="out" aria-live="polite"></div></section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const DUE = /(\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?(\([월화수목금토일]\))?\s*(까지)?|\d{1,2}월\s*\d{1,2}일(\([월화수목금토일]\))?\s*(까지)?|이번\s*주|다음\s*주|월말|\d{1,2}월\s*중)/;
+  const ACT = /(제출|보고|회신|취합|등록|신청|실시|제출하|참석|확인하여|작성|공유|배부|안내)/;
+  const WHO = /(담임교사|교과\s*담당|학년\s*부장|부장교사|업무\s*담당자?|전\s*교직원|교무부|행정실|학생|학부모|전\s*학급)/;
+  let items = [], text = '';
+  function parse() {
+    const lines = $('src').value.split(/\n/).map((s) => s.trim()).filter(Boolean);
+    items = lines.map((l) => ({ l, due: (l.match(DUE) || [])[0], act: ACT.test(l), who: (l.match(WHO) || [])[0] }))
+      .filter((x) => x.act || x.due).map((x) => ({ ...x, done: false }));
+  }
+  function draw() {
+    const out = $('out'); out.textContent = '';
+    const h = document.createElement('h2'); h.textContent = `찾은 할 일 ${items.length}건`; out.appendChild(h);
+    if (!items.length) { const p = document.createElement('p'); p.className = 'none'; p.textContent = '기한이나 제출·실시 같은 말이 든 문장을 찾지 못했어요.'; out.appendChild(p); return; }
+    items.sort((a, b) => (b.due ? 1 : 0) - (a.due ? 1 : 0)).forEach((it) => {
+      const row = document.createElement('label'); row.className = 'item' + (it.done ? ' d' : '');
+      const c = document.createElement('input'); c.type = 'checkbox'; c.checked = it.done; c.onchange = () => { it.done = c.checked; draw(); };
+      const s = document.createElement('span'); s.className = 't';
+      if (it.due) { const t = document.createElement('span'); t.className = 'tag due'; t.textContent = '기한 ' + it.due.replace(/\s+/g, ' '); s.appendChild(t); }
+      if (it.who) { const t = document.createElement('span'); t.className = 'tag who'; t.textContent = it.who; s.appendChild(t); }
+      s.appendChild(document.createTextNode(it.l));
+      row.append(c, s); out.appendChild(row);
+    });
+  }
+  $('go').onclick = () => { parse(); draw(); };
+  $('copy').onclick = async () => { if (!items.length) parse(); text = items.map((x) => `□ ${x.due ? '[' + x.due.trim() + '] ' : ''}${x.l}`).join('\n'); try { await navigator.clipboard.writeText(text); $('copy').textContent = '복사했어요 ✓'; } catch { $('copy').textContent = '복사하지 못했어요'; } setTimeout(() => { $('copy').textContent = '목록 복사'; }, 1800); };
+  $('go').click();
+</script>
+</body>
+</html>

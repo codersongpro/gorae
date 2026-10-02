@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>업무 인수인계 체크리스트</title>
+<style>
+  :root { --b: #5b37ed; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #f7f7f8; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: var(--mu); font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  input[type=text], select { font: inherit; padding: 8px 10px; border: 1px solid #e1e2e4; border-radius: 10px; width: 100%; }
+  .add { display: grid; grid-template-columns: 1fr 9em auto; gap: 8px; } @media (max-width: 560px) { .add { grid-template-columns: 1fr; } }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 16px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #a99af7; outline-offset: 2px; }
+  .prog { height: 12px; background: #eee; border-radius: 999px; overflow: hidden; } .prog i { display: block; height: 100%; background: var(--b); width: 0; transition: width .3s; }
+  .grp h2 { font-size: 1rem; margin: 8px 0 2px; color: var(--b); }
+  .it { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid #f0f0f0; } .it.d span { text-decoration: line-through; color: var(--mu); }
+  .it button { min-height: 36px; padding: 0 10px; font-weight: 400; } .r { display: flex; flex-wrap: wrap; gap: 8px; }
+  @media (prefers-reduced-motion: reduce) { .prog i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🔁 업무 인수인계 체크리스트</h1><p class="sub">맡은 업무를 시기별로 정리하고, 넘겨줄 때 빠진 것이 없는지 확인해요. 개인정보나 비밀번호는 적지 않아요.</p></header>
+  <section class="card" aria-label="업무 추가">
+    <label for="task"><strong>인수인계 항목</strong></label>
+    <div class="add"><input type="text" id="task" placeholder="예: 3월 학년 교육과정 설명회 자료 준비"><select id="when" aria-label="시기"><option>3~4월</option><option>5~6월</option><option>7~8월</option><option>9~10월</option><option>11~12월</option><option>1~2월</option><option>수시</option></select><button class="p" id="add">추가</button></div>
+    <div class="r"><button id="tpl">예시 항목 넣기</button><button id="copy">목록 복사</button><button id="clear">모두 지우기</button></div>
+  </section>
+  <section class="card" aria-label="진행 상황">
+    <div>확인 <strong id="cnt">0 / 0</strong></div><div class="prog" aria-hidden="true"><i id="pg"></i></div>
+    <div id="list" class="grp"></div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const ORDER = ['3~4월', '5~6월', '7~8월', '9~10월', '11~12월', '1~2월', '수시'];
+  let items = [];
+  const SAMPLE = [['3~4월', '학년 교육과정 설명회 자료 준비'], ['3~4월', '학부모 상담 주간 안내문 발송'], ['5~6월', '체험학습 장소 사전 답사 및 보고'], ['9~10월', '학생 안전교육 결과 제출'], ['11~12월', '학년 말 평가 계획 공유'], ['수시', '공문 처리 현황 파일 정리']];
+  function draw() {
+    const list = $('list'); list.textContent = '';
+    ORDER.forEach((w) => {
+      const g = items.filter((i) => i.w === w); if (!g.length) return;
+      const h = document.createElement('h2'); h.textContent = w; list.appendChild(h);
+      g.forEach((it) => {
+        const row = document.createElement('label'); row.className = 'it' + (it.d ? ' d' : '');
+        const c = document.createElement('input'); c.type = 'checkbox'; c.checked = it.d; c.onchange = () => { it.d = c.checked; draw(); };
+        const s = document.createElement('span'); s.textContent = it.t;
+        const x = document.createElement('button'); x.type = 'button'; x.textContent = '삭제'; x.setAttribute('aria-label', `${it.t} 삭제`); x.onclick = (e) => { e.preventDefault(); items = items.filter((v) => v !== it); draw(); };
+        row.append(c, s, x); list.appendChild(row);
+      });
+    });
+    const done = items.filter((i) => i.d).length;
+    $('cnt').textContent = `${done} / ${items.length}`; $('pg').style.width = items.length ? `${(done / items.length) * 100}%` : '0';
+  }
+  $('add').onclick = () => { const t = $('task').value.trim(); if (!t) return; items.push({ w: $('when').value, t, d: false }); $('task').value = ''; draw(); };
+  $('task').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('add').click(); });
+  $('tpl').onclick = () => { SAMPLE.forEach(([w, t]) => { if (!items.some((i) => i.t === t)) items.push({ w, t, d: false }); }); draw(); };
+  $('clear').onclick = () => { if (items.length && !confirm('모든 항목을 지울까요?')) return; items = []; draw(); };
+  $('copy').onclick = async () => { const t = ORDER.map((w) => { const g = items.filter((i) => i.w === w); return g.length ? `[${w}]\n` + g.map((i) => `${i.d ? '☑' : '□'} ${i.t}`).join('\n') : ''; }).filter(Boolean).join('\n\n'); try { await navigator.clipboard.writeText(t); $('copy').textContent = '복사했어요 ✓'; } catch { $('copy').textContent = '복사하지 못했어요'; } setTimeout(() => { $('copy').textContent = '목록 복사'; }, 1800); };
+  $('tpl').click();
+</script>
+</body>
+</html>

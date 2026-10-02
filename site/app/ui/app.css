@@ -277,3 +277,10 @@ body {
 .maker { align-items: center; }
 .maker .maker-label { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
 .run-title { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* 설치 안내 (웹 맨 위) */
+.install-sec { border-left: var(--space-1) solid var(--color-primary); }
+.install-sec .lead { margin: 0; font-weight: var(--font-weight-bold); }
+.install-steps { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-3); }
+.install-steps li p { margin: 0 0 var(--space-1); }
+.install-sec a.btn { text-decoration: none; }

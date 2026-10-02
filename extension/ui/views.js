@@ -561,11 +561,22 @@ export function examLockView() {
 }
 
 // 사용 방법 화면: 등급(역할)·배지·표시 읽는 법을 한 곳에 모으고, 따라 해보기 버튼을 둔다
-export function guideView({ onStartTour, onBack, web = false }) {
+export function guideView({ onStartTour, onBack, onCopy, web = false }) {
   const G = S.guide;
   const sec = (title, ...kids) => h('section', { class: 'card guide-sec' }, h('h3', {}, title), ...kids.filter(Boolean));
+  // 웨일 사이드바 설치 (웹 버전에서는 맨 위): 링크는 눌러서 열고, whale:// 주소는 복사 버튼을 쓴다
+  const installSec = () => h('section', { class: 'card guide-sec install-sec', 'data-tour': 'install' },
+    h('h3', {}, G.web.installTitle), h('p', { class: 'lead' }, G.web.installIntro),
+    h('button', { class: 'primary', 'data-tour': 'install-start', onclick: () => onStartTour('install') }, G.web.startInstall),
+    h('ol', { class: 'install-steps' }, G.web.installSteps.map((st, i) => h('li', { 'data-tour': `inst-${i + 1}` },
+      h('p', {}, st.text),
+      st.links || st.copy ? h('div', { class: 'row' },
+        (st.links || []).map((l) => h('a', { class: 'btn', href: l.href, target: '_blank', rel: 'noopener noreferrer' }, l.label)),
+        st.copy ? h('button', { type: 'button', onclick: () => onCopy(st.copy) }, st.copyLabel) : null) : null))),
+    h('p', { class: 'muted' }, G.web.installNote));
   return h('section', { class: 'section guide' },
     h('div', { class: 'row' }, h('button', { onclick: onBack }, S.actions.back), h('h2', {}, G.title)),
+    web ? installSec() : null,
     h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: () => onStartTour('main') }, G.start),
       h('button', { onclick: () => onStartTour('share') }, G.startShare))),
     sec(G.rolesTitle, h('p', { class: 'muted' }, G.rolesIntro),
@@ -577,10 +588,10 @@ export function guideView({ onStartTour, onBack, web = false }) {
       h('div', { class: 'guide-rows' }, G.marks.map((m) =>
         h('div', { class: 'guide-row' }, h('span', { class: m.cls ? `badge ${m.cls}` : 'badge' }, m.label), h('p', {}, m.text))))),
     sec(G.signTitle, h('p', {}, G.signText), h('ul', { class: 'guide-list' }, G.signStates.map((t) => h('li', {}, t)))),
-    sec(web ? G.web.installTitle : G.web.goTitle,
-      h('p', {}, web ? G.web.installIntro : G.web.goIntro),
-      web ? h('ol', { class: 'guide-list' }, G.web.installSteps.map((t) => h('li', {}, t))) : h('p', {}, h('a', { class: 'btn', href: G.web.url, target: '_blank', rel: 'noopener noreferrer' }, G.web.goBtn)),
-      h('p', { class: 'muted' }, web ? G.web.installNote : G.web.goNote)),
+    web ? null : sec(G.web.goTitle,
+      h('p', {}, G.web.goIntro),
+      h('p', {}, h('a', { class: 'btn', href: G.web.url, target: '_blank', rel: 'noopener noreferrer' }, G.web.goBtn)),
+      h('p', { class: 'muted' }, G.web.goNote)),
     sec(G.podsTitle, h('ul', { class: 'guide-list' }, G.pods.map((t) => h('li', {}, t)))),
     h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length) + ' ' + G.shareCount(SHARE_TOUR_STEPS.length)));
 }

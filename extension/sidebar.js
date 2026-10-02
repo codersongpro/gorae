@@ -34,7 +34,7 @@ import { PAGE_SIZE } from './ui/views.js';
 import { buildFlowSteps, recommendForRemote } from './core/flow.js';
 import { metaOf } from './core/filter.js';
 import { startTour } from './ui/tour.js';
-import { TOUR_STEPS, SHARE_TOUR_STEPS } from './ui/guide-steps.js';
+import { TOUR_STEPS, SHARE_TOUR_STEPS, INSTALL_TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
@@ -96,18 +96,23 @@ async function toggleFavorite(entry) {
 
 // 따라 해보기: 단계마다 필요한 곳간 탭으로 옮겨 가며 실제 버튼을 비춘다
 function beginTour(which = 'main') {
-  go({ screen: 'main', tab: 'catalog', openId: null });
+  const install = which === 'install';
+  go({ screen: install ? 'guide' : 'main', tab: 'catalog', openId: null });
   startTour({
-    steps: which === 'share' ? SHARE_TOUR_STEPS : TOUR_STEPS, t: S.tour,
+    steps: install ? INSTALL_TOUR_STEPS : which === 'share' ? SHARE_TOUR_STEPS : TOUR_STEPS, t: S.tour,
     prepare: async (st) => {
       const patch = {};
-      if (state.screen !== 'main') patch.screen = 'main';
-      if (st.tab && state.tab !== st.tab) { patch.tab = st.tab; patch.openId = null; }
+      const want = st.screen || 'main';
+      if (state.screen !== want) patch.screen = want;
+      if (!st.screen && st.tab && state.tab !== st.tab) { patch.tab = st.tab; patch.openId = null; }
       if (st.open === 'first') { const first = (await store.list())[0]; if (first) patch.openId = first.id; }
       if (Object.keys(patch).length) { Object.assign(state, patch); await render(); }
     },
-    onEnd: (done) => { go({ screen: 'main', tab: 'catalog', openId: null, notice: done ? S.tour.finished : '' }); },
+    onEnd: (done) => { install ? go({ screen: 'guide', notice: done ? S.tour.finished : '' }) : go({ screen: 'main', tab: 'catalog', openId: null, notice: done ? S.tour.finished : '' }); },
   });
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); go({ notice: S.guide.web.copied }); } catch { go({ notice: text }); }
 }
 const toggleDetail = (id) => go({ openId: state.openId === id ? null : id });
 
@@ -508,7 +513,7 @@ async function render() {
     }));
   }
   if (state.screen === 'guide') {
-    return app.replaceChildren(guideView({ onStartTour: beginTour, web: globalThis.GORAE_WEB === true, onBack: () => go({ screen: 'main' }) }));
+    return app.replaceChildren(guideView({ onStartTour: beginTour, onCopy: copyText, web: globalThis.GORAE_WEB === true, onBack: () => go({ screen: 'main' }) }));
   }
   if (state.screen === 'pin') {
     const P = S.pin;
@@ -620,6 +625,8 @@ try {
 try {
   await loadAll();
   render();
+  // 소개 페이지의 '설치 따라 해보기' 링크(app/#install)로 들어오면 바로 설치 안내를 시작한다
+  if (globalThis.GORAE_WEB === true && location.hash === '#install') setTimeout(() => beginTour('install'), 300);
   // 물뿜기: 보내지 못한 것을 다시 보내고, 응답 시트에서 모두의 숫자를 읽는다
   flushPending({ storage, fetchFn: fetch, config: CONFIG }).then(async () => { state.mySpouts = await mySpouts(storage); refreshSpoutCounts(); });
   // 메인 탭이 바뀌면 서비스에 맞는 공유 버튼 순서를 갱신한다

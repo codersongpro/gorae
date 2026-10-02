@@ -342,3 +342,10 @@ article.card .card-head { padding-bottom: var(--space-1); border-bottom: var(--b
 
 /* 이미 내 곳간에 담은 작품의 담기 버튼 */
 button.in-mine { background: var(--color-mypod-soft); color: var(--color-mypod); border-color: var(--color-mypod); font-weight: var(--font-weight-bold); }
+
+/* ⋯ 메뉴가 사이드바 왼쪽에서 잘리지 않게: 메뉴를 버튼이 아니라 카드 줄(오른쪽 끝)에 맞춰 연다 */
+.more-menu { position: static; }
+.card-actions { position: relative; }
+.select-inner { position: relative; }
+.more-menu .menu-pop { right: 0; left: auto; min-width: min(15em, 100%); max-width: 100%; }
+.more-menu.up .menu-pop { left: 0; right: auto; top: auto; bottom: 100%; }

@@ -28,20 +28,31 @@ function checkList(report) {
     h('ul', { class: 'warn-list' }, report.warnings.map((w) => h('li', {}, `${w.label} — ${w.reason}`))));
 }
 
+// 빈 상태: 가운데 정렬 아이콘 + 제목 + (선택) 보조 버튼
+export const emptyState = (title, { icon = '🐳', text = '', action = null } = {}) =>
+  h('div', { class: 'empty' }, h('span', { class: 'icon', 'aria-hidden': 'true' }, icon), h('h3', {}, title),
+    text ? h('p', {}, text) : null, action ? h('button', { onclick: action.onClick }, action.label) : null);
+
 export function tabsBar(current, onSelect) {
   return h('div', { class: 'tabs', role: 'tablist' },
     ['catalog', 'market', 'mypod', 'class'].map((k) =>
       h('button', { class: `tab ${k}`, role: 'tab', 'aria-selected': String(current === k), onclick: () => onSelect(k) },
-        S.tabs[k], h('small', {}, S.tabHints[k]))));
+        S.tabs[k])));
 }
 
 export function topBar(mode, onToggle, onCreate, onImport) {
-  return h('header', { class: `topbar ${mode === 'mother' ? 'mother' : ''}` },
-    h('div', {}, h('h1', {}, S.appName), h('p', { class: 'muted' }, S.mode[mode])),
-    h('div', { class: 'row' },
-      h('button', { onclick: onCreate }, S.actions.create),
-      h('button', { onclick: onImport }, S.actions.import),
-      h('button', { onclick: onToggle }, mode === 'baby' ? S.mode.toggleToMother : S.mode.toggleToBaby)));
+  const teacher = mode === 'mother';
+  return h('div', { class: 'top' },
+    teacher ? h('div', { class: 'mode-band', role: 'status' }, S.mode.band) : null,
+    h('header', { class: 'topbar' },
+      h('div', { class: 'brand' },
+        h('span', { class: 'logo', 'aria-hidden': 'true' }, '🐋'),
+        h('h1', {}, S.appName),
+        h('span', { class: `mode-label ${teacher ? 'teacher' : ''}` }, S.mode[mode])),
+      h('div', { class: 'actions' },
+        h('button', { class: 'icon-btn', 'aria-label': S.actions.create, title: S.actions.create, onclick: onCreate }, '＋'),
+        h('button', { class: 'icon-btn', 'aria-label': S.actions.import, title: S.actions.import, onclick: onImport }, '↓'),
+        h('button', { class: 'icon-btn', 'aria-label': teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, title: teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, onclick: onToggle }, teacher ? '🔓' : '🔒'))));
 }
 
 function select(label, value, options, onChange, labels = {}, allLabel = S.filter.all) {
@@ -63,7 +74,7 @@ function findBar({ entries, state, onFilter, sortSel }) {
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
   const tags = topTags(entries);
   return h('div', { class: 'filters' },
-    h('label', { class: 'wide' }, Fd.search, q),
+    h('div', { class: 'wide' }, q),
     select(S.form.domain, state.domain, DOMAINS, (v) => onFilter({ domain: v, category: '', subcategory: '' }), {}, Fd.domainAll),
     state.domain ? select(S.form.category, state.category, categoriesOf(state.domain), (v) => onFilter({ category: v, subcategory: '' }), {}, Fd.categoryAll) : null,
     cat ? select(cat.detail ? S.form.activityType : S.form.subcategory, state.subcategory, cat.subs, (v) => onFilter({ subcategory: v }), {}, Fd.subAll) : null,
@@ -86,10 +97,10 @@ function findBar({ entries, state, onFilter, sortSel }) {
 // 카드 한 줄 분류: 수업 › 교과활동 › 연습 · 초4 수학 · 10분 · 개인 · 교사+학생
 function metaLine(entry) {
   const m = metaOf(entry);
-  const bits = [m.path.join(' › '), [m.gradeLabel, m.subject].filter(Boolean).join(' '), m.topic, timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
-  return h('div', {},
-    h('p', { class: 'muted' }, bits.join(' · ')),
-    m.tags.length ? h('p', { class: 'muted' }, m.tags.map((t) => '#' + t).join(' ')) : null,
+  const items = [m.path.slice(1).join(' › '), [m.gradeLabel, m.subject].filter(Boolean).join(' '), m.topic, timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
+  return h('div', { class: 'card-meta' },
+    h('div', { class: 'meta' }, items.map((t) => h('span', {}, t))),
+    m.tags.length ? h('div', { class: 'meta' }, m.tags.map((t) => h('span', {}, '#' + t))) : null,
     m.artifactType === 'webapp' ? h('p', { class: 'notice' }, S.cardMeta.webapp) : null,
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
@@ -117,54 +128,53 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
     findBar({ entries, state, onFilter, sortSel }),
-    state.notice ? h('p', { class: 'notice' }, state.notice) : null,
-    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })) : h('p', { class: 'muted' }, S.empty.catalog));
+    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })) : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
 
 function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share, submit, spout }) {
   const w = entry.work;
   const run = canRun(entry);
+  const m = metaOf(entry);
   return h('article', { class: 'card' },
     selectBox || null,
+    h('div', { class: 'row' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null),
     h('h3', {}, w.title),
-    h('div', { class: 'row' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge shallow' }, S.pick) : null),
+    m.description ? h('p', { class: 'desc' }, m.description) : null,
     metaLine(entry),
     w.author ? h('p', { class: 'muted' }, w.author) : null,
     verifyLine(entry),
     w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
-    spout ? spoutRow(entry, spout) : null,
     extra || null,
-    h('div', { class: 'row' },
-      h('button', { class: 'primary', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run),
-      onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
+    h('div', { class: 'card-actions' },
+      spout ? spoutRow(entry, spout) : null,
+      h('span', { class: 'spacer' }),
       onEdit ? h('button', { onclick: () => onEdit(entry) }, S.actions.edit) : null,
       onRemix ? h('button', { onclick: () => onRemix(entry) }, S.actions.remix) : null,
       onRemove ? h('button', { class: 'danger', onclick: () => onRemove(entry) }, S.actions.remove) : null,
-      h('button', { onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details)),
+      onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
+      h('button', { onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details),
+      h('button', { class: 'primary', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
-      metaOf(entry).description ? h('p', {}, metaOf(entry).description) : null,
-      metaOf(entry).standard ? h('p', { class: 'muted' }, `성취기준: ${metaOf(entry).standard}`) : null,
+      m.standard ? h('p', { class: 'muted' }, `성취기준: ${m.standard}`) : null,
       h('div', {}, h('p', { class: 'muted' }, S.detail.howTo), h('p', {}, w.howToUse)),
       w.promptRecipe ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
-      entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎵 ${s.text} — ${s.author}`)) : null,
+      entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎤 ${s.text} — ${s.author}`)) : null,
       checkList(report),
       share ? sharePanel(entry, share) : null,
       submit ? submitPanel(entry, { ...submit, draft: submit.draftOf ? submit.draftOf(entry) : null }) : null) : null);
 }
 
 // 물뿜기: 교사·학생 숫자를 그대로 보여 주고, 기기당 한 번 누를 수 있다
-// 좋아요처럼: 누르면 💨 뿜었어요(숫자 +1), 아직 보내기 전이면 다시 눌러 취소. 보낸 뒤에는 고정.
+// 좋아요처럼: 누르면 🐳 뿜었어요(숫자 +1), 아직 보내기 전이면 다시 눌러 취소. 보낸 뒤에는 고정.
 function spoutRow(entry, { countsOf, mineOf, onSpout }) {
   const c = countsOf(entry);
   const mine = mineOf(entry);
-  const locked = false; // 보낸 뒤에도 다시 누르면 취소 보고가 제출된다
-  return h('div', { class: 'row' },
+  return h('div', { class: 'spout' },
     h('button', {
-      class: mine ? 'chip primary' : 'chip', disabled: locked, 'aria-pressed': String(!!mine),
-      title: locked ? S.spout.lockedHint : S.spout.hint, onclick: () => onSpout(entry),
-    }, mine ? S.spout.done : S.spout.button),
-    h('span', { title: S.spout.hint }, S.spout.counts(c.teacher, c.student)));
+      'aria-pressed': String(!!mine), title: S.spout.hint, 'aria-label': `${mine ? S.spout.done : S.spout.button} ${S.spout.counts(c.teacher, c.student)}`,
+      onclick: () => onSpout(entry),
+    }, h('span', { class: 'emoji', 'aria-hidden': 'true' }, '🐳'), ' ', mine ? S.spout.done : S.spout.button, ' ', S.spout.counts(c.teacher, c.student)));
 }
 
 // 보내지 않은 물뿜기 띠
@@ -272,7 +282,6 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
   q.addEventListener('change', () => onSearch(q.value.trim()));
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
-    state.notice ? h('p', { class: 'notice' }, state.notice) : null,
     total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
     state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
     records.length ? h('div', { class: 'card' },
@@ -293,7 +302,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),
       });
-    }) : state.mypodQuery ? null : h('p', { class: 'muted' }, S.empty.mypod));
+    }) : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐳', text: S.empty.mypod }));
 }
 
 export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass }) {
@@ -305,7 +314,6 @@ export function classView({ mode, records, state, onSelect, onBuild, out, onCopy
   return h('section', { class: 'section' },
     h('h2', {}, C.title),
     h('p', { class: 'muted' }, C.steps),
-    state.notice ? h('p', { class: 'notice' }, state.notice) : null,
     h('p', {}, C.pick),
     records.map((r) => h('label', { class: 'check' },
       h('input', { type: 'checkbox', checked: (state.classSelected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }),
@@ -379,21 +387,47 @@ export function urlConfirmView({ info, onOpen, onCancel }) {
 // 교사고래 암호 화면: 처음이면 정하기, 아니면 넣기
 export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onForgot, onReset }) {
   const P = S.pin;
-  const pin = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'off', 'aria-label': P.pin, placeholder: P.pin, maxlength: '8' });
-  const again = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'off', 'aria-label': P.confirm, placeholder: P.confirm, maxlength: '8' });
-  const submit = () => (hasPin ? onEnter(pin.value) : onSet(pin.value, again.value));
-  pin.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
-  again.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
-  setTimeout(() => pin.focus(), 0);
-  return h('section', { class: 'section' },
-    h('div', { class: 'card' },
-      h('h2', {}, hasPin ? P.enterTitle : P.setTitle),
-      h('p', { class: 'muted' }, hasPin ? P.enterHint : P.setHint),
+  let first = ''; // 정하기 1단계에서 입력한 암호
+  let step = hasPin ? 'enter' : 'set1';
+  let digits = '';
+  const root = h('section', { class: 'section pin' });
+  const MAX = 8;
+  const dots = () => h('div', { class: 'pin-dots', 'aria-label': `${digits.length}자리 입력됨` }, Array.from({ length: Math.max(4, digits.length) }, (_, k) => h('i', { class: k < digits.length ? 'on' : '' })));
+  const confirm = () => {
+    if (digits.length < 4) return;
+    if (step === 'enter') return onEnter(digits);
+    if (step === 'set1') { first = digits; digits = ''; step = 'set2'; return draw(); }
+    return onSet(first, digits);
+  };
+  const press = (d) => { if (digits.length < MAX) { digits += d; draw(); } };
+  const back = () => { digits = digits.slice(0, -1); draw(); };
+  function draw() {
+    const title = step === 'enter' ? P.enterTitle : step === 'set1' ? P.setTitle : P.confirm;
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => h('button', { onclick: () => press(d), 'aria-label': d }, d));
+    root.replaceChildren(...[
+      h('h2', {}, title),
+      h('p', { class: 'muted' }, step === 'enter' ? P.enterHint : P.setHint),
       error ? h('p', { class: 'notice error', role: 'alert' }, error) : null,
-      pin, hasPin ? null : again,
-      h('div', { class: 'row' }, h('button', { class: 'primary', onclick: submit }, P.ok), h('button', { onclick: onCancel }, P.cancel)),
-      hasPin && !askReset ? h('button', { onclick: onForgot }, P.forgot) : null,
-      askReset ? h('div', { class: 'notice' }, h('p', {}, P.forgotConfirm), h('button', { class: 'danger', onclick: onReset }, P.reset)) : null));
+      dots(),
+      h('div', { class: 'keypad' }, ...keys,
+        h('button', { class: 'text', onclick: back }, P.erase),
+        h('button', { onclick: () => press('0'), 'aria-label': '0' }, '0'),
+        h('button', { class: 'text primary', disabled: digits.length < 4, onclick: confirm }, P.ok)),
+      h('div', { class: 'row' }, h('button', { onclick: onCancel }, P.cancel),
+        hasPin && !askReset ? h('button', { onclick: onForgot }, P.forgot) : null),
+      askReset ? h('div', { class: 'notice' }, h('p', {}, P.forgotConfirm), h('button', { class: 'danger', onclick: onReset }, P.reset)) : null,
+    ].filter(Boolean)); // replaceChildren는 null을 글자 "null"로 넣으므로 걸러 낸다
+  }
+  // 키보드로도 입력할 수 있게 한다
+  root.tabIndex = -1;
+  root.addEventListener('keydown', (e) => {
+    if (/^\d$/.test(e.key)) press(e.key);
+    else if (e.key === 'Backspace') back();
+    else if (e.key === 'Enter') confirm();
+  });
+  draw();
+  setTimeout(() => root.focus(), 0);
+  return root;
 }
 
 // 시험 잠금 화면 (학생고래 모드 + 메인 탭이 UBT)

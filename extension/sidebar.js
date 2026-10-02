@@ -384,6 +384,18 @@ async function confirmImport() {
 }
 const toggleIn = (arr, id, on) => (on ? [...new Set([...arr, id])] : arr.filter((x) => x !== id));
 
+// 토스트: 알림 글을 화면 아래에 2.2초 보여 주고 지운다 (화면을 다시 그리지 않아 입력 중인 내용이 안 날아간다)
+let toastTimer = null;
+function showToast() {
+  document.querySelectorAll('.toast').forEach((n) => n.remove());
+  const msg = state.notice;
+  if (!msg) return;
+  const el = h('div', { class: 'toast', role: 'status' }, msg);
+  document.body.append(el);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.remove(); if (state.notice === msg) state.notice = ''; }, 2200);
+}
+
 async function render() {
   // 시험 잠금: 학생고래 모드에서 메인 탭이 UBT면 다른 화면을 모두 가린다 (벗어나면 refreshService가 다시 그림)
   if (isExamLocked(state.service, state.mode)) return app.replaceChildren(examLockView());
@@ -485,6 +497,7 @@ async function render() {
       body,
     ].filter(Boolean),
   );
+  showToast();
 }
 
 state.mode = (await storage.get('mode')) || 'baby';

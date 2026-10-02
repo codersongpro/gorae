@@ -8,16 +8,17 @@ export const S = {
   mode: {
     baby: '학생고래 모드',
     mother: '교사고래 모드',
+    band: '교사고래 모드 (교사) 켜짐',
     toggleToMother: '교사고래 모드로',
     toggleToBaby: '학생고래 모드로',
     on: '교사고래 모드로 바꿨어요. 학생 앞에서는 위쪽 띠 색을 확인하세요.',
   },
   badge: {
-    clear: '🟢 맑은 바다 (학생 사용 가능)',
-    shallow: '🟡 얕은 바다 (교사용 또는 미검수)',
-    whirlpool: '🔴 소용돌이 (보류)',
+    clear: '맑은 바다 · 학생 사용 가능',
+    shallow: '얕은 바다 · 교사용 또는 미검수',
+    whirlpool: '소용돌이 · 보류',
   },
-  pick: '🐋 파수꾼 고래 검수 완료',
+  pick: '★ 파수꾼 고래 검수 완료',
   tailprintOk: (name, date) => `검수 서명 확인됨 · 파수꾼 ${name} · ${date}`,
   reason: {
     NO_TAILPRINT: '검수 서명이 없어요',
@@ -42,7 +43,7 @@ export const S = {
   },
   empty: {
     catalog: '조건에 맞는 작품이 없어요.',
-    mypod: '큰 곳간에서 담아 보세요.',
+    mypodTitle: '내 곳간이 비어 있어요', mypod: '큰 곳간에서 담아 보세요.',
     class: '학급 꾸러미는 교사고래 모드에서 쓸 수 있어요. (8단계에서 구현)',
   },
   actions: {
@@ -131,11 +132,11 @@ export const S = {
     WRONG: (left) => `암호가 틀렸어요. (${left}번 더 틀리면 잠시 잠겨요)`,
     LOCKED: (sec) => `여러 번 틀려서 ${sec}초 동안 잠겼어요.`,
     forgot: '암호를 잊었어요', forgotConfirm: '암호를 지우고 학생고래 모드로 돌아갈까요? 다시 정하면 교사고래 모드를 쓸 수 있어요. (내 곳간 작품은 그대로예요)',
-    reset: '암호 지우기', resetDone: '암호를 지웠어요. 새로 정해 주세요.',
+    reset: '암호 지우기', resetDone: '암호를 지웠어요. 새로 정해 주세요.', erase: '지우기',
   },
   spout: {
-    counts: (t, s) => `💨 교사 ${t} · 학생 ${s}`,
-    button: '💨 물뿜기', done: '💨 뿜었어요',
+    counts: (t, s) => `교사 ${t} · 학생 ${s}`,
+    button: '물뿜기', done: '뿜었어요',
     hint: '좋아요처럼 누르는 익명 추천이에요. 누르면 바로 모두의 숫자에 더해지고, 다시 누르면 취소돼요.',
     lockedHint: '이미 보낸 물뿜기라 취소할 수 없어요.',
     cancelFailed: '인터넷이 안 돼서 물뿜기를 취소하지 못했어요. 잠시 뒤 다시 눌러 주세요.',

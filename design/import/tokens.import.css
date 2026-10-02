@@ -1,7 +1,6 @@
 /* =========================================================
-   고래곳간 디자인 토큰 계약 (design/tokens.css) — 원티드 디자인 시스템 기반 (2026-10-02 적용)
-   - 출처: design/import/tokens.import.css. 변수 '이름'은 계약이라 바꾸지 않는다. 값만 교체한다.
-   - ui/ 코드는 이 변수만 쓴다 (색·px 하드코딩 금지).
+   고래곳간 디자인 토큰 — 원티드 디자인 시스템 기반 (2026-10-02)
+   - 변수 이름은 design/tokens.css 계약 그대로. 값만 교체.
    - 배지 글자·보조 글자는 대비 4.5:1을 맞추려고 원티드 램프에서
      한 단계 진한 값을 골랐다 (화면 시안의 -40 단계보다 진함).
    ========================================================= */
@@ -30,13 +29,6 @@
   --color-badge-shallow-text: #9c5800; /* orange-30 */
   --color-badge-whirlpool: #ffeded;    /* red-50 12% */
   --color-badge-whirlpool-text: #b00c0c; /* red-30 */
-
-  /* 채택한 추가 변수 (디자인 제안) */
-  --color-market: #9c5800;             /* 나눔 곳간 탭 글자 (orange-30) */
-  --color-class: #5b37ed;              /* 학급 꾸러미 탭 글자 (violet-45) */
-  --color-fill: rgba(112, 115, 124, 0.08); /* 검색창·보조 버튼 바탕 */
-  --color-positive: #00bf40;           /* 점검 통과·서명 확인 */
-  --color-caution: #ff9200;            /* 점검 경고 */
 
   --color-danger: #e52222;             /* red-40 (글자·아이콘) */
   --color-focus: #3366ff;
@@ -97,11 +89,6 @@
     --color-badge-whirlpool-text: #ff6363;
     --color-danger: #ff6363;
     --color-focus: #7aa0ff;
-    --color-market: #ffa938;
-    --color-class: #9a82f7;
-    --color-fill: rgba(174, 176, 182, 0.12);
-    --color-positive: #1ed45a;
-    --color-caution: #ffa938;
   }
 }
 :root[data-theme="dark"] {
@@ -125,9 +112,12 @@
   --color-badge-whirlpool-text: #ff6363;
   --color-danger: #ff6363;
   --color-focus: #7aa0ff;
-  --color-market: #ffa938;
-  --color-class: #9a82f7;
-  --color-fill: rgba(174, 176, 182, 0.12);
-  --color-positive: #1ed45a;
-  --color-caution: #ffa938;
 }
+
+/* ---- 추가 제안 변수 (계약 밖, 필요 시 채택) ----
+   --color-market: #9c5800;        나눔 곳간 탭 글자 (orange-30)
+   --color-class: #5b37ed;         학급 꾸러미 탭 글자 (violet-45)
+   --color-fill: rgba(112,115,124,0.08);   검색창·보조 버튼 바탕 (fill-normal)
+   --color-positive: #00bf40;      점검 통과·서명 확인 아이콘
+   --color-caution: #ff9200;       점검 경고 아이콘
+*/

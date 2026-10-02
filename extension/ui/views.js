@@ -42,14 +42,15 @@ export function tabsBar(current, onSelect) {
         S.tabs[k])));
 }
 
-export function topBar(mode, onToggle, onCreate, onImport, onGuide) {
+export function topBar(mode, onToggle, onCreate, onImport, onGuide, onHome) {
   const teacher = mode === 'mother';
   return h('div', { class: 'top' },
     teacher ? h('div', { class: 'mode-band', role: 'status' }, S.mode.band) : null,
     h('header', { class: 'topbar' },
       h('div', { class: 'brand' },
-        h('span', { class: 'logo', 'aria-hidden': 'true' }, '🐋'),
-        h('h1', {}, S.appName),
+        h('button', { class: 'brand-home', type: 'button', title: S.actions.home, 'aria-label': S.actions.home, onclick: onHome },
+          h('span', { class: 'logo', 'aria-hidden': 'true' }, '🐋'),
+          h('h1', {}, S.appName)),
         h('span', { class: `mode-label ${teacher ? 'teacher' : ''}` }, S.mode[mode])),
       h('div', { class: 'actions' },
         h('button', { class: 'icon-btn', 'data-tour': 'create', 'aria-label': S.actions.create, title: S.actions.create, onclick: onCreate }, '＋'),

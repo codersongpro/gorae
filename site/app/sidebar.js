@@ -512,7 +512,8 @@ async function render() {
         return go({ mode: 'baby', notice: '', classOut: null });
       }
       go({ screen: 'pin', pin: { has: await hasPin(storage), error: '', askReset: false } });
-    }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' }), () => go({ screen: 'guide' })),
+    }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' }), () => go({ screen: 'guide' }),
+      () => go({ screen: 'main', tab: 'catalog', openId: null, confirmUrl: null, confirmMarket: null, notice: '' })),
     tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null })),
     // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
     ...[

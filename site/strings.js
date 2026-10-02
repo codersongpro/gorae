@@ -105,7 +105,7 @@ export const S = {
     class: '학급 꾸러미는 교사고래 모드에서 쓸 수 있어요. (8단계에서 구현)',
   },
   actions: {
-    run: '실행', add: '내 곳간에 담기', remove: '삭제', back: '← 돌아가기', openTab: '새 탭에서 열기',
+    home: '첫 화면으로', run: '실행', add: '내 곳간에 담기', remove: '삭제', back: '← 돌아가기', openTab: '새 탭에서 열기',
     create: '만들기', import: '가져오기', edit: '수정', remix: '리믹스', save: '내 곳간에 저장', details: '자세히', close: '접기',
   },
   detail: { howTo: '사용 방법', recipe: '프롬프트 레시피', check: '자동 점검', checkOk: '걸린 항목이 없어요' },

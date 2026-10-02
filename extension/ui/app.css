@@ -205,3 +205,7 @@ a.btn { display: inline-flex; align-items: center; min-height: var(--h-btn); pad
 .verified-card { border-left: var(--space-1) solid var(--color-catalog); }
 .market-card { border-left: var(--space-1) dashed var(--color-market); }
 .badge.precheck { background: var(--color-market); color: var(--color-primary-text); }
+
+/* 제목을 누르면 첫 화면 */
+.brand-home { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch-min); padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; border-radius: var(--radius-md); }
+.brand-home h1 { margin: 0; }

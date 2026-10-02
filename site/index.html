@@ -16,10 +16,10 @@
   .go a.btn.secondary { background: var(--color-surface-raised); color: var(--color-text); border-color: var(--color-border); }
   details.fold { border-top: var(--border-width) solid var(--color-border); padding: var(--space-3) 0; }
   details.fold:first-of-type { border-top: 0; }
-  details.fold summary { cursor: pointer; font-weight: var(--font-weight-bold); min-height: var(--touch-min); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); list-style: none; }
+  details.fold summary { cursor: pointer; font-weight: var(--font-weight-bold); min-height: var(--touch-min); display: flex; align-items: center; gap: var(--space-2); list-style: none; }
   details.fold summary::-webkit-details-marker { display: none; }
-  details.fold summary::after { content: '▶'; color: var(--color-primary); font-size: var(--font-size-sm); flex: none; }
-  details.fold[open] > summary::after { content: '▼'; }
+  details.fold summary::before { content: '▶'; color: var(--color-primary); font-size: var(--font-size-sm); width: 1.2em; flex: none; }
+  details.fold[open] > summary::before { content: '▼'; }
   details.fold summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
   details.fold dl { margin: var(--space-2) 0 0; display: grid; gap: var(--space-2); }
   details.fold dt { font-weight: var(--font-weight-bold); } details.fold dd { margin: 0; color: var(--color-text-muted); }

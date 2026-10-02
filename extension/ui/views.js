@@ -439,12 +439,14 @@ export function classView({ mode, records, state, onSelect, onBuild, out, onCopy
       h('p', {}, C.madeN(out.count)),
       h('p', { class: 'muted' }, C.guide),
       out.tooLong ? h('p', { class: 'notice error' }, C.tooLong) : null,
-      h('button', { class: 'primary', onclick: () => onCopy('all') }, C.copyAll),
+      // 클래스 글은 글자 수 제한이 있어서 '짧은 안내문 + 꾸러미 파일 첨부'가 기본이다
+      h('ol', { class: 'guide-list' }, C.attachSteps.map((t) => h('li', {}, t))),
       h('div', { class: 'row' },
-        h('button', { onclick: () => onCopy('notice') }, C.copyNotice),
-        h('button', { onclick: () => onCopy('assignment') }, C.copyAssignment),
-        h('button', { onclick: () => onCopy('pack') }, C.copyPack),
-        h('button', { onclick: onSaveFile }, C.saveFile)),
+        h('button', { class: 'primary', onclick: onSaveFile }, C.saveFile),
+        h('button', { class: 'primary', onclick: () => onCopy('assignment') }, C.copyAssignment),
+        h('button', { onclick: () => onCopy('notice') }, C.copyNotice)),
+      h('details', {}, h('summary', {}, C.moreCopy),
+        h('div', { class: 'row' }, h('button', { onclick: () => onCopy('all') }, C.copyAll), h('button', { onclick: () => onCopy('pack') }, C.copyPack))),
       h('button', { onclick: onOpenClass }, C.openClass)) : null);
 }
 
@@ -463,7 +465,7 @@ export function runView({ entry, onBack, onOpenTab }) {
 
 export function importView({ preview, errors, onCheck, onToggle, selected, onConfirm, onCancel }) {
   const text = h('textarea', { 'aria-label': S.bundle.pasteLabel, placeholder: S.bundle.pasteLabel });
-  const file = h('input', { type: 'file', accept: '.json,application/json' });
+  const file = h('input', { type: 'file', accept: '.json,.txt,application/json,text/plain' });
   file.addEventListener('change', async () => { const f = file.files[0]; if (f) text.value = await f.text(); });
   return h('section', { class: 'section' },
     h('h2', {}, S.bundle.importTitle),

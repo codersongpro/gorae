@@ -8,7 +8,7 @@ import { isPopular } from '../shared/spout.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
 import { isRestricted } from '../core/reference.js';
-import { TOUR_STEPS, SHARE_TOUR_STEPS } from './guide-steps.js';
+import { TOUR_STEPS } from './guide-steps.js';
 
 const dateOnly = (iso) => String(iso || '').slice(0, 10);
 
@@ -588,8 +588,7 @@ export function guideView({ onStartTour, onBack, onCopy, web = false }) {
   return h('section', { class: 'section guide' },
     h('div', { class: 'row' }, h('button', { onclick: onBack }, S.actions.back), h('h2', {}, G.title)),
     web ? installSec() : null,
-    h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: () => onStartTour('main') }, G.start),
-      h('button', { onclick: () => onStartTour('share') }, G.startShare))),
+    h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: () => onStartTour('main') }, G.start))),
     sec(G.rolesTitle, h('p', { class: 'muted' }, G.rolesIntro),
       h('dl', { class: 'guide-dl' }, G.roles.map((r) => [h('dt', {}, `${r.icon} ${r.name}`), h('dd', {}, r.text)]).flat())),
     sec(G.badgesTitle, h('p', { class: 'muted' }, G.badgesIntro),
@@ -604,5 +603,5 @@ export function guideView({ onStartTour, onBack, onCopy, web = false }) {
       h('p', {}, h('a', { class: 'btn', href: G.web.url, target: '_blank', rel: 'noopener noreferrer' }, G.web.goBtn)),
       h('p', { class: 'muted' }, G.web.goNote)),
     sec(G.podsTitle, h('ul', { class: 'guide-list' }, G.pods.map((t) => h('li', {}, t)))),
-    h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length) + ' ' + G.shareCount(SHARE_TOUR_STEPS.length)));
+    h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length)));
 }

@@ -17,17 +17,6 @@ export const TOUR_STEPS = [
   step('guide', 'catalog', '사용 방법', '여기서 등급과 표시 설명을 다시 읽고, 따라 해보기를 언제든 다시 시작할 수 있어요.'),
 ];
 
-// 웨일 스페이스(클래스·팀보드)에 작품을 올리는 흐름 — open: 'first'는 그 단계에서 첫 작품의 [자세히]를 연다
-export const SHARE_TOUR_STEPS = [
-  step('tab-mypod', 'mypod', '1. 내 곳간에서 시작해요', '공유할 작품은 내 곳간에 있어야 해요. 인증 곳간·나눔 곳간 작품은 먼저 [내 곳간에 담기]를 눌러 주세요.'),
-  step('details', 'mypod', '2. 자세히를 눌러요', '[자세히]를 누르면 아래에 공유 도구가 열려요.'),
-  { ...step('share-kinds', 'mypod', '3. 붙여 넣을 곳을 골라요', '클래스 공지, 팀보드 카드, 그 밖의 스페이스 중 붙일 곳에 맞는 버튼을 누르면 글이 복사돼요. 웨일 서비스 화면을 보고 있으면 알맞은 버튼이 맨 앞에 나와요.'), open: 'first' },
-  { ...step('share-link', 'mypod', '4. 링크만 필요하면', '[바로 실행 링크 복사]는 누르면 바로 실행되는 주소만 복사해요. 메신저나 QR에 쓰기 좋아요.'), open: 'first' },
-  step('teamboard-cards', 'mypod', '5. 팀보드 카드를 한꺼번에', '꾸러미에 담기를 체크한 작품(없으면 ★ 즐겨찾기)을 팀보드 카드 글로 모아 복사해요.'),
-  step('flow-start', 'class', '6. 수업 진행으로 이어가요 (교사고래)', '고른 작품을 도입 → 활동 → 정리 순서로 한 단계씩 여는 수업 진행 화면을 시작해요.'),
-  step('guide', 'catalog', '다 됐어요', '복사한 글은 웨일 스페이스의 클래스 공지·과제 또는 팀보드에서 붙여 넣기(Ctrl+V)하면 끝이에요.'),
-];
-
 // 웨일 사이드바 설치 따라 해보기 — 사용 방법 화면의 설치 목록(inst-1~5)을 한 단계씩 짚는다
 const inst = (n, title, body) => ({ target: `[data-tour="inst-${n}"]`, screen: 'guide', title, body });
 export const INSTALL_TOUR_STEPS = [

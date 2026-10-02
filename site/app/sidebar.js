@@ -34,7 +34,7 @@ import { PAGE_SIZE } from './ui/views.js';
 import { buildFlowSteps, recommendForRemote } from './core/flow.js';
 import { metaOf } from './core/filter.js';
 import { startTour } from './ui/tour.js';
-import { TOUR_STEPS, SHARE_TOUR_STEPS, INSTALL_TOUR_STEPS } from './ui/guide-steps.js';
+import { TOUR_STEPS, INSTALL_TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
@@ -99,7 +99,7 @@ function beginTour(which = 'main') {
   const install = which === 'install';
   go({ screen: install ? 'guide' : 'main', tab: 'catalog', openId: null });
   startTour({
-    steps: install ? INSTALL_TOUR_STEPS : which === 'share' ? SHARE_TOUR_STEPS : TOUR_STEPS, t: S.tour,
+    steps: install ? INSTALL_TOUR_STEPS : TOUR_STEPS, t: S.tour,
     prepare: async (st) => {
       const patch = {};
       const want = st.screen || 'main';

@@ -28,11 +28,13 @@ import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
-import { pinView, marketView, marketRunConfirm, examLockView, guideView } from './ui/views.js';
+import { pinView, marketView, marketRunConfirm, examLockView, guideView, serviceBand, flowView } from './ui/views.js';
 import { isRestricted } from './core/reference.js';
 import { PAGE_SIZE } from './ui/views.js';
+import { buildFlowSteps, recommendForRemote } from './core/flow.js';
+import { metaOf } from './core/filter.js';
 import { startTour } from './ui/tour.js';
-import { TOUR_STEPS } from './ui/guide-steps.js';
+import { TOUR_STEPS, SHARE_TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
@@ -93,14 +95,15 @@ async function toggleFavorite(entry) {
 }
 
 // 따라 해보기: 단계마다 필요한 곳간 탭으로 옮겨 가며 실제 버튼을 비춘다
-function beginTour() {
+function beginTour(which = 'main') {
   go({ screen: 'main', tab: 'catalog', openId: null });
   startTour({
-    steps: TOUR_STEPS, t: S.tour,
+    steps: which === 'share' ? SHARE_TOUR_STEPS : TOUR_STEPS, t: S.tour,
     prepare: async (st) => {
       const patch = {};
       if (state.screen !== 'main') patch.screen = 'main';
       if (st.tab && state.tab !== st.tab) { patch.tab = st.tab; patch.openId = null; }
+      if (st.open === 'first') { const first = (await store.list())[0]; if (first) patch.openId = first.id; }
       if (Object.keys(patch).length) { Object.assign(state, patch); await render(); }
     },
     onEnd: (done) => { go({ screen: 'main', tab: 'catalog', openId: null, notice: done ? S.tour.finished : '' }); },
@@ -398,10 +401,46 @@ async function buildClass(name, note) {
 }
 async function copyClass(kind) {
   const o = state.classOut;
-  await navigator.clipboard.writeText(kind === 'all' ? o.combined : kind === 'notice' ? o.notice : o.packText);
+  await navigator.clipboard.writeText(kind === 'all' ? o.combined : kind === 'notice' ? o.notice : kind === 'assignment' ? o.assignment : o.packText);
   go({ notice: S.classPack.copied[kind] });
 }
 const openClass = () => chrome.tabs.create({ url: CLASS_URL });
+
+// ----- 수업 진행: 고른 작품을 도입 → 활동 → 정리 순서로 한 단계씩 연다
+async function startFlow() {
+  if (!state.classSelected.length) return go({ notice: S.classPack.none });
+  const flow = { ids: [...state.classSelected], i: 0 };
+  await storage.set('flow', flow);
+  go({ screen: 'flow', flow });
+}
+async function moveFlow(i) {
+  const flow = { ...state.flow, i };
+  await storage.set('flow', flow);
+  go({ flow });
+}
+
+// ----- 팀보드 카드: 고른 작품(없으면 즐겨찾기)을 팀보드에 붙일 글로 모아 복사한다
+async function copyTeamboardCards() {
+  const all = await store.list();
+  let recs = all.filter((r) => state.selected.includes(r.id));
+  if (!recs.length) recs = all.filter((r) => r.favorite);
+  if (!recs.length) return go({ notice: S.svc.teamboard.cardsNone });
+  const entries = await verifyWorks(recs.map((r) => r.work));
+  const cards = [];
+  for (const e of entries) cards.push(buildShare('teamboard', e.work, { link: await viewerLinkOf(e.work), status: e.status }).text);
+  await navigator.clipboard.writeText(cards.join('\n\n──────────\n\n'));
+  go({ notice: S.svc.teamboard.cardsCopied(cards.length) });
+}
+
+// 지금 화면의 웨일 서비스에 맞춘 안내 띠
+function serviceTop() {
+  const sv = state.service;
+  const rec = sv === 'remote' ? recommendForRemote(filterEntries(state.entries, { mode: state.mode })) : [];
+  return serviceBand({
+    service: sv, label: SERVICE_LABEL[sv], mode: state.mode, recommended: rec,
+    onGoTab: (tab) => go({ tab, screen: 'main' }), onRun: run, onFlow: () => state.flow && go({ screen: 'flow' }), hasFlow: !!(state.flow && state.flow.ids && state.flow.ids.length),
+  });
+}
 async function copyPack() {
   await navigator.clipboard.writeText(state.exportOut.text);
   go({ notice: S.bundle.copied });
@@ -448,8 +487,18 @@ async function render() {
       hint: k === 'remix' ? S.edit.remixHint : null,
     }));
   }
+  if (state.screen === 'flow') {
+    const records = await store.list();
+    const steps = buildFlowSteps(records, (state.flow && state.flow.ids) || []);
+    const entries = await verifyWorks(steps.map((st) => st.work));
+    const i = Math.min(Math.max(0, (state.flow && state.flow.i) || 0), Math.max(0, steps.length - 1));
+    return app.replaceChildren(flowView({
+      steps, entries, i, onBack: () => go({ screen: 'main', tab: 'class' }), onRun: run,
+      onPrev: () => moveFlow(Math.max(0, i - 1)), onNext: () => moveFlow(Math.min(steps.length - 1, i + 1)), onJump: moveFlow,
+    }));
+  }
   if (state.screen === 'guide') {
-    return app.replaceChildren(guideView({ onStartTour: beginTour, onBack: () => go({ screen: 'main' }) }));
+    return app.replaceChildren(guideView({ onStartTour: beginTour, web: globalThis.GORAE_WEB === true, onBack: () => go({ screen: 'main' }) }));
   }
   if (state.screen === 'pin') {
     const P = S.pin;
@@ -484,7 +533,7 @@ async function render() {
     const pending = Object.values(state.mySpouts).filter((v) => !v.sent).length;
     body = catalogView({
       entries: state.entries, visible, state,
-      ui: cardUi(), onFilter: (p) => go({ ...p, notice: '', limit: PAGE_SIZE }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
+      top: serviceTop(), ui: cardUi(), onFilter: (p) => go({ ...p, notice: '', limit: PAGE_SIZE }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
       onRemix: startRemix, share: shareProps(), submit: submitProps(false),
       spout: spoutProps(),
       sendBar: spoutSendBar({ pending, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
@@ -513,13 +562,13 @@ async function render() {
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
       share: shareProps(), submit: submitProps(true),
       onSearch: (q) => go({ mypodQuery: q, limit: PAGE_SIZE }), total: all.length,
-      ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
+      top: serviceTop(), onTeamboard: copyTeamboardCards, ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
     });
   } else {
     body = classView({
       mode: state.mode, records: state.mode === 'mother' ? await store.list() : [], state,
       onSelect: (id, on) => { state.classSelected = toggleIn(state.classSelected, id, on); },
-      onBuild: buildClass, out: state.classOut, onCopy: copyClass,
+      onBuild: buildClass, out: state.classOut, onCopy: copyClass, onFlow: startFlow,
       onSaveFile: () => saveTextFile(state.classOut.packText, state.classOut.fileName), onOpenClass: openClass,
     });
   }
@@ -547,6 +596,7 @@ async function render() {
 
 await ensureDefaultPin(storage); // 임시 기본 암호 1234 (처음 쓰는 기기에 한 번)
 state.mode = (await storage.get('mode')) || 'baby';
+state.flow = (await storage.get('flow')) || null;
 state.shareProfile = (await storage.get('shareProfile')) || {};
 // 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 학생고래 모드로 시작한다
 if (state.mode === 'mother' && !(await hasPin(storage))) state.mode = 'baby';

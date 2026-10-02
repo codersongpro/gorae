@@ -7,7 +7,7 @@ import { KIND_OPTIONS } from '../shared/market.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
 import { isRestricted } from '../core/reference.js';
-import { TOUR_STEPS } from './guide-steps.js';
+import { TOUR_STEPS, SHARE_TOUR_STEPS } from './guide-steps.js';
 
 const dateOnly = (iso) => String(iso || '').slice(0, 10);
 
@@ -96,6 +96,47 @@ function findBar({ entries, state, onFilter, sortSel }) {
         tags.length ? h('div', { class: 'row wide' }, h('span', { class: 'muted' }, Fd.tag),
           tags.map((t) => h('button', { class: state.tag === t ? 'chip primary' : 'chip', onclick: () => onFilter({ tag: state.tag === t ? '' : t }) }, '#' + t))) : null,
         h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) }, Fd.reset))));
+}
+
+// 지금 보고 있는 웨일 서비스에 맞춘 안내 띠 (클래스·팀보드·웨일온)
+export function serviceBand({ service, label, mode, recommended = [], onGoTab, onRun, onFlow, hasFlow }) {
+  if (!['class', 'teamboard', 'remote'].includes(service)) return null;
+  const V = S.svc;
+  const teacher = mode === 'mother';
+  return h('div', { class: 'card svc-band', 'data-tour': 'svc-band' },
+    h('p', {}, h('strong', {}, V.title(label))),
+    h('p', { class: 'muted' }, V[service].text),
+    service === 'class' ? h('div', { class: 'row' },
+      teacher ? h('button', { class: 'primary', onclick: () => onGoTab('class') }, V.class.go) : h('p', { class: 'muted' }, V.class.needTeacher)) : null,
+    service === 'teamboard' ? h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => onGoTab('mypod') }, V.teamboard.go)) : null,
+    service === 'remote' ? h('div', { class: 'svc-rec' },
+      recommended.length ? recommended.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run)))
+        : h('p', { class: 'muted' }, V.remote.none),
+      teacher ? h('div', { class: 'row' }, h('button', { onclick: () => onGoTab('class') }, V.remote.flow), hasFlow ? h('button', { class: 'primary', onclick: onFlow }, V.remote.resume) : null) : null) : null);
+}
+
+// 수업 진행 화면: 도입 → 활동 → 정리 순서로 한 단계씩 실행한다
+export function flowView({ steps, entries, i, onPrev, onNext, onRun, onBack, onJump }) {
+  const F = S.flow;
+  if (!steps.length) return h('section', { class: 'section' }, h('p', { class: 'notice' }, F.empty), h('button', { onclick: onBack }, S.actions.back));
+  const cur = steps[i];
+  const entry = entries[i];
+  const total = steps.reduce((a, st) => a + st.minutes, 0);
+  return h('section', { class: 'section flow' },
+    h('div', { class: 'row' }, h('button', { onclick: onBack }, S.actions.back), h('h2', {}, F.title)),
+    total ? h('p', { class: 'muted' }, F.total(total)) : null,
+    h('ol', { class: 'flow-steps' }, steps.map((st, k) =>
+      h('li', { class: k === i ? 'now' : k < i ? 'past' : '' },
+        h('button', { type: 'button', 'aria-current': k === i ? 'step' : null, onclick: () => onJump(k) }, h('span', { class: 'lab' }, st.label), h('span', {}, st.work.title))))),
+    h('div', { class: 'card' },
+      h('p', { class: 'muted' }, `${cur.label} · ${i + 1} / ${steps.length}`),
+      h('h3', {}, cur.work.title),
+      cur.work.howToUse ? h('p', {}, cur.work.howToUse) : null,
+      cur.minutes ? h('p', { class: 'muted' }, F.minutes(cur.minutes)) : null,
+      h('div', { class: 'row' },
+        h('button', { class: 'primary', disabled: !entry || !canRun(entry).ok, onclick: () => onRun(entry) }, S.actions.run),
+        h('button', { onclick: onPrev, disabled: i === 0 }, F.prev),
+        h('button', { onclick: onNext, disabled: i === steps.length - 1 }, F.next))));
 }
 
 // 곳간 구역 안내 띠: 큰 곳간(검수됨)과 나눔 곳간(검수 전)을 한눈에 구분한다
@@ -337,17 +378,18 @@ function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
   return h('div', { class: 'detail' },
     h('p', { class: 'muted' }, S.share.title),
     serviceLabel ? h('p', { class: 'notice' }, S.share.nowOn(serviceLabel)) : null,
-    h('div', { class: 'row' },
+    h('div', { class: 'row', 'data-tour': 'share-kinds' },
       kinds.map((k, i) => h('button', { class: i === 0 && serviceLabel ? 'primary' : '', onclick: () => onShare(entry, k) }, S.share.kinds[k])),
-      h('button', { onclick: () => onLink(entry) }, S.share.link)),
+      h('button', { 'data-tour': 'share-link', onclick: () => onLink(entry) }, S.share.link)),
     h('p', { class: 'muted' }, S.share.hint));
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly, top, onTeamboard }) {
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
   q.addEventListener('change', () => onSearch(q.value.trim()));
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
+    top || null,
     total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
     state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
     total ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!state.favOnly, onchange: (e) => onFavOnly(e.target.checked) }), S.fav.only) : null,
@@ -356,6 +398,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
       h('p', {}, S.bundle.exportTitle),
       nameInput,
       h('button', { onclick: () => onExport(nameInput.value) }, S.bundle.exportBtn),
+      h('button', { 'data-tour': 'teamboard-cards', title: S.svc.teamboard.cardsHint, onclick: onTeamboard }, S.svc.teamboard.cards),
       exportOut ? h('div', { class: 'detail' }, h('p', {}, S.bundle.madeN(exportOut.count, exportOut.fileName)),
         h('div', { class: 'row' }, h('button', { onclick: onSaveFile }, S.bundle.saveFile), h('button', { onclick: onCopy }, S.bundle.copy))) : null) : null,
     records.length ? [...sliceOf(records, ui).map((r) => {
@@ -373,7 +416,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
     }), moreButton(records.length, sliceOf(records, ui).length, ui)] : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐳', text: S.empty.mypod }));
 }
 
-export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass }) {
+export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass, onFlow }) {
   const C = S.classPack;
   if (mode !== 'mother') return h('section', { class: 'section' }, h('p', { class: 'notice' }, C.needMother));
   if (!records.length) return h('section', { class: 'section' }, h('p', { class: 'muted' }, C.empty));
@@ -387,7 +430,10 @@ export function classView({ mode, records, state, onSelect, onBuild, out, onCopy
       h('input', { type: 'checkbox', checked: (state.classSelected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }),
       `${r.work.title} (${[r.work.grade, r.work.subject].filter(Boolean).join('·')})`)),
     nameInput, noteInput,
-    h('button', { class: 'primary', onclick: () => onBuild(nameInput.value, noteInput.value) }, C.build),
+    h('div', { class: 'row' },
+      h('button', { class: 'primary', onclick: () => onBuild(nameInput.value, noteInput.value) }, C.build),
+      h('button', { 'data-tour': 'flow-start', onclick: onFlow, title: C.flowHint }, C.flow)),
+    h('p', { class: 'muted' }, C.flowHint),
     out ? h('div', { class: 'card' },
       h('p', {}, C.madeN(out.count)),
       h('p', { class: 'muted' }, C.guide),
@@ -395,6 +441,7 @@ export function classView({ mode, records, state, onSelect, onBuild, out, onCopy
       h('button', { class: 'primary', onclick: () => onCopy('all') }, C.copyAll),
       h('div', { class: 'row' },
         h('button', { onclick: () => onCopy('notice') }, C.copyNotice),
+        h('button', { onclick: () => onCopy('assignment') }, C.copyAssignment),
         h('button', { onclick: () => onCopy('pack') }, C.copyPack),
         h('button', { onclick: onSaveFile }, C.saveFile)),
       h('button', { onclick: onOpenClass }, C.openClass)) : null);
@@ -508,12 +555,13 @@ export function examLockView() {
 }
 
 // 사용 방법 화면: 등급(역할)·배지·표시 읽는 법을 한 곳에 모으고, 따라 해보기 버튼을 둔다
-export function guideView({ onStartTour, onBack }) {
+export function guideView({ onStartTour, onBack, web = false }) {
   const G = S.guide;
   const sec = (title, ...kids) => h('section', { class: 'card guide-sec' }, h('h3', {}, title), ...kids.filter(Boolean));
   return h('section', { class: 'section guide' },
     h('div', { class: 'row' }, h('button', { onclick: onBack }, S.actions.back), h('h2', {}, G.title)),
-    h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: onStartTour }, G.start)),
+    h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: () => onStartTour('main') }, G.start),
+      h('button', { onclick: () => onStartTour('share') }, G.startShare))),
     sec(G.rolesTitle, h('p', { class: 'muted' }, G.rolesIntro),
       h('dl', { class: 'guide-dl' }, G.roles.map((r) => [h('dt', {}, `${r.icon} ${r.name}`), h('dd', {}, r.text)]).flat())),
     sec(G.badgesTitle, h('p', { class: 'muted' }, G.badgesIntro),
@@ -523,6 +571,10 @@ export function guideView({ onStartTour, onBack }) {
       h('div', { class: 'guide-rows' }, G.marks.map((m) =>
         h('div', { class: 'guide-row' }, h('span', { class: m.cls ? `badge ${m.cls}` : 'badge' }, m.label), h('p', {}, m.text))))),
     sec(G.signTitle, h('p', {}, G.signText), h('ul', { class: 'guide-list' }, G.signStates.map((t) => h('li', {}, t)))),
+    sec(web ? G.web.installTitle : G.web.goTitle,
+      h('p', {}, web ? G.web.installIntro : G.web.goIntro),
+      web ? h('ol', { class: 'guide-list' }, G.web.installSteps.map((t) => h('li', {}, t))) : h('p', {}, h('a', { class: 'btn', href: G.web.url, target: '_blank', rel: 'noopener noreferrer' }, G.web.goBtn)),
+      h('p', { class: 'muted' }, web ? G.web.installNote : G.web.goNote)),
     sec(G.podsTitle, h('ul', { class: 'guide-list' }, G.pods.map((t) => h('li', {}, t)))),
-    h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length)));
+    h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length) + ' ' + G.shareCount(SHARE_TOUR_STEPS.length)));
 }

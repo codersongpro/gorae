@@ -256,3 +256,12 @@ body {
 .card { border-radius: calc(var(--radius-lg) + var(--space-1)); border: var(--border-width) solid color-mix(in srgb, var(--color-surface-raised) 65%, transparent); box-shadow: 0 var(--space-3) calc(var(--space-6) + var(--space-2)) color-mix(in srgb, var(--color-text) 10%, transparent), 0 var(--border-width) var(--space-1) color-mix(in srgb, var(--color-text) 6%, transparent), inset 0 var(--border-width) 0 color-mix(in srgb, var(--color-surface-raised) 85%, transparent); transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .card:hover { transform: translateY(calc(var(--border-width) * -2)); box-shadow: 0 var(--space-4) calc(var(--space-6) + var(--space-3)) color-mix(in srgb, var(--color-text) 14%, transparent), inset 0 var(--border-width) 0 color-mix(in srgb, var(--color-surface-raised) 90%, transparent); }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+
+/* 웨일 서비스 띠 · 수업 진행 */
+.svc-band { border-left: var(--space-1) solid var(--color-class); }
+.svc-rec { display: grid; gap: var(--space-2); }
+.flow-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.flow-steps button { width: 100%; display: flex; gap: var(--space-2); align-items: center; text-align: left; min-height: var(--touch-min); }
+.flow-steps li.now button { border-color: var(--color-class); background: var(--color-catalog-soft); font-weight: var(--font-weight-bold); }
+.flow-steps li.past button { opacity: 0.55; }
+.flow-steps .lab { min-width: 3.5em; color: var(--color-class); font-weight: var(--font-weight-bold); }

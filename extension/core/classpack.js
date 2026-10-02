@@ -1,6 +1,7 @@
 // 학급 꾸러미: 교사고래 모드에서 작품을 골라 꾸러미와 웨일 클래스 공지 문구를 함께 만든다 (DOM 없음)
 import { createPack, serializePack, MAX_ITEMS } from '../shared/pack.js';
 import { normalizeWork } from '../shared/taxonomy.js';
+import { buildAssignment } from './flow.js';
 
 export const CLASS_URL = 'https://class.whalespace.io';
 // 공지·과제 글 길이 제한을 아직 확인하지 못해, 이 길이를 넘으면 파일 첨부를 권한다
@@ -47,6 +48,7 @@ export function buildClassBundle(records, ids, { name, teacherNote, now = new Da
     fileName: `${safe}.gorae.json`,
     packText,
     notice,
+    assignment: buildAssignment({ name: pack.name, works: picked.map((r) => r.work), teacherNote }),
     combined,
     tooLong: combined.length > LONG_TEXT_CHARS,
   };

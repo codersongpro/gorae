@@ -60,5 +60,19 @@ await copyJobs(jobs);
 const appJobs = (await listFiles('extension/')).map((f) => [`extension/${f}`, `site/app/${f}`]);
 await copyJobs(appJobs);
 jobs.push(...appJobs);
+
+// 확장앱 설치용 압축 파일(extension/ 폴더만): site/gorae-extension.zip
+{
+  const { buildZip, ZIP_PATH } = await import('./pack-extension.mjs');
+  const zip = await buildZip();
+  const dst = new URL(ZIP_PATH, root);
+  if (check) {
+    const cur = await readFile(dst).catch(() => null);
+    if (!cur || !zip.equals(cur)) { console.log('어긋남:', ZIP_PATH); stale++; }
+  } else {
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile(dst, zip);
+  }
+}
 if (check) process.exit(stale ? 1 : 0);
 console.log(`동기화 ${jobs.length}개 파일`);

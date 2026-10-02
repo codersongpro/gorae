@@ -14,6 +14,14 @@
   .go { display: grid; gap: var(--space-3); }
   .go a.btn { justify-content: center; min-height: var(--touch-min); font-weight: var(--font-weight-bold); }
   .go a.btn.secondary { background: var(--color-surface-raised); color: var(--color-text); border-color: var(--color-border); }
+  details.fold { border-top: var(--border-width) solid var(--color-border); padding: var(--space-3) 0; }
+  details.fold:first-of-type { border-top: 0; }
+  details.fold summary { cursor: pointer; font-weight: var(--font-weight-bold); min-height: var(--touch-min); display: flex; align-items: center; }
+  details.fold summary:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+  details.fold dl { margin: var(--space-2) 0 0; display: grid; gap: var(--space-2); }
+  details.fold dt { font-weight: var(--font-weight-bold); } details.fold dd { margin: 0; color: var(--color-text-muted); }
+  .fold-tools { display: flex; gap: var(--space-2); justify-content: flex-end; }
+  .fold-tools button { min-height: var(--touch-min); }
   ul.points { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
 </style>
 </head>
@@ -38,9 +46,55 @@
       <li><strong>웨일 사이드바</strong>: 확장앱을 설치하면 웨일 클래스·팀보드·UBT 화면 옆에서 바로 쓸 수 있어요. 웨일 PC 브라우저에서만 설치돼요.</li>
       <li><strong>작품 링크</strong>: 선생님이 보낸 링크를 누르면 바로 실행돼요. 작품은 격리된 공간에서 외부 통신 없이 돌아가요.</li>
     </ul>
+    <div class="fold-tools"><button type="button" id="openAll">모두 펼치기</button><button type="button" id="closeAll">모두 접기</button></div>
+
+    <details class="fold" open>
+      <summary>작품 등급: 맑은 바다 · 얕은 바다 · 소용돌이</summary>
+      <dl>
+        <dt>맑은 바다</dt><dd>파수꾼고래의 검수 서명이 확인된 작품이에요. 학생고래도 쓸 수 있어요. 특히 추천하는 작품에는 “★ 파수꾼 고래 검수 완료”가 붙어요.</dd>
+        <dt>얕은 바다</dt><dd>검수 전이거나 자동 점검에서 걸린 항목이 있는 작품이에요. 나눔 곳간의 작품은 대부분 여기에 해당해요. 교사고래가 먼저 확인하고 쓰세요.</dd>
+        <dt>소용돌이</dt><dd>문제가 있어 보류된 작품이에요. 실행할 수 없어요.</dd>
+        <dt>서명이 바뀌면?</dt><dd>검수 뒤에 내용이 바뀌었거나 말소된 서명이면 배지를 주지 않아요. 카드 아래 회색 줄에서 이유를 볼 수 있어요.</dd>
+      </dl>
+    </details>
+
+    <details class="fold">
+      <summary>고래 종류: 학생고래 · 교사고래 · 파수꾼고래</summary>
+      <dl>
+        <dt>🐳 학생고래</dt><dd>맑은 바다 작품만 보고 실행해요. 기본으로 켜져 있어요.</dd>
+        <dt>🔓 교사고래</dt><dd>암호(PIN)로 켜요. 얕은 바다 작품도 확인하고, 학급 꾸러미를 만들고, 작품을 큰 곳간에 보낼 수 있어요.</dd>
+        <dt>🛡️ 파수꾼고래</dt><dd>작품을 검수해 서명하는 최고 관리자예요. 검수 도구에서 서명하고 고래 족보와 이달의 고래자리를 관리해요.</dd>
+      </dl>
+    </details>
+
+    <details class="fold">
+      <summary>나누는 방법</summary>
+      <dl>
+        <dt>바로 실행 링크</dt><dd>내 곳간의 작품에서 링크를 만들어 보내요. 받은 사람은 누르면 바로 실행돼요. 짧은 작품에 알맞아요.</dd>
+        <dt>꾸러미 파일</dt><dd>작품을 최대 10개까지 한 파일(.gorae.json)로 묶어 내보내요. 메신저나 웨일 클래스·스페이스로 전할 수 있어요.</dd>
+        <dt>나눔 곳간에 올리기</dt><dd>구글 설문으로 작품 파일과 소개를 올리면 모두의 나눔 곳간 목록에 보여요. 이름·학교 대신 별명만 써요.</dd>
+        <dt>큰 곳간에 보내기</dt><dd>교사고래 모드에서 검수를 요청해요. 파수꾼고래가 확인하고 서명하면 맑은 바다로 올라와요.</dd>
+        <dt>물뿜기</dt><dd>마음에 드는 작품에 🐳를 눌러 응원해요. 교사고래·학생고래 숫자가 따로 보여요.</dd>
+      </dl>
+    </details>
+
+    <details class="fold">
+      <summary>가져오는 방법</summary>
+      <dl>
+        <dt>큰 곳간·나눔 곳간에서 담기</dt><dd>카드의 [내 곳간에 담기]를 눌러요. 나눔 곳간은 담기 전에 [미리 보기]로 새 창에서 먼저 열어 볼 수 있어요.</dd>
+        <dt>꾸러미 파일·링크로 가져오기</dt><dd>상단의 ↓ [가져오기]에 파일을 올리거나 링크를 붙여 넣어요. 담을 작품을 체크한 뒤 확인해요.</dd>
+        <dt>내 작품 만들기</dt><dd>＋ [만들기]에서 HTML을 붙여 넣거나 배포한 웹앱 주소를 등록해요. 자동 점검을 거쳐 내 곳간에 저장돼요.</dd>
+        <dt>고쳐 쓰기</dt><dd>[리믹스]로 다른 작품을 바탕으로 새 작품을 만들 수 있어요. 원작 이름이 함께 남아요.</dd>
+      </dl>
+    </details>
   </section>
 
   <p class="muted">로그인도 개인정보 저장도 없어요. 작품과 설정은 내 기기에만 저장돼요.</p>
 </main>
+<script>
+  const all = () => document.querySelectorAll('details.fold');
+  document.getElementById('openAll').onclick = () => all().forEach((d) => { d.open = true; });
+  document.getElementById('closeAll').onclick = () => all().forEach((d) => { d.open = false; });
+</script>
 </body>
 </html>

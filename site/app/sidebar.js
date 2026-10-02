@@ -26,7 +26,7 @@ import { S } from './ui/strings.js';
 import { exportBundle, previewImport, importSelected } from './core/bundle.js';
 import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { createPack, serializePack } from './shared/pack.js';
-import { buildClassBundle } from './core/classpack.js';
+import { buildClassBundle, CLASS_URL, TEAMBOARD_URL, WHALEON_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
 import { pinView, marketView, marketRunConfirm, guideView, serviceBand, flowView } from './ui/views.js';
@@ -186,6 +186,38 @@ async function shareWork(entry, kind) {
   go({ notice: link ? S.share.copied(S.share.kinds[kind]) : `${S.share.tooBig} ${S.share.tooBigCopied}` });
 }
 // 웨일 클래스에 도구 하나만 바로 공유: 꾸러미를 만들지 않고, 클래스용 안내문을 복사하고 작품 파일(.gorae.json)을 저장한다
+// 클래스 공유 뒤에 웨일 클래스를 새 탭으로 연다 (이미 클래스 화면을 보고 있으면 그대로 둔다)
+function openServicePage(service, url) {
+  if (state.service === service) return; // 이미 그 서비스 화면을 보고 있으면 그대로 둔다
+  try { if (chrome.tabs && chrome.tabs.create) chrome.tabs.create({ url }); } catch { /* 탭을 못 열어도 공유는 끝났다 */ }
+}
+const openClassPage = () => openServicePage('class', CLASS_URL);
+const openTeamboardPage = () => openServicePage('teamboard', TEAMBOARD_URL);
+const openWhaleonPage = () => openServicePage('remote', WHALEON_URL);
+
+// 웨일온에 도구 하나 바로 공유: 안내 글 복사 + 작품 파일 저장 + 웨일온 열기
+async function shareToWhaleonNow(entry) {
+  const w = entry.work;
+  const link = await viewerLinkOf(w);
+  let text = buildShare('space', w, { link, status: entry.status }).text;
+  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.';
+  await navigator.clipboard.writeText(text);
+  saveTextFile(serializePack(createPack({ name: w.title, items: [w] })), `${String(w.title).replace(/[\\/:*?"<>|\s]+/g, '_')}.gorae.json`);
+  go({ notice: S.share.whaleonNowDone });
+  openWhaleonPage();
+}
+
+// 팀보드에 도구 하나 바로 공유: 전시 카드 글 복사 + 작품 파일 저장 + 팀보드 열기
+async function shareToTeamboardNow(entry) {
+  const w = entry.work;
+  const link = await viewerLinkOf(w);
+  let text = buildShare('teamboard', w, { link, status: entry.status }).text;
+  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.';
+  await navigator.clipboard.writeText(text);
+  saveTextFile(serializePack(createPack({ name: w.title, items: [w] })), `${String(w.title).replace(/[\\/:*?"<>|\s]+/g, '_')}.gorae.json`);
+  go({ notice: S.share.teamboardNowDone });
+  openTeamboardPage();
+}
 async function shareToClassNow(entry) {
   const w = entry.work;
   const link = await viewerLinkOf(w);
@@ -196,6 +228,7 @@ async function shareToClassNow(entry) {
   const pack = createPack({ name: w.title, items: [w] });
   saveTextFile(serializePack(pack), `${String(w.title).replace(/[\/:*?"<>|\s]+/g, '_')}.gorae.json`);
   go({ notice: S.share.classNowDone });
+  openClassPage();
 }
 async function copyViewerLink(entry) {
   const link = await viewerLinkOf(entry.work);
@@ -219,6 +252,8 @@ const shareProps = () => ({
   onShare: shareWork,
   onLink: copyViewerLink,
   onClassNow: shareToClassNow,
+  onTeamboardNow: shareToTeamboardNow,
+  onWhaleonNow: shareToWhaleonNow,
 });
 
 // ----- 인증 곳간에 공유하기: 설문 문항(1~6)에 맞춘 답과 업로드 파일을 만든다. 학생고래·교사고래 모두 쓸 수 있다
@@ -393,6 +428,14 @@ async function submitCreate(input) {
 const startEdit = (entry) => go({ screen: 'create', create: { kind: 'edit', targetId: entry.work.id, errors: [], warnings: [], input: editInput(entry.work) } });
 const startRemix = (entry) => isRestricted(entry.work, state.mode) ? go({ notice: S.reference.blocked }) : go({ screen: 'create', create: { kind: 'remix', errors: [], warnings: [], input: remixInput(entry.work) } });
 
+// 텍스트를 파일로 저장한다 (꾸러미 .gorae.json 등)
+function saveTextFile(text, fileName, type = 'application/json') {
+  const blob = new Blob([text], { type });
+  const a = h('a', { href: URL.createObjectURL(blob), download: fileName });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 // 내 곳간 선택 바: 고른 작품으로 꾸러미 파일 저장 · 클래스 공유 · 팀보드 · 수업 진행
 async function pickedRecords(max = 10) {
   const all = await store.list();
@@ -417,6 +460,7 @@ async function shareSelectionToClass() {
   await navigator.clipboard.writeText(out.assignment + '\n\n받는 방법: 첨부한 꾸러미 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.');
   saveTextFile(out.packText, out.fileName);
   go({ notice: S.sel.classDone(out.count) });
+  openClassPage();
 }
 
 // ----- 수업 진행: 고른 작품을 도입 → 활동 → 정리 순서로 한 단계씩 연다
@@ -432,27 +476,36 @@ async function moveFlow(i) {
   go({ flow });
 }
 
-// ----- 팀보드 카드: 고른 작품(없으면 즐겨찾기)을 팀보드에 붙일 글로 모아 복사한다
-async function copyTeamboardCards() {
+// ----- 팀보드에 공유: 고른 작품(없으면 즐겨찾기)의 전시 카드 글을 복사하고, 같은 작품 파일을 저장한 뒤 팀보드를 연다
+async function shareSelectionToTeamboard() {
   const all = await store.list();
   let recs = all.filter((r) => state.selected.includes(r.id));
   if (!recs.length) recs = all.filter((r) => r.favorite);
   if (!recs.length) return go({ notice: S.svc.teamboard.cardsNone });
+  if (recs.length > 10) return go({ notice: S.bundle.tooMany });
+  if (recs.some((r) => isRestricted(r.work, state.mode))) return go({ notice: S.reference.blocked });
   const entries = await verifyWorks(recs.map((r) => r.work));
   const cards = [];
   for (const e of entries) cards.push(buildShare('teamboard', e.work, { link: await viewerLinkOf(e.work), status: e.status }).text);
   await navigator.clipboard.writeText(cards.join('\n\n──────────\n\n'));
-  go({ notice: S.svc.teamboard.cardsCopied(cards.length) });
-}
-// 팀보드에 첨부할 꾸러미 파일: 같은 작품들을 .gorae.json 한 파일로 저장한다 (팀보드의 업로드(↑) 도구로 올린다)
-async function saveTeamboardPack() {
-  const all = await store.list();
-  let recs = all.filter((r) => state.selected.includes(r.id));
-  if (!recs.length) recs = all.filter((r) => r.favorite);
-  if (!recs.length) return go({ notice: S.svc.teamboard.cardsNone });
   const out = exportBundle(all, recs.map((r) => r.id), { name: S.svc.teamboard.packName });
   saveTextFile(out.text, out.fileName);
-  go({ notice: S.svc.teamboard.packSaved(recs.length) });
+  go({ notice: S.svc.teamboard.sharedNow(recs.length) });
+  openTeamboardPage();
+}
+
+// ----- 웨일온에 공유: 고른 작품의 안내 글을 복사하고, 꾸러미 파일을 저장한 뒤 웨일온을 연다
+async function shareSelectionToWhaleon() {
+  const p = await pickedRecords();
+  if (p.error) return go({ notice: p.error });
+  const entries = await verifyWorks(p.recs.map((r) => r.work));
+  const texts = [];
+  for (const e of entries) texts.push(buildShare('space', e.work, { link: await viewerLinkOf(e.work), status: e.status }).text);
+  await navigator.clipboard.writeText(texts.join('\n\n──────────\n\n'));
+  const out = exportBundle(p.all, p.recs.map((r) => r.id), { name: S.sel.packName });
+  saveTextFile(out.text, out.fileName);
+  go({ notice: S.sel.whaleonDone(out.count) });
+  openWhaleonPage();
 }
 
 // 지금 화면의 웨일 서비스에 맞춘 안내 띠
@@ -595,7 +648,7 @@ async function render() {
       onRun: run, onRemove: removeRecord, onToggleDetail: toggleDetail,
       onEdit: startEdit, onRemix: startRemix,
       onSelect: (id, on) => go({ selected: toggleIn(state.selected, id, on) }),
-      bar: { onPack: savePack, onClass: shareSelectionToClass, onTeamboardCards: copyTeamboardCards, onTeamboardFile: saveTeamboardPack, onFlow: startFlow, onClear: () => go({ selected: [] }) },
+      bar: { onPack: savePack, onClass: shareSelectionToClass, onTeamboard: shareSelectionToTeamboard, onWhaleon: shareSelectionToWhaleon, onFlow: startFlow, onClear: () => go({ selected: [] }) },
       share: shareProps(), submit: submitProps(true),
       onSearch: (q) => go({ mypodQuery: q, limit: PAGE_SIZE }), total: all.length,
       top: serviceTop(), ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),

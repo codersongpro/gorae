@@ -3,7 +3,9 @@ import { createPack, serializePack, MAX_ITEMS } from '../shared/pack.js';
 import { normalizeWork } from '../shared/taxonomy.js';
 import { buildAssignment } from './flow.js';
 
-export const CLASS_URL = 'https://class.whalespace.io';
+export const CLASS_URL = 'https://class.whalespace.io/';
+export const TEAMBOARD_URL = 'https://teamboard.whalespace.io/';
+export const WHALEON_URL = 'https://study.whaleon.naver.com/'; // 웨일온 (사이드바가 알아보는 웨일온 주소와 같은 곳)
 // 공지·과제 글 길이 제한을 아직 확인하지 못해, 이 길이를 넘으면 파일 첨부를 권한다
 export const LONG_TEXT_CHARS = 16000;
 

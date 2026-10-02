@@ -246,7 +246,9 @@ function moreMenu(entry, { onEdit, onRemix, onRemove, share }) {
   if (share) {
     items.push(h('p', { class: 'menu-group' }, S.share.menuTitle));
     if (share.onClassNow) items.push(menuItem(S.actions.classShare, () => share.onClassNow(entry), 'class-now'));
-    for (const k of (share.kinds || []).filter((x) => x !== 'class')) items.push(menuItem(S.share.kinds[k], () => share.onShare(entry, k)));
+    if (share.onTeamboardNow) items.push(menuItem(S.share.teamboardNow, () => share.onTeamboardNow(entry), 'teamboard-now'));
+    if (share.onWhaleonNow) items.push(menuItem(S.share.whaleonNow, () => share.onWhaleonNow(entry), 'whaleon-now'));
+    for (const k of (share.kinds || []).filter((x) => x !== 'class' && x !== 'teamboard' && x !== 'space')) items.push(menuItem(S.share.kinds[k], () => share.onShare(entry, k)));
     items.push(menuItem(S.share.link, () => share.onLink(entry)));
   }
   if (onRemove) items.push(menuItem(S.actions.remove, () => onRemove(entry), 'danger'));
@@ -430,8 +432,8 @@ function selectBar({ count, teacher, bar }) {
         h('div', { class: 'menu-pop', role: 'menu' },
           menuItem(T.pack, bar.onPack),
           menuItem(T.class, bar.onClass), // 학생고래도 쓸 수 있다
-          menuItem(S.svc.teamboard.cards, bar.onTeamboardCards),
-          menuItem(S.svc.teamboard.file, bar.onTeamboardFile))),
+          menuItem(T.teamboard, bar.onTeamboard),
+          menuItem(T.whaleon, bar.onWhaleon))),
       teacher ? h('button', { class: 'primary', 'data-tour': 'flow-start', title: T.flowHint, onclick: bar.onFlow }, T.flow) : null,
       h('button', { onclick: bar.onClear }, T.clear)));
 }

@@ -118,4 +118,7 @@ export function spoutCountsFor(catalog, workId, mine = null, live = null, pendin
 }
 
 export const spoutTotal = (c) => (c ? c.teacher + c.student : 0);
+// 물뿜기를 이만큼 받으면 '인기' 표시를 붙이고, 나눔 곳간 작품은 검수 요청을 추천한다 (조작하기 어렵고 비용이 없는 보상)
+export const POPULAR_MIN = 10;
+export const isPopular = (c) => spoutTotal(c) >= POPULAR_MIN;
 export const roleLabel = (r) => ROLE_LABEL[r] || r;

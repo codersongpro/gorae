@@ -4,6 +4,7 @@ import { S } from './strings.js';
 import { displayBadge } from '../core/trust.js';
 import { facetValues, metaOf, topTags } from '../core/filter.js';
 import { KIND_OPTIONS } from '../shared/market.js';
+import { isPopular } from '../shared/spout.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
 import { whaleIcon } from './icons.js';
@@ -234,7 +235,8 @@ function workCard(entry, opts) {
       onFav ? h('button', { class: `star${fav ? ' on' : ''}`, type: 'button', 'aria-pressed': String(!!fav), 'aria-label': fav ? S.fav.off : S.fav.on, title: fav ? S.fav.off : S.fav.on, onclick: () => onFav(entry) }, fav ? '★' : '☆') : null),
     h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
       w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null,
-      KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null),
+      KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null,
+      spout && isPopular(spout.countsOf(entry)) ? h('span', { class: 'badge popular', title: S.popular.hint }, S.popular.badge) : null),
     makerLine(w.author, '', !!entry.status.ok),
     locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
     selectBox || null,
@@ -344,8 +346,9 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
       h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▼' : '▶'), h('h3', {}, e.title))),
       makerLine(e.nickname, e.whale, false),
-      h('div', { class: 'row' }, h('span', { class: 'badge precheck' }, S.zone.market.badge), h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
+      h('div', { class: 'row' }, h('span', { class: 'badge precheck' }, S.zone.market.badge), h('span', { class: 'badge shallow' }, S.badge.shallow), spout && isPopular(spout.countsOf({ work: { id: e.id } })) ? h('span', { class: 'badge popular', title: S.popular.hint }, S.popular.badge) : null, e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
       isEx(e.id) && (e.kinds.length || e.categoryText) ? h('div', { class: 'pills' }, e.kinds.map((k) => pill('cat', k)), e.categoryText ? pill('info', e.categoryText) : null) : null,
+      teacher && spout && isPopular(spout.countsOf({ work: { id: e.id } })) ? h('p', { class: 'notice' }, S.popular.reviewTip) : null,
       isEx(e.id) && e.timestamp ? h('p', { class: 'muted' }, e.timestamp) : null,
       isEx(e.id) && e.description ? h('p', {}, e.description) : null,
       isEx(e.id) && e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
@@ -360,7 +363,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
           h('button', { disabled: !!(m.busy && m.busy[e.id]), onclick: () => onPreview(e) }, M.preview),
           teacher ? h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
             m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import) : null,
-          teacher ? h('button', { disabled: !!(m.busy && m.busy[e.id]), title: M.reviewHint, onclick: () => onReview(e) }, M.review) : null,
+          teacher ? h('button', { class: spout && isPopular(spout.countsOf({ work: { id: e.id } })) ? 'primary' : '', disabled: !!(m.busy && m.busy[e.id]), title: M.reviewHint, onclick: () => onReview(e) }, M.review) : null,
           !teacher ? h('p', { class: 'muted' }, M.studentNote) : null))),
     moreButton(shown.length, sliceOf(shown, ui).length, ui));
 }

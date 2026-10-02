@@ -10,7 +10,7 @@ import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
 import { normalizeWork } from './shared/taxonomy.js';
 import { signFeatured, MAX_FEATURED } from './shared/featured.js';
-import { parseSpoutReports, applySpoutReports } from './shared/spout.js';
+import { parseSpoutReports, applySpoutReports, POPULAR_MIN, isPopular } from './shared/spout.js';
 
 // 작품 미리보기 실행용 정책 (뷰어와 같은 뜻: 바깥 통신 차단)
 const CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data:; media-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'";
@@ -337,8 +337,9 @@ function viewSpout() {
         say(`보고 ${reports.length - r.skippedReports}개, 물뿜기 ${r.added}번을 더했어요.` + (r.skippedReports ? ` (이미 더한 보고 ${r.skippedReports}개는 건너뜀)` : '') + (r.unknownIds.length ? ` 목록에 없는 작품: ${r.unknownIds.join(', ')}` : ''));
       } }, '집계하기')),
     top.length ? h('div', { class: 'card' }, h('h3', {}, '많이 뿜은 작품'),
-      h('table', {}, h('tr', {}, h('th', {}, '작품'), h('th', {}, '교사'), h('th', {}, '학생')),
-        top.map(([id, c]) => h('tr', {}, h('td', {}, title(id)), h('td', {}, String(c.teacher)), h('td', {}, String(c.student)))))) : null,
+      h('table', {}, h('tr', {}, h('th', {}, '작품'), h('th', {}, '교사'), h('th', {}, '학생'), h('th', {}, '표시')),
+        top.map(([id, c]) => h('tr', {}, h('td', {}, title(id)), h('td', {}, String(c.teacher)), h('td', {}, String(c.student)), h('td', {}, isPopular(c) ? '🔥 인기' : '')))),
+      h('p', { class: 'muted' }, `물뿜기 ${POPULAR_MIN}번 이상이면 앱 카드에 "🔥 인기" 표시가 붙고, 나눔 곳간 작품은 교사에게 검수 요청이 추천돼요. 이달의 고래자리 후보로 위쪽 작품들을 살펴보세요.`)) : null,
     state.spoutDone ? catalogOut() : null);
 }
 

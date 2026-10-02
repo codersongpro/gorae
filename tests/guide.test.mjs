@@ -78,3 +78,10 @@ test('정렬 기본값은 새로 제작된 순, 물뿜기 많은 순은 숫자 �
   assert.deepEqual(sortEntries(list).map((e) => e.work.id), ['new', 'mid', 'old']);
   assert.deepEqual(sortEntries(list, 'spout', { old: 5, mid: 2 }).map((e) => e.work.id), ['old', 'mid', 'new']);
 });
+
+import { isPopular, POPULAR_MIN } from '../shared/spout.js';
+test('물뿜기 합계가 기준 이상이면 인기 작품이다', () => {
+  assert.equal(isPopular({ teacher: POPULAR_MIN - 1, student: 0 }), false);
+  assert.equal(isPopular({ teacher: 4, student: POPULAR_MIN - 4 }), true);
+  assert.equal(isPopular(null), false);
+});

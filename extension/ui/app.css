@@ -292,3 +292,5 @@ details > summary::-webkit-details-marker { display: none; }
 details > summary::before { content: '▶'; color: var(--color-catalog); font-size: var(--font-size-sm); width: 1.2em; flex: none; transition: transform 0.15s ease; }
 details[open] > summary::before { content: '▼'; }
 @media (prefers-reduced-motion: reduce) { details > summary::before { transition: none; } }
+
+.badge.popular { background: var(--color-badge-whirlpool); color: var(--color-badge-whirlpool-text); }

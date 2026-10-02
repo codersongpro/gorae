@@ -268,11 +268,8 @@ body {
 /* 웹 버전 맨 위: 사이드바 설치 안내 */
 .web-promo { width: 100%; min-height: var(--touch-min); padding: var(--space-2) var(--space-3); border: 0; background: var(--color-primary); color: var(--color-primary-text); font: inherit; font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); text-align: center; cursor: pointer; }
 
-/* 고래 아이콘(SVG): 검수됨 = 파란 고래 + 확인 표시, 검수 전 = 회색 점선 */
-.wi { width: calc(var(--space-5) + var(--space-1)); height: calc(var(--space-5) + var(--space-1)); flex: none; }
-.wi.ok { color: var(--color-catalog); }
-.wi.no { color: var(--color-text-muted); }
-.wi .wi-badge { fill: var(--color-positive, #1f9d55); }
+/* 제작자 줄의 고래 이모지 */
+.wi { font-size: var(--font-size-lg); line-height: 1; flex: none; }
 .maker { align-items: center; }
 .maker .maker-label { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
 .run-title { display: inline-flex; align-items: center; gap: var(--space-2); }

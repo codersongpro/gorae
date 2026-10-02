@@ -7,7 +7,6 @@ import { KIND_OPTIONS } from '../shared/market.js';
 import { isPopular } from '../shared/spout.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
-import { whaleIcon } from './icons.js';
 import { isRestricted } from '../core/reference.js';
 import { TOUR_STEPS, SHARE_TOUR_STEPS } from './guide-steps.js';
 
@@ -162,12 +161,15 @@ function metaLine(entry) {
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
 
+// 검수된 작품은 🐋, 검수 전 작품은 범고래 🫍
+export const VERIFIED_WHALE = '🐋';
+export const UNVERIFIED_WHALE = '🫍';
 // 제작자 줄: [고래 아이콘] 제작자 **닉네임** · 학교급 — 고래 아이콘은 검수 여부(그림 두 가지)만 알려 준다
 export function makerLine(author, role, verified = false) {
   const [nick, ...rest] = String(author || '').split('·').map((t) => t.trim());
   if (!nick) return null;
   const sub = [rest.join(' · '), role].filter(Boolean).join(' · ');
-  return h('p', { class: 'maker' }, whaleIcon(verified, verified ? S.whaleIcon.ok : S.whaleIcon.no),
+  return h('p', { class: 'maker' }, h('span', { class: 'wi', role: 'img', 'aria-label': verified ? S.whaleIcon.ok : S.whaleIcon.no }, verified ? VERIFIED_WHALE : UNVERIFIED_WHALE),
     h('span', { class: 'maker-label' }, S.maker), h('strong', { class: 'nick' }, nick), sub ? h('span', { class: 'maker-sub' }, sub) : null);
 }
 

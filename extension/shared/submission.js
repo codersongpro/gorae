@@ -11,7 +11,7 @@ const LINE_MARK = '[고래곳간 작품 정보]';
 // 주석·줄 안에서 안전하도록 JSON의 '--'와 '<'를 유니코드 이스케이프로 바꾼다 (값은 그대로)
 const safeJson = (o) => JSON.stringify(o).replace(/--/g, '-\\u002d').replace(/</g, '\\u003c');
 const cardOf = (work) => {
-  const { html, tailprint, ...card } = work; // 검수 서명은 파수꾼이 새로 찍으므로 보내지 않는다
+  const { html, tailprint, ...card } = work; // 검수 서명은 파수꾼고래가 새로 찍으므로 보내지 않는다
   return card;
 };
 

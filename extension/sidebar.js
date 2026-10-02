@@ -63,7 +63,7 @@ async function loadAll() {
   state.source = res.source;
   state.listRejected = !trusted.accepted && trusted.reason === 'LIST_OLD';
   state.entries = await buildEntries({ works: res.catalog.items, list: trusted.list, storage, rootJwk: ROOT_PUBLIC_JWK });
-  // 이달의 고래자리: 대왕고래 서명이 맞을 때만 띠를 보인다
+  // 이달의 고래자리: 파수꾼고래 서명이 맞을 때만 띠를 보인다
   state.featured = await verifyFeatured(res.catalog.featured, ROOT_PUBLIC_JWK, res.catalog.items);
   state.catalog = res.catalog; // 물뿜기 숫자(spouts)를 읽는다
   state.mySpouts = await mySpouts(storage);

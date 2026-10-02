@@ -41,7 +41,7 @@ export function buildWorkSubmission(work, { nickname, role, privacyChecked } = {
   }
   const withCard = `${address}\n${cardLine(work)}`;
   if (withCard.length <= FORM_LIMITS.address) address = withCard;
-  else warnings.push('작품 정보가 길어 주소만 보내요. 파수꾼이 분류를 직접 확인해야 해요.');
+  else warnings.push('작품 정보가 길어 주소만 보내요. 파수꾼고래가 분류를 직접 확인해야 해요.');
   if (address.length > FORM_LIMITS.address) return { ok: false, errors: [`주소 칸은 ${FORM_LIMITS.address}자까지예요.`] };
   return { ok: true, answers: { ...answers, address }, warnings };
 }

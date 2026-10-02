@@ -67,7 +67,7 @@ test('AC-026 족보에 없는 열쇠의 서명은 거부', async () => {
   assert.equal((await (await verifier(s)).verify(forged)).reason, tp.REASON.SIG_INVALID);
 });
 
-test('족보를 고치면(파수꾼 추가 등) 대왕고래 서명이 깨진다', async () => {
+test('족보를 고치면(파수꾼고래 추가 등) 파수꾼고래 서명이 깨진다', async () => {
   const s = await setup();
   const evil = await tp.generateKeyPair();
   const tampered = { ...s.list, reviewers: [...s.list.reviewers, { id: 'evil', nickname: '가짜', publicKey: await tp.exportPublicJwk(evil.publicKey), addedAt: '2026-10-01T00:00:00Z' }] };
@@ -99,7 +99,7 @@ test('AC-028 이미 본 버전보다 낮은 족보는 거부하고 기존 족보
   assert.equal((await resolveTrustedList({ candidate: s.list, storage, rootJwk: s.rootJwk })).accepted, true);
 });
 
-test('AC-029 말소된 파수꾼의 말소 이후 서명은 무효 (사유별 규칙)', async () => {
+test('AC-029 말소된 파수꾼고래의 말소 이후 서명은 무효 (사유별 규칙)', async () => {
   const left = await setup({ revoked: [{ id: 'g1', revokedAt: '2026-10-05T00:00:00Z', reason: 'left' }] });
   const vLeft = await verifier(left);
   const after = await sign(left, work, { signedAt: '2026-10-06T00:00:00Z' });

@@ -88,6 +88,6 @@ await writeFile(new URL('../site/catalog.json', import.meta.url), JSON.stringify
 await writeFile(new URL('../site/reviewers.json', import.meta.url), JSON.stringify(list, null, 2));
 await writeFile(
   new URL('../extension/core/rootkey.js', import.meta.url),
-  `// 대왕고래 공개키 (현재 값은 테스트용 — 운영 전에 실제 뿌리 공개키로 교체)\nexport const ROOT_PUBLIC_JWK = ${JSON.stringify(root.publicJwk)};\n`,
+  `// 관리 공개키 (현재 값은 테스트용 — 운영 전에 실제 뿌리 공개키로 교체)\nexport const ROOT_PUBLIC_JWK = ${JSON.stringify(root.publicJwk)};\n`,
 );
 console.log('샘플 생성 완료: site/catalog.json, site/reviewers.json, extension/core/rootkey.js');

@@ -11,7 +11,7 @@ async function rootKeys() {
   return { priv: kp.privateKey, pub: await tp.exportPublicJwk(kp.publicKey) };
 }
 
-test('AC-031 대왕고래 서명이 있는 고래자리는 보이고, 목록에 없는 id는 뺀다', async () => {
+test('AC-031 파수꾼고래 서명이 있는 고래자리는 보이고, 목록에 없는 id는 뺀다', async () => {
   const k = await rootKeys();
   const f = await signFeatured({ month: '2026-10', title: '10월의 고래자리', note: '가을 수업 추천', items: ['a', 'c', 'gone'] }, k.priv);
   const v = await verifyFeatured(f, k.pub, items);

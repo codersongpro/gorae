@@ -36,7 +36,7 @@ test('HTML 작품은 업로드용 .html 파일이 되고, 그대로 열어도 �
   assert.deepEqual(back.works[0], html);
 });
 
-test('업로드 파일에는 원래 검수 서명을 넣지 않는다 (파수꾼이 새로 찍음)', () => {
+test('업로드 파일에는 원래 검수 서명을 넣지 않는다 (파수꾼고래가 새로 찍음)', () => {
   const signed = { ...html, tailprint: { sig: 'x', badge: 'clear' } };
   assert.ok(!toSubmissionHtml(signed).includes('tailprint'));
 });

@@ -19,7 +19,7 @@ async function world() {
 }
 const verifierOf = (w, list = w.list, last = 0) => tp.createVerifier({ rootPublicJwk: w.rootJwk, list, lastSeenVersion: last });
 
-test('AC-020 족보에 등록된 파수꾼이 맑은 바다+고래 픽을 찍으면 검증되는 catalog 항목이 나온다', async () => {
+test('AC-020 족보에 등록된 파수꾼고래가 맑은 바다+고래 픽을 찍으면 검증되는 catalog 항목이 나온다', async () => {
   const w = await world();
   const res = await signForCatalog({ work, privateKey: w.guard.privateKey, reviewerId: 'g1', badge: 'clear', pick: true, songs: [{ text: '4학년 분수 도입에 10분, 반응 최고', author: '노을 고래 · 초등', date: '2026-10-02' }] });
   assert.equal(res.ok, true);
@@ -79,7 +79,7 @@ test('AC-027 열쇠 백업: 암호로만 풀리고 틀린 암호는 거부, 되�
   await assert.rejects(() => encryptJwk(jwk, '1234'));
 });
 
-test('고래 족보 관리: 파수꾼을 추가하면 버전이 올라가고 서명이 유효하다 (AC-028 연계)', async () => {
+test('고래 족보 관리: 파수꾼고래를 추가하면 버전이 올라가고 서명이 유효하다 (AC-028 연계)', async () => {
   const w = await world();
   const other = await tp.generateKeyPair();
   const body = addReviewer(w.list, { id: 'g2', nickname: '새벽고래', publicKey: await tp.exportPublicJwk(other.publicKey) });
@@ -93,7 +93,7 @@ test('고래 족보 관리: 파수꾼을 추가하면 버전이 올라가고 서
   assert.throws(() => addReviewer(w.list, { id: 'g3', nickname: 'x', publicKey: { kty: 'EC', crv: 'P-256', x: 'a', y: 'b', d: 'SECRET' } }), /개인 열쇠/);
 });
 
-test('AC-029 파수꾼 말소: 분실은 모두 무효, 탈퇴는 말소 이후 서명만 무효', async () => {
+test('AC-029 파수꾼고래 말소: 분실은 모두 무효, 탈퇴는 말소 이후 서명만 무효', async () => {
   const w = await world();
   const oldSig = (await signForCatalog({ work, privateKey: w.guard.privateKey, reviewerId: 'g1', badge: 'clear', signedAt: '2026-10-02T00:00:00Z' })).item;
   const lostList = await signList(revokeReviewer(w.list, 'g1', 'lost', new Date('2026-10-05')), w.root.privateKey);

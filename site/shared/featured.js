@@ -1,4 +1,4 @@
-// 이달의 고래자리: 대왕고래가 뿌리 열쇠로 서명한 이달의 전시 목록 (DOM 없음)
+// 이달의 고래자리: 파수꾼고래가 관리 열쇠로 서명한 이달의 전시 목록 (DOM 없음)
 // catalog.featured = { month: '2026-10', title, note, items: [작품 id…], issuedAt, sig }
 // 서명이 맞지 않으면 띠를 아예 보여 주지 않는다 (AC-031).
 import { canonicalize, toB64u, fromB64u, importPublicJwk } from './tailprint.js';

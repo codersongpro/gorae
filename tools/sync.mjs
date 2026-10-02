@@ -2,7 +2,7 @@
 //   shared/*.js            → extension/shared/ , site/shared/
 //   design/tokens.css      → extension/ui/tokens.css , site/tokens.css
 //   site/{catalog,reviewers}.json → extension/sample/   (배포 전 번들 샘플 목록)
-//   extension/core/rootkey.js     → site/rootkey.js     (대왕고래 공개키)
+//   extension/core/rootkey.js     → site/rootkey.js     (관리 공개키)
 //   extension/ui/strings.js       → site/strings.js     (화면 문구 한 곳 유지)
 //   extension/ui/dom.js           → site/dom.js
 // `--check` 를 주면 복사하지 않고 어긋난 파일이 있는지만 확인한다.

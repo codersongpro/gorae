@@ -1,5 +1,5 @@
 // 검수 서명(전자서명) 핵심 모듈 — DOM 없이 WebCrypto만 사용 (확장앱·뷰어·검수 도구 공용)
-// 서명: ECDSA P-256 + SHA-256. 검증 3단계: 족보 서명 → 파수꾼 등록·미말소 → 작품 서명.
+// 서명: ECDSA P-256 + SHA-256. 검증 3단계: 족보 서명 → 파수꾼고래 등록·미말소 → 작품 서명.
 
 const ALGO = { name: 'ECDSA', namedCurve: 'P-256' };
 const SIGN = { name: 'ECDSA', hash: 'SHA-256' };
@@ -47,7 +47,7 @@ export async function sha256Hex(text) {
 
 // ---------- 열쇠 ----------
 // extractable=false 이면 개인 열쇠를 꺼낼 수 없다(공개키는 항상 내보내기 가능).
-// 대왕고래·백업 파일이 필요한 경우에만 true.
+// 파수꾼고래·백업 파일이 필요한 경우에만 true.
 export async function generateKeyPair({ extractable = false } = {}) {
   return subtle().generateKey(ALGO, extractable, ['sign', 'verify']);
 }
@@ -89,7 +89,7 @@ const workPayload = (t) =>
     signedAt: t.signedAt,
   });
 
-// 파수꾼이 작품에 검수 서명을 찍는다. 반환: tailprint가 붙은 새 작품 카드
+// 파수꾼고래가 작품에 검수 서명을 찍는다. 반환: tailprint가 붙은 새 작품 카드
 export async function signWork(work, privateKey, { reviewer, badge, pick = false, songs = [], signedAt }) {
   const t = {
     contentHash: await contentHash(work),
@@ -109,14 +109,14 @@ const listPayload = (list) => {
   return canonicalize(rest);
 };
 
-// 대왕고래가 족보에 서명한다 (버전은 호출하는 쪽에서 올려서 넘김)
+// 파수꾼고래가 족보에 서명한다 (버전은 호출하는 쪽에서 올려서 넘김)
 export async function signReviewerList(list, rootPrivateKey) {
   const body = { ...list };
   delete body.rootSig;
   return { ...body, rootSig: await signText(rootPrivateKey, listPayload(body)) };
 }
 
-// 족보 검증: 대왕고래 서명 + 이미 본 버전보다 낮으면 거부
+// 족보 검증: 파수꾼고래 서명 + 이미 본 버전보다 낮으면 거부
 export async function verifyReviewerList(list, rootPublicJwk, lastSeenVersion = 0) {
   if (!list || typeof list.version !== 'number' || !list.rootSig) return { ok: false, reason: REASON.LIST_INVALID };
   const rootKey = await importPublicJwk(rootPublicJwk);
@@ -141,7 +141,7 @@ export async function createVerifier({ rootPublicJwk, list, lastSeenVersion = 0 
       if (!t) return { ok: false, reason: REASON.NO_TAILPRINT };
       // ① 족보
       if (!listResult.ok) return { ok: false, reason: listResult.reason };
-      // ② 파수꾼 등록·미말소
+      // ② 파수꾼고래 등록·미말소
       const reviewer = (list.reviewers || []).find((r) => r.id === t.reviewer);
       if (!reviewer) return { ok: false, reason: REASON.REVIEWER_UNKNOWN };
       const rev = (list.revoked || []).find((r) => r.id === t.reviewer);

@@ -1,4 +1,4 @@
-// 검수 도구: 검수 서명 만들기(파수꾼) · 검수대(파수꾼) · 고래 족보 관리(대왕고래)
+// 검수 도구: 검수 서명 만들기(파수꾼고래) · 검수대(파수꾼고래) · 고래 족보 관리(파수꾼고래)
 // 모든 일은 이 브라우저 안에서만 한다. 개인 열쇠는 꺼낼 수 없는 형태로만 보관하고 어디로도 보내지 않는다.
 import { h } from './dom.js';
 import * as tp from './shared/tailprint.js';
@@ -71,13 +71,13 @@ function viewMake() {
   const bundleText = me ? JSON.stringify({ id: me.reviewerId, nickname: me.nickname, publicKey: me.publicJwk }) : '';
   return h('div', { class: 'section' },
     h('div', { class: 'card' },
-      h('h2', {}, '1. 검수 서명 만들기 (혹등고래 파수꾼)'),
-      h('p', { class: 'muted' }, '열쇠 한 쌍을 만들어요. 개인 열쇠는 이 브라우저에 꺼낼 수 없게 저장되고, 기기를 바꿀 때 쓸 암호 건 백업 파일을 내려받아요. 공개키 묶음은 대왕고래에게 보내 족보에 올려 달라고 하세요.'),
+      h('h2', {}, '1. 검수 서명 만들기 (파수꾼고래)'),
+      h('p', { class: 'muted' }, '열쇠 한 쌍을 만들어요. 개인 열쇠는 이 브라우저에 꺼낼 수 없게 저장되고, 기기를 바꿀 때 쓸 암호 건 백업 파일을 내려받아요. 공개키 묶음은 관리자 파수꾼고래에게 보내 고래 족보에 올려 달라고 하세요.'),
       me ? h('p', { class: 'ok' }, `✔ 이 브라우저에 열쇠가 있어요: ${me.nickname} (${me.reviewerId})`) : h('p', { class: 'notice' }, '아직 이 브라우저에 열쇠가 없어요.'),
       field('별명', nick), field('백업 암호', pw),
       h('button', { onclick: () => makeReviewer(nick.value, pw.value) }, me ? '새 열쇠로 바꾸기' : '검수 서명 만들기')),
     me ? h('div', { class: 'card' },
-      h('h3', {}, '공개키 묶음 (대왕고래에게 전달)'),
+      h('h3', {}, '공개키 묶음 (관리자 파수꾼고래에게 전달)'),
       h('textarea', { readonly: true, 'aria-label': '공개키 묶음' }, bundleText),
       h('button', { class: 'secondary', onclick: () => copy(bundleText) }, '복사')) : null,
     h('div', { class: 'card' },
@@ -124,7 +124,7 @@ function viewDesk() {
   return h('div', { class: 'section' },
     h('div', { class: 'card' },
       h('h2', {}, '2. 검수대'),
-      h('p', { class: 'muted' }, `파수꾼: ${state.reviewer.nickname}. 응답을 붙여 넣으면 자동 점검 결과를 보여 줘요. 코드를 직접 보고 실행해 본 뒤 배지를 골라 서명하세요.`),
+      h('p', { class: 'muted' }, `파수꾼고래: ${state.reviewer.nickname}. 응답을 붙여 넣으면 자동 점검 결과를 보여 줘요. 코드를 직접 보고 실행해 본 뒤 배지를 골라 서명하세요.`),
       paste,
       h('p', { class: 'muted' }, '또는 설문으로 올라온 파일(.html·.gorae.json)을 고르세요. 구글 드라이브의 설문 응답 폴더에서 내려받으면 돼요.'),
       upload,
@@ -173,7 +173,7 @@ function draftCard(d) {
     songs,
     h('button', { onclick: () => sign(d) }, '검수 서명 찍기'),
     d.signed ? h('div', {},
-      h('p', { class: d.check && d.check.ok ? 'ok' : 'notice error' }, d.check ? (d.check.ok ? '✔ 지금 불러온 고래 족보로 서명이 확인돼요.' : `⚠ 지금 불러온 족보로는 확인되지 않아요 (대왕고래에게 족보 등록을 요청하세요): ${REASON_TEXT[d.check.reason] || d.check.reason}`) : ''),
+      h('p', { class: d.check && d.check.ok ? 'ok' : 'notice error' }, d.check ? (d.check.ok ? '✔ 지금 불러온 고래 족보로 서명이 확인돼요.' : `⚠ 지금 불러온 족보로는 확인되지 않아요 (파수꾼고래에게 족보 등록을 요청하세요): ${REASON_TEXT[d.check.reason] || d.check.reason}`) : ''),
       h('textarea', { readonly: true, 'aria-label': '서명된 catalog 항목' }, JSON.stringify(d.signed, null, 2)),
       h('div', { class: 'row' },
         h('button', { class: 'secondary', onclick: () => copy(JSON.stringify(d.signed, null, 2)) }, '항목 복사'),
@@ -216,34 +216,34 @@ function catalogOut() {
       h('button', { class: 'secondary', onclick: () => download('catalog.json', text) }, '내려받기')));
 }
 
-// ---------- C. 고래 족보 관리 (대왕고래) ----------
+// ---------- C. 고래 족보 관리 (파수꾼고래) ----------
 function viewRoot() {
-  const rootPw = h('input', { type: 'password', placeholder: '뿌리 열쇠 백업 암호 (8자 이상)', autocomplete: 'new-password' });
+  const rootPw = h('input', { type: 'password', placeholder: '관리 열쇠 백업 암호 (8자 이상)', autocomplete: 'new-password' });
   const lfile = h('input', { type: 'file', accept: '.keybackup,.json' });
-  const lpw = h('input', { type: 'password', placeholder: '뿌리 열쇠 백업 암호', autocomplete: 'current-password' });
-  const bundle = h('textarea', { placeholder: '파수꾼의 공개키 묶음을 붙여 넣으세요', 'aria-label': '공개키 묶음' });
-  const revokeSel = h('select', { 'aria-label': '말소할 파수꾼' }, (state.list ? state.list.reviewers : []).map((r) => h('option', { value: r.id }, `${r.nickname} (${r.id})`)));
+  const lpw = h('input', { type: 'password', placeholder: '관리 열쇠 백업 암호', autocomplete: 'current-password' });
+  const bundle = h('textarea', { placeholder: '파수꾼고래의 공개키 묶음을 붙여 넣으세요', 'aria-label': '공개키 묶음' });
+  const revokeSel = h('select', { 'aria-label': '말소할 파수꾼고래' }, (state.list ? state.list.reviewers : []).map((r) => h('option', { value: r.id }, `${r.nickname} (${r.id})`)));
   const reasonSel = h('select', { 'aria-label': '말소 사유' }, [['left', '탈퇴·전근 (말소 이전 서명은 인정)'], ['lost', '열쇠 분실 (모두 무효)'], ['leaked', '열쇠 유출 (모두 무효)']].map(([v, t]) => h('option', { value: v }, t)));
   const L = state.list;
   const listText = L && L.rootSig && state.listSigned ? JSON.stringify(L, null, 2) : '';
   return h('div', { class: 'section' },
     h('div', { class: 'card' },
-      h('h2', {}, '3. 고래 족보 관리 (대왕고래)'),
-      h('p', { class: 'notice error' }, '뿌리 열쇠는 족보 서명 때만 불러오고, 백업 파일은 인터넷에 올리지 마세요. 분실에 대비해 서로 다른 장소에 2부 보관하세요.'),
-      state.root ? h('p', { class: 'ok' }, '✔ 뿌리 열쇠를 불러왔어요 (이 탭을 닫으면 사라져요).') : h('p', { class: 'notice' }, '뿌리 열쇠가 불러와져 있지 않아요.'),
-      h('h3', {}, '뿌리 열쇠 불러오기'), lfile, lpw,
+      h('h2', {}, '3. 고래 족보 관리 (관리자 파수꾼고래)'),
+      h('p', { class: 'notice error' }, '관리 열쇠는 족보 서명 때만 불러오고, 백업 파일은 인터넷에 올리지 마세요. 분실에 대비해 서로 다른 장소에 2부 보관하세요.'),
+      state.root ? h('p', { class: 'ok' }, '✔ 관리 열쇠를 불러왔어요 (이 탭을 닫으면 사라져요).') : h('p', { class: 'notice' }, '관리 열쇠가 불러와져 있지 않아요.'),
+      h('h3', {}, '관리 열쇠 불러오기'), lfile, lpw,
       h('button', { onclick: async () => loadRoot(await readFile(lfile), lpw.value) }, '불러오기'),
-      h('h3', {}, '처음이라면: 뿌리 열쇠 만들기'),
+      h('h3', {}, '처음이라면: 관리 열쇠 만들기'),
       rootPw,
-      h('button', { class: 'secondary', onclick: () => makeRoot(rootPw.value) }, '뿌리 열쇠 만들기 + 백업 내려받기')),
+      h('button', { class: 'secondary', onclick: () => makeRoot(rootPw.value) }, '관리 열쇠 만들기 + 백업 내려받기')),
     h('div', { class: 'card' },
       h('h3', {}, `현재 고래 족보 (버전 ${L ? L.version : '-'})`),
       h('button', { class: 'secondary', onclick: async () => { state.list = null; await ensureSiteData(); say('공개된 족보를 다시 불러왔어요.'); } }, '공개된 족보 불러오기'),
       L ? h('table', {}, h('tr', {}, h('th', {}, '별명'), h('th', {}, 'id'), h('th', {}, '상태')),
         L.reviewers.map((r) => { const rv = L.revoked.find((x) => x.id === r.id); return h('tr', {}, h('td', {}, r.nickname), h('td', {}, r.id), h('td', {}, rv ? `말소(${rv.reason})` : '등록')); })) : null,
-      h('h3', {}, '파수꾼 추가'), bundle,
+      h('h3', {}, '파수꾼고래 추가'), bundle,
       h('button', { onclick: () => editList(() => addReviewer(state.list, JSON.parse(bundle.value))) }, '추가하고 서명'),
-      h('h3', {}, '파수꾼 말소 (검수 서명 말소)'), revokeSel, reasonSel,
+      h('h3', {}, '파수꾼고래 말소 (검수 서명 말소)'), revokeSel, reasonSel,
       h('button', { class: 'danger', onclick: () => editList(() => revokeReviewer(state.list, revokeSel.value, reasonSel.value)) }, '말소하고 서명')),
     featuredCard(),
     state.featuredSigned ? catalogOut() : null,
@@ -256,7 +256,7 @@ function viewRoot() {
         h('button', { class: 'secondary', onclick: () => download('reviewers.json', listText) }, '내려받기'))) : null);
 }
 
-// 이달의 고래자리 선정: 큰 곳간 작품 중 골라 뿌리 열쇠로 서명 → catalog.json의 featured
+// 이달의 고래자리 선정: 큰 곳간 작품 중 골라 관리 열쇠로 서명 → catalog.json의 featured
 function featuredCard() {
   const items = (state.catalog && state.catalog.items) || [];
   const now = new Date();
@@ -267,10 +267,10 @@ function featuredCard() {
   const boxes = items.map((w) => h('label', { class: 'check' }, h('input', { type: 'checkbox', value: w.id, checked: current.has(w.id) }), w.title));
   return h('div', { class: 'card' },
     h('h3', {}, `이달의 고래자리 선정 (최대 ${MAX_FEATURED}개)`),
-    h('p', { class: 'muted' }, '큰 곳간 맨 위 띠에 보일 작품을 고르고 뿌리 열쇠로 서명해요. 서명이 틀리면 띠가 숨겨져요.'),
+    h('p', { class: 'muted' }, '큰 곳간 맨 위 띠에 보일 작품을 고르고 관리 열쇠로 서명해요. 서명이 틀리면 띠가 숨겨져요.'),
     month, title, note, ...boxes,
     h('button', { onclick: async () => {
-      if (!state.root) return say('먼저 뿌리 열쇠를 불러와 주세요.', true);
+      if (!state.root) return say('먼저 관리 열쇠를 불러와 주세요.', true);
       try {
         await ensureSiteData();
         const picked = boxes.map((b) => b.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
@@ -290,22 +290,22 @@ async function makeRoot(password) {
   const kp = await tp.generateKeyPair({ extractable: true });
   const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
   const publicJwk = await tp.exportPublicJwk(kp.publicKey);
-  download('대왕고래_뿌리열쇠.keybackup', JSON.stringify(await encryptJwk(privJwk, password, { kind: 'root' })));
+  download('파수꾼고래_관리열쇠.keybackup', JSON.stringify(await encryptJwk(privJwk, password, { kind: 'root' })));
   state.root = { privateKey: await tp.importPrivateJwk(privJwk), publicJwk };
   state.newRootJwk = publicJwk;
-  say('뿌리 열쇠를 만들었어요. 아래 공개키를 extension/core/rootkey.js에 넣고 확장앱을 다시 배포해야 해요.');
+  say('관리 열쇠를 만들었어요. 아래 공개키를 extension/core/rootkey.js에 넣고 확장앱을 다시 배포해야 해요.');
 }
 async function loadRoot(text, password) {
   try {
     const jwk = await decryptJwk(JSON.parse(text), password);
     state.root = { privateKey: await tp.importPrivateJwk(jwk), publicJwk: { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y } };
-    say('뿌리 열쇠를 불러왔어요.');
+    say('관리 열쇠를 불러왔어요.');
   } catch (e) {
     say(e.message === 'BAD_PASSWORD' ? '암호가 틀렸거나 파일이 손상됐어요.' : '백업 파일을 읽을 수 없어요.', true);
   }
 }
 async function editList(change) {
-  if (!state.root) return say('먼저 뿌리 열쇠를 불러와 주세요.', true);
+  if (!state.root) return say('먼저 관리 열쇠를 불러와 주세요.', true);
   try {
     await ensureSiteData();
     const body = change();
@@ -348,7 +348,7 @@ function render() {
   tabsEl.replaceChildren(...TABS.map(([k, t]) => h('button', { role: 'tab', 'aria-selected': String(state.tab === k), onclick: () => { state.tab = k; state.msg = ''; state.err = ''; render(); } }, t)));
   const body = state.tab === 'make' ? viewMake() : state.tab === 'desk' ? viewDesk() : state.tab === 'spout' ? viewSpout() : viewRoot();
   const root = state.newRootJwk && state.tab === 'root'
-    ? h('div', { class: 'card' }, h('h3', {}, '새 대왕고래 공개키 (extension/core/rootkey.js의 ROOT_PUBLIC_JWK에 넣기)'), h('textarea', { readonly: true, 'aria-label': '대왕고래 공개키' }, JSON.stringify(state.newRootJwk)))
+    ? h('div', { class: 'card' }, h('h3', {}, '새 관리 공개키 (extension/core/rootkey.js의 ROOT_PUBLIC_JWK에 넣기)'), h('textarea', { readonly: true, 'aria-label': '관리 공개키' }, JSON.stringify(state.newRootJwk)))
     : null;
   panel.replaceChildren(...[
     state.msg ? h('p', { class: 'notice', role: 'status' }, state.msg) : null,

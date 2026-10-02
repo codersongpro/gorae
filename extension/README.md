@@ -11,4 +11,4 @@
 - `core/` 화면과 무관한 로직 (DOM 접근 금지)
 - `ui/` 화면. 색·간격은 `ui/tokens.css` 변수만, 문구는 `ui/strings.js`에만
 - `shared/`, `ui/tokens.css`, `sample/` 는 **복사본**입니다. 원본(`/shared`, `/design/tokens.css`, `/site`)을 고치고 `npm run sync`로 갱신하세요.
-- `core/rootkey.js` 의 대왕고래 공개키는 현재 테스트용입니다. 운영 전에 교체하세요.
+- `core/rootkey.js` 의 관리 공개키는 현재 테스트용입니다. 운영 전에 교체하세요.

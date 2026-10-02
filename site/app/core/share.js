@@ -18,7 +18,7 @@ const clean = (lines) => lines.filter((l) => l !== null && l !== undefined && l 
 function reviewLine(status) {
   if (status && status.ok) {
     const badge = { clear: '맑은 바다(학생 사용 가능)', shallow: '얕은 바다(교사용)', whirlpool: '소용돌이(보류)' }[status.badge] || status.badge;
-    return `검수 상태: ${badge} · 검수 서명 확인됨 (파수꾼 ${status.reviewer.nickname})`;
+    return `검수 상태: ${badge} · 검수 서명 확인됨 (파수꾼고래 ${status.reviewer.nickname})`;
   }
   return '검수 상태: 미검수 (검수 서명 없음)';
 }

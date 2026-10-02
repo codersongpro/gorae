@@ -192,7 +192,7 @@ function featuredBand(entries, state, onRun) {
     shown.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run))));
 }
 
-export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar, ui, top, onSwitch }) {
+export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar, ui, top, onSwitch, mineIds = new Set(), onOpenMine }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
@@ -205,7 +205,7 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     state.source !== 'network' || state.listRejected ? h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')) : null,
     findBar({ entries, state, onFilter, sortSel }),
     listTools(visible.map((e) => e.work.id)),
-    visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
+    visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, inMine: mineIds.has(e.work.id), onOpenMine, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
 
 // 학교급 뱃지: 학교급이 정해진 작품은 초/중/고 하나, 정해지지 않은(공통) 수업 작품은 초·중·고 모두
@@ -260,7 +260,7 @@ function workCard(entry, opts) {
   const w = entry.work;
   // 참고 전용 작품은 학생고래 모드에서 보고 실행만 된다: 담기·리믹스·수정·꾸러미·레시피·공유를 숨긴다
   const locked = isRestricted(w, opts.mode);
-  const { onRun, onToggleDetail, onRemove, open, report, extra, spout, fav, onFav } = opts;
+  const { onRun, onToggleDetail, onRemove, open, report, extra, spout, fav, onFav, inMine, onOpenMine } = opts;
   const onAdd = locked ? null : opts.onAdd, onEdit = locked ? null : opts.onEdit, onRemix = locked ? null : opts.onRemix;
   const selectBox = locked ? null : opts.selectBox, share = locked ? null : opts.share, submit = locked ? null : opts.submit;
   const run = canRun(entry);
@@ -288,7 +288,9 @@ function workCard(entry, opts) {
     h('div', { class: 'card-actions' },
       spout ? spoutRow(entry, spout) : null,
       h('span', { class: 'spacer' }),
-      onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
+      onAdd ? (inMine
+        ? h('button', { class: 'in-mine', title: S.actions.addedHint, onclick: () => onOpenMine(entry) }, S.actions.added)
+        : h('button', { onclick: () => onAdd(entry) }, S.actions.add)) : null,
       menu,
       h('button', { class: 'primary', 'data-tour': 'run', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,

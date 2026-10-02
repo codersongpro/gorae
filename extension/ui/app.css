@@ -339,3 +339,6 @@ article.card .card-head { padding-bottom: var(--space-1); border-bottom: var(--b
 .select-inner strong { margin-right: auto; }
 .more-menu.up .menu-pop { top: auto; bottom: 100%; right: auto; left: 0; }
 .more-menu.up > summary { font-size: var(--font-size-sm); }
+
+/* 이미 내 곳간에 담은 작품의 담기 버튼 */
+button.in-mine { background: var(--color-mypod-soft); color: var(--color-mypod); border-color: var(--color-mypod); font-weight: var(--font-weight-bold); }

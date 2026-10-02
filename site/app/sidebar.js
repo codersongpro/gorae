@@ -565,7 +565,9 @@ async function render() {
     const totals = Object.fromEntries(state.entries.map((e) => [e.work.id, spoutTotal(spoutCountsFor(state.catalog, e.work.id, state.mySpouts[e.work.id], state.spoutLive, state.pendingCancels[e.work.id]))]));
     const visible = sortEntries(filterEntries(state.entries, state), state.sort, totals);
     const pending = Object.values(state.mySpouts).filter((v) => !v.sent).length;
+    const mineIds = new Set((await store.list()).map((r) => r.id)); // 이미 내 곳간에 담은 작품
     body = catalogView({
+      mineIds, onOpenMine: (e) => go({ tab: 'mypod', openId: e.work.id, notice: '', limit: PAGE_SIZE }),
       entries: state.entries, visible, state,
       top: serviceTop(), ui: cardUi(), onSwitch, onFilter: (p) => go({ ...p, notice: '', limit: PAGE_SIZE }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
       onRemix: startRemix, share: shareProps(), submit: submitProps(false),

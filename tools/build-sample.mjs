@@ -80,7 +80,7 @@ for (const s of mypodSamples) mypodOut.push({ ...s.work, html: await readMore(s.
 await writeFile(new URL('../extension/sample/mypod-samples.json', import.meta.url), JSON.stringify({ className: CLASS_SAMPLE_NAME, works: mypodOut }, null, 2));
 
 const featured = await signFeatured(
-  { month: '2026-10', title: '10월의 고래자리', note: '새 학기 수업을 여는 도구와 분수 활동', items: ['tool-lucky-draw', 'tool-scoreboard', 'sample-fraction-pizza'], issuedAt: '2026-10-01T02:00:00Z' },
+  { month: '2026-10', title: '10월의 고래자리', note: '새 학기 수업을 여는 도구와 재미있는 단어 게임', items: ['tool-lucky-draw', 'tool-scoreboard', 'sample-word-match'], issuedAt: '2026-10-01T02:00:00Z' },
   root.privateKey,
 );
 const catalog = { updatedAt: '2026-10-01T02:00:00Z', items: signed, exeItems, featured };

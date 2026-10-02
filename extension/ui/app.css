@@ -186,3 +186,14 @@ a.btn { display: inline-flex; align-items: center; min-height: var(--h-btn); pad
 /* 참고 전용 작품 */
 .badge.reference { background: var(--color-caution, var(--color-fill)); color: var(--color-text); }
 .ref-band { flex-basis: 100%; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--color-caution, var(--color-fill)); color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); }
+
+/* 카드 뱃지 · 제작자 닉네임 */
+.badge.verified { background: var(--color-mypod-soft); color: var(--color-mypod); }
+.pills { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.pill { display: inline-flex; align-items: center; height: var(--h-badge); padding: 0 var(--space-2); border-radius: var(--radius-sm); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); white-space: nowrap; background: var(--color-fill); color: var(--color-text-muted); }
+.pill.cat { background: var(--color-catalog-soft); color: var(--color-catalog); }
+.pill.edu { background: var(--color-mypod-soft); color: var(--color-mypod); }
+.pill.tag { background: transparent; padding: 0; font-weight: var(--font-weight-regular, 400); }
+.maker { display: flex; align-items: baseline; gap: var(--space-1); margin: 0; }
+.maker .nick { font-size: var(--font-size-md, 1rem); font-weight: var(--font-weight-bold); color: var(--color-catalog); }
+.maker .maker-sub { color: var(--color-text-muted); font-size: var(--font-size-sm); }

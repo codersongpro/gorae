@@ -97,15 +97,27 @@ function findBar({ entries, state, onFilter, sortSel }) {
         h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) }, Fd.reset))));
 }
 
-// 카드 한 줄 분류: 수업 › 교과활동 › 연습 · 초4 수학 · 10분 · 개인 · 교사+학생
+// 카드 분류 뱃지: 카테고리(파랑) · 학년·교과·단원(청록) · 시간·모둠·대상(회색)
+const pill = (kind, text) => h('span', { class: `pill ${kind}` }, text);
 function metaLine(entry) {
   const m = metaOf(entry);
-  const items = [m.path.slice(1).join(' › '), [m.gradeLabel, m.subject].filter(Boolean).join(' '), m.unit ? `단원 ${m.unit}` : '', m.topic, timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
+  const cat = m.path.slice(1).join(' › ');
+  const edu = [[m.gradeLabel, m.subject].filter(Boolean).join(' '), m.unit ? `단원 ${m.unit}` : '', m.topic].filter(Boolean);
+  const info = [timeLabel(m.estimatedMinutes), groupLabel(m.groupType), audienceLabel(m.audience)].filter(Boolean);
   return h('div', { class: 'card-meta' },
-    h('div', { class: 'meta' }, items.map((t) => h('span', {}, t))),
-    m.tags.length ? h('div', { class: 'meta' }, m.tags.map((t) => h('span', {}, '#' + t))) : null,
+    h('div', { class: 'pills' },
+      cat ? pill('cat', cat) : null, edu.map((t) => pill('edu', t)), info.map((t) => pill('info', t)),
+      m.tags.map((t) => pill('tag', '#' + t))),
     m.artifactType === 'webapp' ? h('p', { class: 'notice' }, S.cardMeta.webapp) : null,
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
+}
+
+// 제작자 닉네임 강조: "별빛 고래 · 초등" → 🐳 **별빛 고래** · 초등
+export function makerLine(author, role) {
+  const [nick, ...rest] = String(author || '').split('·').map((t) => t.trim());
+  if (!nick) return null;
+  const sub = [rest.join(' · '), role].filter(Boolean).join(' · ');
+  return h('p', { class: 'maker' }, h('span', { 'aria-hidden': 'true' }, '🐳'), h('strong', { class: 'nick' }, nick), sub ? h('span', { class: 'maker-sub' }, sub) : null);
 }
 
 // 이달의 고래자리 띠: 서명이 맞을 때만, 학생고래 모드에서는 맑은 바다 작품만
@@ -145,13 +157,14 @@ function workCard(entry, opts) {
   const m = metaOf(entry);
   return h('article', { class: 'card' },
     selectBox || null,
-    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
+    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok ? h('span', { class: 'badge verified' }, S.verified) : null,
+      entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
       w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null),
     locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
     h('h3', {}, w.title),
+    makerLine(w.author),
     m.description ? h('p', { class: 'desc' }, m.description) : null,
     metaLine(entry),
-    w.author ? h('p', { class: 'muted' }, w.author) : null,
     verifyLine(entry),
     w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
     extra || null,
@@ -251,9 +264,10 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, spout,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
     shown.map((e) => h('article', { class: 'card' },
       h('h3', {}, e.title),
+      makerLine(e.nickname, e.whale),
       h('div', { class: 'row' }, h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
-      e.kinds.length || e.categoryText ? h('p', { class: 'muted' }, [e.kinds.join(' · '), e.categoryText].filter(Boolean).join(' / ')) : null,
-      h('p', { class: 'muted' }, [M.by(e.nickname, e.whale), e.timestamp].filter(Boolean).join(' · ')),
+      e.kinds.length || e.categoryText ? h('div', { class: 'pills' }, e.kinds.map((k) => pill('cat', k)), e.categoryText ? pill('info', e.categoryText) : null) : null,
+      e.timestamp ? h('p', { class: 'muted' }, e.timestamp) : null,
       e.description ? h('p', {}, e.description) : null,
       e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
       e.files.length || e.payload ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),

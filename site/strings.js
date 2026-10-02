@@ -19,6 +19,7 @@ export const S = {
     whirlpool: '소용돌이 · 보류',
   },
   pick: '★ 파수꾼 고래 검수 완료',
+  verified: '✔ 검수 서명 확인',
   tailprintOk: (name, date) => `검수 서명 확인됨 · 파수꾼고래 ${name} · ${date}`,
   reason: {
     NO_TAILPRINT: '검수 서명이 없어요',

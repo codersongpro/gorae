@@ -30,6 +30,7 @@ import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView
 import { createView } from './ui/form.js';
 import { pinView, marketView, marketRunConfirm, examLockView, guideView } from './ui/views.js';
 import { isRestricted } from './core/reference.js';
+import { PAGE_SIZE } from './ui/views.js';
 import { startTour } from './ui/tour.js';
 import { TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
@@ -45,6 +46,7 @@ const state = {
   market: { status: 'idle', entries: [], query: '', kind: '', busy: {}, done: {} },
   shareProfile: {}, marketRunOk: {}, confirmMarket: null,
   service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null, spoutLive: null, pendingCancels: {},
+  expanded: {}, limit: 12, favOnly: false,
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
   grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
   source: 'network', listRejected: false, notice: '', openId: null,
@@ -75,6 +77,20 @@ async function loadAll() {
 const verifyWorks = (works) => buildEntries({ works, list: state.list, storage, rootJwk: ROOT_PUBLIC_JWK });
 
 function go(patch) { Object.assign(state, patch); render(); }
+// 카드 접기/펼치기 · 더 보기 (목록이 길어져도 스크롤을 줄이는 공통 동작)
+const cardUi = () => ({
+  expanded: state.expanded, limit: state.limit,
+  onExpand: (id) => go({ expanded: { ...state.expanded, [id]: !state.expanded[id] } }),
+  onExpandAll: (ids, on) => go({ expanded: { ...state.expanded, ...Object.fromEntries(ids.map((id) => [id, on])) } }),
+  onMore: () => go({ limit: state.limit + PAGE_SIZE }),
+});
+async function toggleFavorite(entry) {
+  const rec = await store.get(entry.work.id);
+  if (!rec) return;
+  rec.favorite = !rec.favorite;
+  await store.put(rec);
+  go({ notice: rec.favorite ? S.fav.added : S.fav.removed });
+}
 
 // 따라 해보기: 단계마다 필요한 곳간 탭으로 옮겨 가며 실제 버튼을 비춘다
 function beginTour() {
@@ -468,7 +484,7 @@ async function render() {
     const pending = Object.values(state.mySpouts).filter((v) => !v.sent).length;
     body = catalogView({
       entries: state.entries, visible, state,
-      onFilter: (p) => go({ ...p, notice: '' }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
+      ui: cardUi(), onFilter: (p) => go({ ...p, notice: '', limit: PAGE_SIZE }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
       onRemix: startRemix, share: shareProps(), submit: submitProps(false),
       spout: spoutProps(),
       sendBar: spoutSendBar({ pending, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
@@ -479,14 +495,16 @@ async function render() {
       m: state.market, onRefresh: refreshMarket, onImport: importFromMarket, onReview: (e) => importFromMarket(e, { review: true }), mode: state.mode, onPreview: previewFromMarket,
       spout: spoutProps(), web: globalThis.GORAE_WEB === true,
       sendBar: spoutSendBar({ pending: Object.values(state.mySpouts).filter((v) => !v.sent).length, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
-      onFilter: (p) => { state.market = { ...state.market, ...p }; render(); },
+      ui: cardUi(), onFilter: (p) => { state.market = { ...state.market, ...p }; state.limit = PAGE_SIZE; render(); },
     });
   } else if (state.tab === 'mypod') {
     const all = await store.list();
     const entries = await verifyWorks(all.map((r) => r.work));
     // 내 곳간 찾기: 큰 곳간과 같은 검색 규칙(제목·주제·성취기준·태그·분류)
     const hit = state.mypodQuery ? new Set(filterEntries(entries, { query: state.mypodQuery }).map((e) => e.work.id)) : null;
-    const records = hit ? all.filter((r) => hit.has(r.id)) : all;
+    // 즐겨찾기(★)는 맨 위로, '즐겨찾기만 보기'를 켜면 그것만
+    const found = (hit ? all.filter((r) => hit.has(r.id)) : all).filter((r) => !state.favOnly || r.favorite);
+    const records = [...found.filter((r) => r.favorite), ...found.filter((r) => !r.favorite)];
     body = mypodView({
       records, entriesById: new Map(entries.map((e) => [e.work.id, { ...e, source: (records.find((r) => r.id === e.work.id) || {}).source }])), state,
       onRun: run, onRemove: removeRecord, onToggleDetail: toggleDetail,
@@ -494,7 +512,8 @@ async function render() {
       onSelect: (id, on) => { state.selected = toggleIn(state.selected, id, on); },
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
       share: shareProps(), submit: submitProps(true),
-      onSearch: (q) => go({ mypodQuery: q }), total: all.length,
+      onSearch: (q) => go({ mypodQuery: q, limit: PAGE_SIZE }), total: all.length,
+      ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
     });
   } else {
     body = classView({
@@ -505,6 +524,7 @@ async function render() {
     });
   }
   app.replaceChildren(
+    h('div', { class: 'sticky-head' },
     topBar(state.mode, async () => {
       // 학생고래로는 바로, 교사고래로는 암호를 거쳐서 바꾼다
       if (state.mode === 'mother') {
@@ -514,7 +534,7 @@ async function render() {
       go({ screen: 'pin', pin: { has: await hasPin(storage), error: '', askReset: false } });
     }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' }), () => go({ screen: 'guide' }),
       () => go({ screen: 'main', tab: 'catalog', openId: null, confirmUrl: null, confirmMarket: null, notice: '' })),
-    tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null })),
+    tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null, limit: PAGE_SIZE }))),
     // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
     ...[
       state.confirmUrl ? urlConfirmView({ info: state.confirmUrl, onOpen: openConfirmed, onCancel: () => go({ confirmUrl: null }) }) : null,

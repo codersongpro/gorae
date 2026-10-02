@@ -138,42 +138,67 @@ function featuredBand(entries, state, onRun) {
     shown.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run))));
 }
 
-export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar }) {
+export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar, ui, top }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
     zoneBand('catalog'),
+    top || null,
     featuredBand(entries, state, onRun),
     sendBar || null,
     h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
     findBar({ entries, state, onFilter, sortSel }),
-    visible.length ? visible.map((e) => workCard(e, { mode: state.mode, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })) : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
+    listTools(visible.map((e) => e.work.id), ui),
+    visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
+
+const KIND_LABEL = { html: 'HTML', webapp: '웹앱', exe: 'EXE' };
+
+// 목록 도구: 모두 펼치기/접기, 더 보기 (작품이 늘어도 길게 스크롤하지 않도록 기본은 접힌 카드 + 12개씩)
+export const PAGE_SIZE = 12;
+function listTools(ids, ui) {
+  if (!ui || !ui.onExpandAll || ids.length < 2) return null;
+  const all = ids.every((id) => ui.expanded && ui.expanded[id]);
+  return h('div', { class: 'list-tools' },
+    h('span', { class: 'muted' }, S.list.count(ids.length)),
+    h('button', { class: 'chip', onclick: () => ui.onExpandAll(ids, !all) }, all ? S.list.collapseAll : S.list.expandAll));
+}
+function moreButton(total, shown, ui) {
+  if (!ui || !ui.onMore || shown >= total) return null;
+  return h('button', { class: 'more-btn', onclick: ui.onMore }, S.list.more(total - shown));
+}
+const sliceOf = (items, ui) => (ui && ui.limit ? items.slice(0, ui.limit) : items);
 
 function workCard(entry, opts) {
   const w = entry.work;
   // 참고 전용 작품은 학생고래 모드에서 보고 실행만 된다: 담기·리믹스·수정·꾸러미·레시피·공유를 숨긴다
   const locked = isRestricted(w, opts.mode);
-  const { onRun, onToggleDetail, onRemove, open, report, extra, spout } = opts;
+  const { onRun, onToggleDetail, onRemove, open, report, extra, spout, ui, fav, onFav } = opts;
   const onAdd = locked ? null : opts.onAdd, onEdit = locked ? null : opts.onEdit, onRemix = locked ? null : opts.onRemix;
   const selectBox = locked ? null : opts.selectBox, share = locked ? null : opts.share, submit = locked ? null : opts.submit;
   const run = canRun(entry);
   const m = metaOf(entry);
-  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}` },
-    selectBox || null,
+  // 제목 줄에는 간단한 정보(검수 여부·종류)만. 설명·분류는 펼쳤을 때 보인다
+  const more = !!(open || (ui && ui.expanded && ui.expanded[w.id]));
+  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}${more ? ' open' : ' compact'}` },
+    h('div', { class: 'card-head' },
+      h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(more), title: more ? S.list.fold : S.list.unfold, onclick: () => ui && ui.onExpand && ui.onExpand(w.id) },
+        h('h3', {}, w.title), h('span', { class: 'chev', 'aria-hidden': 'true' }, more ? '▾' : '▸')),
+      onFav ? h('button', { class: `star${fav ? ' on' : ''}`, type: 'button', 'aria-pressed': String(!!fav), 'aria-label': fav ? S.fav.off : S.fav.on, title: fav ? S.fav.off : S.fav.on, onclick: () => onFav(entry) }, fav ? '★' : '☆') : null),
     h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok ? h('span', { class: 'badge verified' }, S.verified) : null,
       entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
-      w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null),
-    locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
-    h('h3', {}, w.title),
+      w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null,
+      KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null),
     makerLine(w.author),
-    m.description ? h('p', { class: 'desc' }, m.description) : null,
-    metaLine(entry),
-    verifyLine(entry),
-    w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
-    extra || null,
+    locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
+    selectBox || null,
+    more && m.description ? h('p', { class: 'desc' }, m.description) : null,
+    more ? metaLine(entry) : null,
+    more ? verifyLine(entry) : null,
+    more && w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
+    more ? extra || null : null,
     h('div', { class: 'card-actions' },
       spout ? spoutRow(entry, spout) : null,
       h('span', { class: 'spacer' }),
@@ -241,7 +266,7 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
 }
 
 // 나눔 곳간: 시트 목록 → 검색·분류 거르기 → 가져오기
-export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onReview, mode = 'baby', spout, sendBar, web = false }) {
+export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onReview, mode = 'baby', spout, sendBar, web = false, ui }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
@@ -256,6 +281,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
   else if (m.status === 'error') state = h('p', { class: 'notice error', role: 'alert' }, M.error[m.error] || m.error);
   else if (m.missing && m.missing.length) state = h('p', { class: 'notice error' }, M.columns(m.missing, m.header || []));
   const teacher = mode === 'mother';
+  const isEx = (id) => !!(ui && ui.expanded && ui.expanded[id]);
   return h('section', { class: 'section' },
     zoneBand('market'),
     sendBar || null,
@@ -269,15 +295,17 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
     m.status === 'ok' && !(m.entries || []).length ? h('p', { class: 'muted' }, M.empty) : null,
     m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
-    shown.map((e) => h('article', { class: 'card market-card' },
-      h('h3', {}, e.title),
+    listTools(shown.map((e) => e.id), ui),
+    sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}` },
+      h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
+        h('h3', {}, e.title), h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▾' : '▸'))),
       makerLine(e.nickname, e.whale),
       h('div', { class: 'row' }, h('span', { class: 'badge precheck' }, S.zone.market.badge), h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
-      e.kinds.length || e.categoryText ? h('div', { class: 'pills' }, e.kinds.map((k) => pill('cat', k)), e.categoryText ? pill('info', e.categoryText) : null) : null,
-      e.timestamp ? h('p', { class: 'muted' }, e.timestamp) : null,
-      e.description ? h('p', {}, e.description) : null,
-      e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
-      e.files.length || e.payload ? null : h('p', { class: 'muted' }, S.cardMeta.webapp),
+      isEx(e.id) && (e.kinds.length || e.categoryText) ? h('div', { class: 'pills' }, e.kinds.map((k) => pill('cat', k)), e.categoryText ? pill('info', e.categoryText) : null) : null,
+      isEx(e.id) && e.timestamp ? h('p', { class: 'muted' }, e.timestamp) : null,
+      isEx(e.id) && e.description ? h('p', {}, e.description) : null,
+      isEx(e.id) && e.comment ? h('p', { class: 'muted' }, '💬 ' + e.comment) : null,
+      isEx(e.id) && !(e.files.length || e.payload) ? h('p', { class: 'muted' }, S.cardMeta.webapp) : null,
       spout ? spoutRow({ work: { id: e.id } }, spout) : null,
       // 웹 버전: 구글 드라이브 파일은 브라우저가 직접 받을 수 없어 드라이브에서 열어 보게 한다 (가져오기는 웨일 사이드바에서)
       web && e.files.length
@@ -289,7 +317,8 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
           teacher ? h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
             m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import) : null,
           teacher ? h('button', { disabled: !!(m.busy && m.busy[e.id]), title: M.reviewHint, onclick: () => onReview(e) }, M.review) : null,
-          !teacher ? h('p', { class: 'muted' }, M.studentNote) : null))));
+          !teacher ? h('p', { class: 'muted' }, M.studentNote) : null))),
+    moreButton(shown.length, sliceOf(shown, ui).length, ui));
 }
 
 // 나눔 곳간 작품을 실행하기 전 출처 확인
@@ -314,32 +343,34 @@ function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
     h('p', { class: 'muted' }, S.share.hint));
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly }) {
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
   q.addEventListener('change', () => onSearch(q.value.trim()));
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
   return h('section', { class: 'section' },
     total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
     state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
+    total ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!state.favOnly, onchange: (e) => onFavOnly(e.target.checked) }), S.fav.only) : null,
+    listTools(records.map((r) => r.id), ui),
     records.length ? h('div', { class: 'card' },
       h('p', {}, S.bundle.exportTitle),
       nameInput,
       h('button', { onclick: () => onExport(nameInput.value) }, S.bundle.exportBtn),
       exportOut ? h('div', { class: 'detail' }, h('p', {}, S.bundle.madeN(exportOut.count, exportOut.fileName)),
         h('div', { class: 'row' }, h('button', { onclick: onSaveFile }, S.bundle.saveFile), h('button', { onclick: onCopy }, S.bundle.copy))) : null) : null,
-    records.length ? records.map((r) => {
+    records.length ? [...sliceOf(records, ui).map((r) => {
       const w = r.work;
       const tags = [`출처: ${S.source[r.source] || r.source}`, `버전 ${w.version}`];
       if (r.sample) tags.unshift(S.market.sampleTag);
       if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
       if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
       return workCard(entriesById.get(r.id), {
-        mode: state.mode, onRun, onRemove, onToggleDetail, onEdit, onRemix, share, submit, open: state.openId === r.id, report: r.checkReport,
+        mode: state.mode, ui, fav: !!r.favorite, onFav, onRun, onRemove, onToggleDetail, onEdit, onRemix, share, submit, open: state.openId === r.id, report: r.checkReport,
         selectBox: h('label', { class: 'check' },
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),
       });
-    }) : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐳', text: S.empty.mypod }));
+    }), moreButton(records.length, sliceOf(records, ui).length, ui)] : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐳', text: S.empty.mypod }));
 }
 
 export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass }) {

@@ -84,7 +84,6 @@ function go(patch) { Object.assign(state, patch); render(); }
 const cardUi = () => ({
   expanded: state.expanded, limit: state.limit,
   onExpand: (id) => go({ expanded: { ...state.expanded, [id]: !state.expanded[id] } }),
-  onExpandAll: (ids, on) => go({ expanded: { ...state.expanded, ...Object.fromEntries(ids.map((id) => [id, on])) } }),
   onMore: () => go({ limit: state.limit + PAGE_SIZE }),
 });
 async function toggleFavorite(entry) {
@@ -501,6 +500,19 @@ function showToast() {
   toastTimer = setTimeout(() => { el.remove(); if (state.notice === msg) state.notice = ''; }, 2200);
 }
 
+// ⋯ 메뉴·＋ 메뉴: 바깥을 누르면 닫는다
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.more-menu[open], .add-menu[open]').forEach((d) => { if (!d.contains(e.target)) d.open = false; });
+});
+// [더 보기] 버튼이 화면에 들어오면 저절로 눌러 다음 12개를 이어 불러온다 (버튼은 그대로 남겨 둔다)
+let moreObserver = null;
+function watchMore() {
+  if (moreObserver) moreObserver.disconnect();
+  const btn = document.querySelector('.more-btn');
+  if (!btn || typeof IntersectionObserver === 'undefined') return;
+  moreObserver = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { moreObserver.disconnect(); btn.click(); } }, { rootMargin: '120px' });
+  moreObserver.observe(btn);
+}
 let lastScreen = null;
 async function render() {
   // 화면이 바뀌면(예: 사용 방법을 열면) 맨 위부터 보이게 한다
@@ -622,6 +634,7 @@ async function render() {
     ].filter(Boolean),
   );
   showToast();
+  watchMore();
 }
 
 await ensureDefaultPin(storage); // 임시 기본 암호 1234 (처음 쓰는 기기에 한 번)

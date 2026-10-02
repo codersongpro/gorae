@@ -133,7 +133,7 @@ export const S = {
     class: '학급 꾸러미는 교사고래 모드에서 쓸 수 있어요. (8단계에서 구현)',
   },
   actions: {
-    home: '첫 화면으로', run: '실행', classShare: '클래스 공유', add: '내 곳간에 담기', remove: '삭제', back: '← 돌아가기', openTab: '새 탭에서 열기',
+    home: '첫 화면으로', run: '실행', more: '더 보기', add2: '추가 (만들기·가져오기)', classShare: '클래스 공유', add: '내 곳간에 담기', remove: '삭제', back: '← 돌아가기', openTab: '새 탭에서 열기',
     create: '만들기', import: '가져오기', edit: '수정', remix: '리믹스', save: '내 곳간에 저장', details: '자세히', close: '접기',
   },
   detail: { howTo: '사용 방법', recipe: '프롬프트 레시피', check: '자동 점검', checkOk: '걸린 항목이 없어요' },
@@ -256,7 +256,7 @@ export const S = {
     title: '웨일 스페이스에 공유 (붙여넣기용으로 복사돼요)',
     kinds: { class: '클래스용 안내 복사', teamboard: '팀보드 전시용 복사', space: '웨일 스페이스 공유 글 복사' },
     nowOn: (label) => `지금 화면: ${label}`,
-    link: '바로 실행 링크 복사',
+    menuTitle: '웨일 스페이스에 공유', link: '바로 실행 링크 복사',
     classNow: '웨일 클래스에 바로 공유 (이 도구 하나)', classNowHint: '꾸러미를 만들지 않고, 이 도구 하나의 안내문을 복사하고 작품 파일을 저장해요. 클래스 글에 붙여 넣고 도구 모음의 [파일]로 방금 저장한 파일을 첨부하세요.',
     classNowDone: '클래스용 안내문을 복사하고 작품 파일을 저장했어요. 클래스 글에 붙여 넣고 [파일]로 저장한 파일을 첨부하세요.',
     copied: (label) => `${label}을(를) 복사했어요. 붙여 넣기만 하세요.`,

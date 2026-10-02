@@ -310,3 +310,18 @@ details[open] > summary::before { content: '▼'; }
 article.card { border: calc(var(--border-width) * 2) solid color-mix(in srgb, var(--accent, var(--color-text-muted)) 40%, var(--color-border)); border-left: var(--space-2) solid var(--accent, var(--color-border)); box-shadow: 0 var(--space-1) var(--space-4) color-mix(in srgb, var(--color-text) 14%, transparent); }
 article.card.market-card { border-left-style: dashed; border-left-color: var(--color-market); }
 article.card .card-head { padding-bottom: var(--space-1); border-bottom: var(--border-width) solid color-mix(in srgb, var(--accent, var(--color-border)) 25%, transparent); }
+
+/* ⋯ 메뉴 · ＋ 추가 메뉴 */
+.more-menu, .add-menu { position: relative; display: inline-block; }
+.more-menu > summary, .add-menu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; min-height: var(--touch-min); min-width: var(--touch-min); padding: 0 var(--space-3); border-radius: var(--radius-md); font-weight: var(--font-weight-bold); }
+.more-menu > summary { border: var(--border-width) solid var(--color-border); background: var(--color-surface-raised); font-size: var(--font-size-lg); }
+.more-menu > summary::before, .add-menu > summary::before { content: none; }
+.more-menu > summary::-webkit-details-marker, .add-menu > summary::-webkit-details-marker { display: none; }
+.menu-pop { position: absolute; right: 0; top: 100%; z-index: 40; min-width: 13em; display: grid; padding: var(--space-1); background: var(--color-surface-raised); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+.menu-item { text-align: left; border: 0; background: transparent; min-height: var(--touch-min); padding: 0 var(--space-3); border-radius: var(--radius-sm); font: inherit; color: var(--color-text); cursor: pointer; }
+.menu-item:hover, .menu-item:focus-visible { background: var(--color-fill); }
+.menu-item.danger { color: var(--color-danger); }
+.menu-group { margin: 0; padding: var(--space-2) var(--space-3) 0; color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); border-top: var(--border-width) solid var(--color-border); }
+.card:has(.more-menu[open]) { position: relative; z-index: 6; }
+.zone { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: baseline; }
+.more-menu[open] > summary::before, .add-menu[open] > summary::before { content: none; }

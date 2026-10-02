@@ -47,7 +47,6 @@ export function tabsBar(current, onSelect) {
 export function topBar(mode, onToggle, onCreate, onImport, onGuide, onHome) {
   const teacher = mode === 'mother';
   return h('div', { class: 'top' },
-    globalThis.GORAE_WEB === true ? h('button', { class: 'web-promo', type: 'button', onclick: onGuide }, S.guide.web.promo) : null,
     teacher ? h('div', { class: 'mode-band', role: 'status' }, S.mode.band) : null,
     h('header', { class: 'topbar' },
       h('div', { class: 'brand' },
@@ -56,8 +55,9 @@ export function topBar(mode, onToggle, onCreate, onImport, onGuide, onHome) {
           h('h1', {}, S.appName)),
         h('span', { class: `mode-label ${teacher ? 'teacher' : ''}` }, S.mode[mode])),
       h('div', { class: 'actions' },
-        h('button', { class: 'icon-btn', 'data-tour': 'create', 'aria-label': S.actions.create, title: S.actions.create, onclick: onCreate }, '＋'),
-        h('button', { class: 'icon-btn', 'data-tour': 'import', 'aria-label': S.actions.import, title: S.actions.import, onclick: onImport }, '↓'),
+        h('details', { class: 'add-menu' },
+          h('summary', { class: 'icon-btn', 'data-tour': 'create', 'aria-label': S.actions.add2, title: S.actions.add2 }, '＋'),
+          h('div', { class: 'menu-pop', role: 'menu' }, menuItem(S.actions.create, onCreate), menuItem(S.actions.import, onImport))),
         h('button', { class: 'icon-btn', 'data-tour': 'mode', 'aria-label': teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, title: teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, onclick: onToggle }, teacher ? '🔓' : '🔒'),
         onGuide ? h('button', { class: 'icon-btn', 'data-tour': 'guide', 'aria-label': S.guide.open, title: S.guide.open, onclick: onGuide }, '❔') : null)));
 }
@@ -195,10 +195,9 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     top || null,
     featuredBand(entries, state, onRun),
     sendBar || null,
-    h('p', { class: 'muted' }, S.tagline),
-    h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
+    state.source !== 'network' || state.listRejected ? h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')) : null,
     findBar({ entries, state, onFilter, sortSel }),
-    listTools(visible.map((e) => e.work.id), ui),
+    listTools(visible.map((e) => e.work.id)),
     visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
 
@@ -221,12 +220,9 @@ const KIND_LABEL = { html: 'HTML', webapp: '웹앱', exe: 'EXE' };
 
 // 목록 도구: 모두 펼치기/접기, 더 보기 (작품이 늘어도 길게 스크롤하지 않도록 기본은 접힌 카드 + 12개씩)
 export const PAGE_SIZE = 12;
-function listTools(ids, ui) {
-  if (!ui || !ui.onExpandAll || ids.length < 2) return null;
-  const all = ids.every((id) => ui.expanded && ui.expanded[id]);
-  return h('div', { class: 'list-tools' },
-    h('span', { class: 'muted' }, S.list.count(ids.length)),
-    h('button', { class: 'chip', onclick: () => ui.onExpandAll(ids, !all) }, all ? S.list.collapseAll : S.list.expandAll));
+function listTools(ids) {
+  if (ids.length < 2) return null;
+  return h('div', { class: 'list-tools' }, h('span', { class: 'muted' }, S.list.count(ids.length)));
 }
 function moreButton(total, shown, ui) {
   if (!ui || !ui.onMore || shown >= total) return null;
@@ -234,20 +230,40 @@ function moreButton(total, shown, ui) {
 }
 const sliceOf = (items, ui) => (ui && ui.limit ? items.slice(0, ui.limit) : items);
 
+// ⋯ 메뉴: 담기 말고 자주 쓰지 않는 동작(리믹스·수정·삭제·공유)을 한곳에 모은다
+const menuItem = (label, fn, cls = '') => h('button', { type: 'button', role: 'menuitem', class: `menu-item ${cls}`.trim(), onclick: fn }, label);
+function moreMenu(entry, { onEdit, onRemix, onRemove, share }) {
+  const items = [];
+  if (onRemix) items.push(menuItem(S.actions.remix, () => onRemix(entry)));
+  if (onEdit) items.push(menuItem(S.actions.edit, () => onEdit(entry)));
+  if (share) {
+    items.push(h('p', { class: 'menu-group' }, S.share.menuTitle));
+    if (share.onClassNow) items.push(menuItem(S.actions.classShare, () => share.onClassNow(entry), 'class-now'));
+    for (const k of (share.kinds || []).filter((x) => x !== 'class')) items.push(menuItem(S.share.kinds[k], () => share.onShare(entry, k)));
+    items.push(menuItem(S.share.link, () => share.onLink(entry)));
+  }
+  if (onRemove) items.push(menuItem(S.actions.remove, () => onRemove(entry), 'danger'));
+  if (!items.length) return null;
+  return h('details', { class: 'more-menu' },
+    h('summary', { 'aria-label': S.actions.more, title: S.actions.more }, '⋯'),
+    h('div', { class: 'menu-pop', role: 'menu' }, ...items));
+}
+
 function workCard(entry, opts) {
   const w = entry.work;
   // 참고 전용 작품은 학생고래 모드에서 보고 실행만 된다: 담기·리믹스·수정·꾸러미·레시피·공유를 숨긴다
   const locked = isRestricted(w, opts.mode);
-  const { onRun, onToggleDetail, onRemove, open, report, extra, spout, ui, fav, onFav } = opts;
+  const { onRun, onToggleDetail, onRemove, open, report, extra, spout, fav, onFav } = opts;
   const onAdd = locked ? null : opts.onAdd, onEdit = locked ? null : opts.onEdit, onRemix = locked ? null : opts.onRemix;
   const selectBox = locked ? null : opts.selectBox, share = locked ? null : opts.share, submit = locked ? null : opts.submit;
   const run = canRun(entry);
   const m = metaOf(entry);
-  // 제목 줄에는 간단한 정보(검수 여부·종류)만. 설명·분류는 펼쳤을 때 보인다
-  const more = !!(open || (ui && ui.expanded && ui.expanded[w.id]));
+  // 토글은 하나: 제목의 ▶를 누르면 설명·분류·사용 방법·점검 결과가 모두 펼쳐진다
+  const more = !!open;
+  const menu = moreMenu(entry, { onEdit, onRemix, onRemove: locked ? null : onRemove, share });
   return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}${more ? ' open' : ' compact'}`, 'data-group': cardGroup(m.domain, m.category) },
     h('div', { class: 'card-head' },
-      h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(more), title: more ? S.list.fold : S.list.unfold, onclick: () => ui && ui.onExpand && ui.onExpand(w.id) },
+      h('button', { class: 'card-toggle', type: 'button', 'data-tour': 'details', 'aria-expanded': String(more), title: more ? S.list.fold : S.list.unfold, onclick: () => onToggleDetail(w.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, more ? '▼' : '▶'), h('h3', {}, w.title)),
       onFav ? h('button', { class: `star${fav ? ' on' : ''}`, type: 'button', 'aria-pressed': String(!!fav), 'aria-label': fav ? S.fav.off : S.fav.on, title: fav ? S.fav.off : S.fav.on, onclick: () => onFav(entry) }, fav ? '★' : '☆') : null),
     h('div', { class: 'row', 'data-tour': 'badge' }, ...levelBadges(m), badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
@@ -265,12 +281,8 @@ function workCard(entry, opts) {
     h('div', { class: 'card-actions' },
       spout ? spoutRow(entry, spout) : null,
       h('span', { class: 'spacer' }),
-      onEdit ? h('button', { onclick: () => onEdit(entry) }, S.actions.edit) : null,
-      onRemix ? h('button', { onclick: () => onRemix(entry) }, S.actions.remix) : null,
-      onRemove ? h('button', { class: 'danger', onclick: () => onRemove(entry) }, S.actions.remove) : null,
       onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
-      share && share.onClassNow ? h('button', { 'data-tour': 'class-now', title: S.share.classNowHint, onclick: () => share.onClassNow(entry) }, S.actions.classShare) : null,
-      h('button', { 'data-tour': 'details', onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details),
+      menu,
       h('button', { class: 'primary', 'data-tour': 'run', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
@@ -279,7 +291,6 @@ function workCard(entry, opts) {
       w.promptRecipe && !locked ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
       entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎤 ${s.text} — ${s.author}`)) : null,
       checkList(report),
-      share ? sharePanel(entry, share) : null,
       submit ? submitPanel(entry, { ...submit, draft: submit.draftOf ? submit.draftOf(entry) : null }) : null) : null);
 }
 
@@ -359,7 +370,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
     m.status === 'ok' && !(m.entries || []).length ? h('p', { class: 'muted' }, M.empty) : null,
     m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
-    listTools(shown.map((e) => e.id), ui),
+    listTools(shown.map((e) => e.id)),
     sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}`, 'data-group': cardGroup(e.category && e.category.domain, e.category && e.category.category) },
       h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▼' : '▶'), h('h3', {}, e.title))),
@@ -398,16 +409,6 @@ export function marketRunConfirm({ title, onRun, onCancel }) {
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다
-function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
-  return h('div', { class: 'detail' },
-    h('p', { class: 'muted' }, S.share.title),
-    serviceLabel ? h('p', { class: 'notice' }, S.share.nowOn(serviceLabel)) : null,
-    h('div', { class: 'row', 'data-tour': 'share-kinds' },
-      kinds.map((k, i) => h('button', { class: i === 0 && serviceLabel ? 'primary' : '', onclick: () => onShare(entry, k) }, S.share.kinds[k])),
-      h('button', { 'data-tour': 'share-link', onclick: () => onLink(entry) }, S.share.link)),
-    h('p', { class: 'muted' }, S.share.hint));
-}
-
 export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly, top, onTeamboard, onTeamboardFile }) {
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
   q.addEventListener('change', () => onSearch(q.value.trim()));
@@ -417,7 +418,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
     total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
     state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
     total ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!state.favOnly, onchange: (e) => onFavOnly(e.target.checked) }), S.fav.only) : null,
-    listTools(records.map((r) => r.id), ui),
+    listTools(records.map((r) => r.id)),
     records.length ? h('div', { class: 'card' },
       h('p', {}, S.bundle.exportTitle),
       nameInput,

@@ -23,7 +23,7 @@ if (!ticket) {
   } else {
     const b = displayBadge(entry);
     bar.replaceChildren(...[
-      h('h1', {}, '🐋 ' + ticket.work.title),
+      h('h1', {}, (ticket.status && ticket.status.ok ? '🐋 ' : '🫍 ') + ticket.work.title),
       h('span', { class: `badge ${b}` }, S.badge[b]),
       h('span', { class: 'muted' }, S.run.running),
       ticket.work.referenceOnly === true ? h('span', { class: 'ref-band', role: 'note' }, S.reference.runBand) : null,

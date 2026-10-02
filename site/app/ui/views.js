@@ -160,11 +160,11 @@ function metaLine(entry) {
 }
 
 // 제작자 닉네임 강조: "별빛 고래 · 초등" → 🐋 **별빛 고래** · 초등
-export function makerLine(author, role) {
+export function makerLine(author, role, icon = '🐋') {
   const [nick, ...rest] = String(author || '').split('·').map((t) => t.trim());
   if (!nick) return null;
   const sub = [rest.join(' · '), role].filter(Boolean).join(' · ');
-  return h('p', { class: 'maker' }, h('span', { 'aria-hidden': 'true' }, '🐋'), h('strong', { class: 'nick' }, nick), sub ? h('span', { class: 'maker-sub' }, sub) : null);
+  return h('p', { class: 'maker' }, h('span', { 'aria-hidden': 'true' }, icon), h('strong', { class: 'nick' }, nick), sub ? h('span', { class: 'maker-sub' }, sub) : null);
 }
 
 // 이달의 고래자리 띠: 서명이 맞을 때만, 학생고래 모드에서는 맑은 바다 작품만
@@ -196,6 +196,8 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
 
+// 검수되지 않은 작품의 고래 (범고래 이모지)
+export const UNVERIFIED_WHALE = '🫍';
 const KIND_LABEL = { html: 'HTML', webapp: '웹앱', exe: 'EXE' };
 
 // 목록 도구: 모두 펼치기/접기, 더 보기 (작품이 늘어도 길게 스크롤하지 않도록 기본은 접힌 카드 + 12개씩)
@@ -233,7 +235,7 @@ function workCard(entry, opts) {
       entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
       w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null,
       KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null),
-    makerLine(w.author),
+    makerLine(w.author, '', entry.status.ok ? '🐋' : UNVERIFIED_WHALE),
     locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
     selectBox || null,
     more && m.description ? h('p', { class: 'desc' }, m.description) : null,
@@ -341,7 +343,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
     sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}` },
       h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
         h('h3', {}, e.title), h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▾' : '▸'))),
-      makerLine(e.nickname, e.whale),
+      makerLine(e.nickname, e.whale, UNVERIFIED_WHALE),
       h('div', { class: 'row' }, h('span', { class: 'badge precheck' }, S.zone.market.badge), h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
       isEx(e.id) && (e.kinds.length || e.categoryText) ? h('div', { class: 'pills' }, e.kinds.map((k) => pill('cat', k)), e.categoryText ? pill('info', e.categoryText) : null) : null,
       isEx(e.id) && e.timestamp ? h('p', { class: 'muted' }, e.timestamp) : null,

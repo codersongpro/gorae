@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "고래곳간",
-  "description": "로그인 없이 바이브코딩 작품을 꾸러미로 주고받고, 웨일 사이드바에서 안전하게 실행하는 곳간",
+  "description": "수업에 필요한 도구를 모아, 나누고, 이어 쓰다. 선생님과 학생 모두 누군가 만든 도구를 바로 활용하고, 내 수업에 맞게 바꾸고, 동료와 함께 쌓아가는 웨일 사이드바.",
   "version": "0.1.0",
   "permissions": ["storage", "clipboardWrite"],
   "host_permissions": [

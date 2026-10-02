@@ -50,7 +50,7 @@ export function topBar(mode, onToggle, onCreate, onImport, onGuide, onHome) {
     h('header', { class: 'topbar' },
       h('div', { class: 'brand' },
         h('button', { class: 'brand-home', type: 'button', title: S.actions.home, 'aria-label': S.actions.home, onclick: onHome },
-          h('span', { class: 'logo', 'aria-hidden': 'true' }, '🐋'),
+          h('span', { class: 'logo', 'aria-hidden': 'true' }, '🐳'),
           h('h1', {}, S.appName)),
         h('span', { class: `mode-label ${teacher ? 'teacher' : ''}` }, S.mode[mode])),
       h('div', { class: 'actions' },

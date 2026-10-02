@@ -209,3 +209,10 @@ a.btn { display: inline-flex; align-items: center; min-height: var(--h-btn); pad
 /* 제목을 누르면 첫 화면 */
 .brand-home { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--touch-min); padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; border-radius: var(--radius-md); }
 .brand-home h1 { margin: 0; }
+
+/* 좁은 사이드바: 제목 아래에 모드 이름을 두고, 아이콘 버튼이 밀려 겹치지 않게 한다 */
+.topbar .brand { flex-direction: column; align-items: flex-start; gap: 0; flex: 1 1 auto; overflow: hidden; }
+.topbar .brand-home { min-height: 0; }
+.topbar .mode-label { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.topbar .actions { flex: none; }
+.topbar .actions .icon-btn { min-width: calc(var(--touch-min) - var(--space-2)); }

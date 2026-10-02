@@ -108,7 +108,7 @@ export const S = {
       installSteps: [
         { text: '고래곳간 파일을 내려받아 압축을 풀어요. (GitHub의 [Code → Download ZIP]과 같아요)', links: [{ label: 'ZIP 바로 받기', href: 'https://github.com/codersongpro/gorae/archive/refs/heads/main.zip' }, { label: 'GitHub 저장소 열기', href: 'https://github.com/codersongpro/gorae' }] },
         { text: '웨일 주소창에 whale://extensions 를 입력해 확장 프로그램 관리 화면을 열어요. (보안상 링크로는 열 수 없어서 복사 버튼을 만들었어요)', copy: 'whale://extensions', copyLabel: '주소 복사' },
-        { text: '오른쪽 위의 [개발자 모드]를 켜요.' },
+        { text: '아래의 [개발자 모드]를 켜요.' },
         { text: '[압축해제된 확장 프로그램을 로드합니다]를 눌러 압축 푼 폴더 안의 extension 폴더를 골라요.' },
         { text: '웨일 오른쪽 사이드바에서 고래 아이콘을 누르면 고래곳간이 열려요.' },
       ],

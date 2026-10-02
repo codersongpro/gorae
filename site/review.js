@@ -505,11 +505,11 @@ async function finish(d) {
   try {
     const pub = await publishItem(res.item, d.work.title);
     if (d.quick) state.queue.done[d.quick] = true;
-    if (pub.skipped) say(`✔ '${d.work.title}' 검수 완료! 토큰이 없어 아래 [게시하기]로 catalog.json을 직접 올려야 해요.` + warn);
+    if (pub.skipped) say(`✔ '${d.work.title}' 검수 완료! 토큰이 없어 아래 [복사] 또는 [내려받기]로 catalog.json을 직접 올려야 해요.` + warn);
     else say(`✔ '${d.work.title}' 검수 완료! 깃허브에 올렸어요. 1~2분 뒤 모두의 인증 곳간에 보여요.` + warn);
   } catch (e) {
     if (d.quick) state.queue.done[d.quick] = true;
-    say(`검수 서명은 찍었지만 깃허브에 올리지 못했어요: ${e.message} 아래 [게시하기]로 직접 올릴 수 있어요.`, true);
+    say(`검수 서명은 찍었지만 깃허브에 올리지 못했어요: ${e.message} 아래 [복사] 또는 [내려받기]로 catalog.json을 직접 올릴 수 있어요.`, true);
   }
 }
 

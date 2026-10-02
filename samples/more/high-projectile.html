@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>포물선 운동 시뮬레이터</title>
+<style>
+  :root { --b: #0d47a1; --tx: #0e1c33; --mu: #536480; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #0f1b33; color: #e8eefc; font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 820px) { .wrap { grid-template-columns: 1fr 330px; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #9fb0d5; font-size: .9rem; }
+  .card { background: #172648; border-radius: 16px; padding: 14px; display: grid; gap: 10px; align-content: start; }
+  canvas { width: 100%; height: auto; background: linear-gradient(#10244a, #0b1530); border-radius: 12px; touch-action: none; }
+  label { display: grid; gap: 2px; font-weight: 700; } input[type=range] { width: 100%; height: 34px; accent-color: #64b5f6; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; } td, th { border-bottom: 1px solid #2b3d68; padding: 5px 6px; text-align: left; } td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: #90caf9; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border: 1px solid #3b5088; border-radius: 12px; background: #1d3160; color: #e8eefc; cursor: pointer; }
+  button.p { background: #1976d2; border-color: #1976d2; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #90caf9; outline-offset: 2px; }
+  .note { background: #1d3160; border-radius: 12px; padding: 8px 12px; font-size: .9rem; color: #c5d3f3; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🎯 포물선 운동 시뮬레이터</h1><p class="sub">고1 통합과학 · 역학적 시스템. 던진 각도와 처음 속력을 바꾸며 수평 도달 거리와 최고 높이를 예측하고 확인해요. 공기 저항은 무시해요.</p></header>
+  <section class="card" aria-label="궤도">
+    <canvas id="cv" width="640" height="360" role="img" aria-label="공의 포물선 궤도 그래프"></canvas>
+    <div class="r"><button class="p" id="fire">발사 ▶</button><button id="clear">궤도 지우기</button><button id="g">중력: 지구 9.8</button></div>
+  </section>
+  <section class="card" aria-label="조건과 결과">
+    <label>발사 각도: <span id="av">45</span>°<input type="range" id="ang" min="5" max="85" step="1" value="45"></label>
+    <label>처음 속력: <span id="vv">20</span>m/s<input type="range" id="spd" min="5" max="40" step="1" value="20"></label>
+    <table aria-live="polite"><tbody>
+      <tr><td>체공 시간 T = 2v₀sinθ / g</td><td id="rt">-</td></tr>
+      <tr><td>최고 높이 H = (v₀sinθ)² / 2g</td><td id="rh">-</td></tr>
+      <tr><td>수평 도달 거리 R = v₀²sin2θ / g</td><td id="rr">-</td></tr>
+    </tbody></table>
+    <div class="note">🔍 같은 속력이라면 몇 도에서 가장 멀리 날아갈까요? 각도를 바꿔 가며 [발사]하고 여러 궤도를 겹쳐서 비교해 보세요.</div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const cv = $('cv'), cx = cv.getContext('2d');
+  const G = [['지구 9.8', 9.8], ['달 1.6', 1.6], ['화성 3.7', 3.7]]; let gi = 0;
+  const COLORS = ['#ffb74d', '#81c784', '#64b5f6', '#f06292', '#ba68c8', '#4dd0e1'];
+  let shots = [], anim = null;
+  const g = () => G[gi][1];
+  function physics(a, v) { const r = (a * Math.PI) / 180, vx = v * Math.cos(r), vy = v * Math.sin(r); return { T: (2 * vy) / g(), H: (vy * vy) / (2 * g()), R: (2 * vx * vy) / g(), vx, vy }; }
+  function scale() { const m = shots.reduce((s, o) => ({ R: Math.max(s.R, o.p.R), H: Math.max(s.H, o.p.H) }), { R: 20, H: 8 }); const cur = physics(+$('ang').value, +$('spd').value); const R = Math.max(m.R, cur.R, 20) * 1.1, H = Math.max(m.H, cur.H, 8) * 1.25; return { sx: (cv.width - 60) / R, sy: (cv.height - 50) / H }; }
+  function axes(s) { cx.clearRect(0, 0, cv.width, cv.height); cx.strokeStyle = '#4a5f93'; cx.fillStyle = '#9fb0d5'; cx.lineWidth = 1; cx.font = '12px sans-serif'; cx.beginPath(); cx.moveTo(40, 10); cx.lineTo(40, cv.height - 30); cx.lineTo(cv.width - 10, cv.height - 30); cx.stroke(); const stepX = niceStep((cv.width - 60) / s.sx / 6), stepY = niceStep((cv.height - 50) / s.sy / 5); for (let x = 0; x * s.sx < cv.width - 60; x += stepX) { cx.fillText(x, 40 + x * s.sx - 4, cv.height - 14); cx.beginPath(); cx.moveTo(40 + x * s.sx, cv.height - 30); cx.lineTo(40 + x * s.sx, cv.height - 26); cx.stroke(); } for (let y = 0; y * s.sy < cv.height - 50; y += stepY) { cx.fillText(y, 10, cv.height - 30 - y * s.sy + 4); } cx.fillText('거리(m)', cv.width - 50, cv.height - 36); cx.fillText('높이(m)', 6, 14); }
+  function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; }
+  const pt = (s, x, y) => [40 + x * s.sx, cv.height - 30 - y * s.sy];
+  function drawAll(upTo = null) {
+    const s = scale(); axes(s);
+    shots.forEach((o, i) => { cx.strokeStyle = o.color; cx.lineWidth = i === shots.length - 1 ? 3 : 2; cx.beginPath(); const tMax = upTo !== null && i === shots.length - 1 ? upTo : o.p.T; for (let t = 0; t <= tMax + 1e-9; t += o.p.T / 120) { const [px, py] = pt(s, o.p.vx * t, o.p.vy * t - 0.5 * g() * t * t); t === 0 ? cx.moveTo(px, py) : cx.lineTo(px, py); } cx.stroke();
+      if (upTo === null || i !== shots.length - 1) { const [lx, ly] = pt(s, o.p.R, 0); cx.fillStyle = o.color; cx.fillText(`${o.a}° · ${o.p.R.toFixed(1)}m`, Math.min(lx - 10, cv.width - 90), ly - 6 - (i % 3) * 13); } });
+  }
+  function readout() { const p = physics(+$('ang').value, +$('spd').value); $('av').textContent = $('ang').value; $('vv').textContent = $('spd').value; $('rt').textContent = `${p.T.toFixed(2)} s`; $('rh').textContent = `${p.H.toFixed(2)} m`; $('rr').textContent = `${p.R.toFixed(2)} m`; }
+  $('fire').onclick = () => {
+    cancelAnimationFrame(anim); const a = +$('ang').value, v = +$('spd').value; shots.push({ a, v, p: physics(a, v), color: COLORS[shots.length % COLORS.length] }); if (shots.length > 6) shots.shift();
+    const o = shots[shots.length - 1], t0 = performance.now(); const speedUp = 2;
+    const step = (now) => { const t = Math.min(o.p.T, ((now - t0) / 1000) * speedUp); drawAll(t); if (t < o.p.T) anim = requestAnimationFrame(step); else drawAll(); };
+    anim = requestAnimationFrame(step);
+  };
+  $('clear').onclick = () => { cancelAnimationFrame(anim); shots = []; drawAll(); };
+  $('g').onclick = () => { gi = (gi + 1) % G.length; $('g').textContent = `중력: ${G[gi][0]}`; shots = []; readout(); drawAll(); };
+  ['ang', 'spd'].forEach((id) => $(id).addEventListener('input', () => { readout(); if (!anim) drawAll(); }));
+  readout(); drawAll();
+</script>
+</body>
+</html>

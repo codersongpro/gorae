@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수직선 정수 계산기</title>
+<style>
+  :root { --b: #2e7d32; --tx: #12301a; --mu: #55705a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #edf7ee; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: var(--mu); font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(18,48,26,.12); display: grid; gap: 10px; }
+  svg { width: 100%; height: auto; background: #fbfffb; border-radius: 12px; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  select, input[type=text] { font: inherit; padding: 8px; border: 1px solid #bcd9be; border-radius: 10px; } input[type=text] { width: 4.5em; text-align: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 16px; border: 1px solid #bcd9be; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #81c784; outline-offset: 2px; }
+  .eq { font-size: clamp(1.6rem, 6vw, 2.4rem); font-weight: 800; text-align: center; } #why { text-align: center; font-weight: 700; min-height: 3em; }
+  .quiz { background: #f3faf4; border-radius: 12px; padding: 10px; display: grid; gap: 6px; } #fb { font-weight: 800; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🔢 수직선 정수 계산기</h1><p class="sub">중1 수학 · 정수와 유리수. 수직선 위에서 화살표로 더하기와 빼기를 보며 부호의 규칙을 익혀요.</p></header>
+  <section class="card" aria-label="수직선">
+    <svg id="sv" viewBox="0 0 440 130" role="img" aria-label="수직선과 계산 화살표"></svg>
+    <div class="ctl"><input type="text" id="x" value="3" aria-label="처음 수" inputmode="numeric">
+      <select id="op" aria-label="연산"><option value="+">＋</option><option value="-">－</option></select>
+      <input type="text" id="y" value="-5" aria-label="더하거나 빼는 수" inputmode="numeric"><button class="p" id="go">계산</button><button id="rnd">무작위 문제</button></div>
+    <div class="eq" id="eq" aria-live="polite"></div><div id="why" role="status"></div>
+  </section>
+  <section class="card quiz" aria-label="퀴즈">
+    <strong>🎯 결과를 먼저 맞혀 보세요</strong>
+    <div class="ctl"><span id="qt">버튼을 눌러 시작</span><input type="text" id="ans" aria-label="내 답" inputmode="numeric"><button id="chk">확인</button><button id="nq">새 문제</button></div>
+    <div id="fb" role="status"></div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg', MIN = -10, MAX = 10, X0 = 20, STEP = 20;
+  const px = (v) => X0 + (v - MIN) * STEP;
+  const el = (p, n, a, t) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; p.appendChild(e); return e; };
+  const sg = (n) => (n < 0 ? `(${String(n).replace('-', '−')})` : String(n));
+  const clamp = (v) => Math.max(MIN, Math.min(MAX, v));
+  function calc() {
+    const x = Math.trunc(+$('x').value), y = Math.trunc(+$('y').value), op = $('op').value;
+    if (![x, y].every(Number.isFinite)) return;
+    const d = op === '+' ? y : -y, r = x + d;
+    const sv = $('sv'); sv.textContent = '';
+    el(sv, 'line', { x1: X0 - 10, y1: 70, x2: px(MAX) + 10, y2: 70, stroke: '#37474f', 'stroke-width': 2 });
+    for (let v = MIN; v <= MAX; v++) { el(sv, 'line', { x1: px(v), y1: 64, x2: px(v), y2: 76, stroke: '#37474f', 'stroke-width': v === 0 ? 3 : 1.2 }); if (v % 2 === 0) el(sv, 'text', { x: px(v), y: 95, 'text-anchor': 'middle', 'font-size': 11, fill: '#37474f' }, String(v).replace('-', '−')); }
+    const arrow = (a, b, y, color) => { el(sv, 'line', { x1: px(clamp(a)), y1: y, x2: px(clamp(b)), y2: y, stroke: color, 'stroke-width': 4, 'stroke-linecap': 'round' }); const dir = b >= a ? 1 : -1; const e = px(clamp(b)); el(sv, 'polygon', { points: `${e},${y} ${e - dir * 9},${y - 6} ${e - dir * 9},${y + 6}`, fill: color }); };
+    el(sv, 'circle', { cx: px(clamp(x)), cy: 70, r: 6, fill: '#1565c0' }); el(sv, 'text', { x: px(clamp(x)), y: 50, 'text-anchor': 'middle', 'font-size': 12, fill: '#1565c0', 'font-weight': 700 }, `시작 ${String(x).replace('-', '−')}`);
+    arrow(x, x + d, 30, d >= 0 ? '#2e7d32' : '#c62828');
+    el(sv, 'circle', { cx: px(clamp(r)), cy: 70, r: 6, fill: '#e65100' }); el(sv, 'text', { x: px(clamp(r)), y: 118, 'text-anchor': 'middle', 'font-size': 12, fill: '#e65100', 'font-weight': 700 }, `도착 ${String(r).replace('-', '−')}`);
+    $('eq').textContent = `${sg(x)} ${op === '+' ? '+' : '−'} ${sg(y)} = ${String(r).replace('-', '−')}`;
+    $('why').textContent = op === '+' ? (y >= 0 ? `${y}만큼 오른쪽으로 가요.` : `${-y}만큼 왼쪽으로 가요. (음수를 더하면 왼쪽으로)`) : (y >= 0 ? `${y}를 빼면 왼쪽으로 ${y}만큼 가요.` : `음수 ${y}를 빼면 오른쪽으로 ${-y}만큼 가요. (−(−${-y}) = +${-y})`);
+    if (Math.abs(x) > MAX || Math.abs(r) > MAX) $('why').textContent += ' (수직선은 −10~10까지만 그렸어요)';
+  }
+  $('go').onclick = calc; ['x', 'y'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') calc(); }));
+  $('op').addEventListener('change', calc);
+  const rnd = (a, b) => a + (crypto.getRandomValues(new Uint32Array(1))[0] % (b - a + 1));
+  $('rnd').onclick = () => { $('x').value = rnd(-8, 8); $('y').value = rnd(-8, 8); $('op').value = rnd(0, 1) ? '+' : '-'; calc(); };
+  let q = null;
+  $('nq').onclick = () => { q = { x: rnd(-9, 9), y: rnd(-9, 9), op: rnd(0, 1) ? '+' : '-' }; q.r = q.op === '+' ? q.x + q.y : q.x - q.y; $('qt').textContent = `${sg(q.x)} ${q.op === '+' ? '+' : '−'} ${sg(q.y)} = ?`; $('ans').value = ''; $('fb').textContent = ''; $('x').value = q.x; $('y').value = q.y; $('op').value = q.op; calc(); };
+  $('chk').onclick = () => { if (!q) { $('fb').textContent = '먼저 [새 문제]를 눌러요.'; return; } const v = Math.trunc(+String($('ans').value).replace('−', '-')); $('fb').textContent = v === q.r ? '⭕ 맞아요! 화살표로 확인해 보세요.' : `❌ 다시 생각해 봐요. 정답은 ${String(q.r).replace('-', '−')}`; };
+  calc();
+</script>
+</body>
+</html>

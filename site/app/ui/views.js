@@ -202,6 +202,18 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
 
+// 학교급 뱃지: 학교급이 정해진 작품은 초/중/고 하나, 정해지지 않은(공통) 수업 작품은 초·중·고 모두
+const LEVEL_BADGE = { elementary: ['초', 'e'], middle: ['중', 'm'], high: ['고', 'h'] };
+function levelBadges(m) {
+  if (m.domain !== 'lesson') return [];
+  const ids = m.schoolLevel ? [m.schoolLevel] : ['elementary', 'middle', 'high'];
+  return ids.map((id) => h('span', { class: `badge lvl lvl-${LEVEL_BADGE[id][1]}`, title: S.level.title(LEVEL_BADGE[id][0]) }, LEVEL_BADGE[id][0]));
+}
+// 카드 색은 세 가지: 수업자료(수업 작품) / 학급운영(수업도구·학급·생활) / 행정업무(그 밖의 업무)
+export function cardGroup(domain, category) {
+  if (domain === 'lesson') return category === 'classroom_tool' ? 'class' : 'material';
+  return ['class_management', 'student_life'].includes(category) ? 'class' : 'admin';
+}
 const KIND_LABEL = { html: 'HTML', webapp: '웹앱', exe: 'EXE' };
 
 // 목록 도구: 모두 펼치기/접기, 더 보기 (작품이 늘어도 길게 스크롤하지 않도록 기본은 접힌 카드 + 12개씩)
@@ -230,12 +242,12 @@ function workCard(entry, opts) {
   const m = metaOf(entry);
   // 제목 줄에는 간단한 정보(검수 여부·종류)만. 설명·분류는 펼쳤을 때 보인다
   const more = !!(open || (ui && ui.expanded && ui.expanded[w.id]));
-  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}${more ? ' open' : ' compact'}`, 'data-cat': m.category || null },
+  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}${more ? ' open' : ' compact'}`, 'data-group': cardGroup(m.domain, m.category) },
     h('div', { class: 'card-head' },
       h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(more), title: more ? S.list.fold : S.list.unfold, onclick: () => ui && ui.onExpand && ui.onExpand(w.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, more ? '▼' : '▶'), h('h3', {}, w.title)),
       onFav ? h('button', { class: `star${fav ? ' on' : ''}`, type: 'button', 'aria-pressed': String(!!fav), 'aria-label': fav ? S.fav.off : S.fav.on, title: fav ? S.fav.off : S.fav.on, onclick: () => onFav(entry) }, fav ? '★' : '☆') : null),
-    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
+    h('div', { class: 'row', 'data-tour': 'badge' }, ...levelBadges(m), badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
       w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null,
       KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null,
       spout && isPopular(spout.countsOf(entry)) ? h('span', { class: 'badge popular', title: S.popular.hint }, S.popular.badge) : null),
@@ -344,7 +356,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
     m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
     listTools(shown.map((e) => e.id), ui),
-    sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}`, 'data-cat': (e.category && e.category.category) || null },
+    sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}`, 'data-group': cardGroup(e.category && e.category.domain, e.category && e.category.category) },
       h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▼' : '▶'), h('h3', {}, e.title))),
       makerLine(e.nickname, e.whale, false),

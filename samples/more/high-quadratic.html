@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이차함수 그래프 탐색기</title>
+<style>
+  :root { --b: #6a1b9a; --tx: #231233; --mu: #6a5880; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #f6eefb; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 820px) { .wrap { grid-template-columns: 1fr 340px; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: var(--mu); font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(35,18,51,.12); display: grid; gap: 10px; align-content: start; }
+  svg { width: 100%; height: auto; background: #fff; border-radius: 12px; }
+  label { display: grid; gap: 2px; font-weight: 700; } input[type=range] { width: 100%; height: 34px; accent-color: var(--b); }
+  .eq { font-size: clamp(1.3rem, 4.5vw, 1.8rem); font-weight: 800; text-align: center; color: var(--b); } .eq2 { text-align: center; color: var(--mu); }
+  ul.facts { margin: 0; padding-left: 1.2em; display: grid; gap: 3px; font-size: .95rem; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border: 1px solid #dcc7ee; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #ce93d8; outline-offset: 2px; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 999px; font-weight: 800; font-size: .85rem; } .t2 { background: #e8f5e9; color: #1b5e20; } .t1 { background: #fff3e0; color: #8a4b00; } .t0 { background: #ffebee; color: #b71c1c; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>📉 이차함수 그래프 탐색기</h1><p class="sub">고1 수학 · 이차함수. y = a(x − p)² + q에서 a, p, q가 그래프의 모양과 꼭짓점을 어떻게 바꾸는지, 판별식으로 x축과 만나는 점의 수를 살펴봐요.</p></header>
+  <section class="card" aria-label="그래프">
+    <svg id="sv" viewBox="-110 -110 220 220" role="img" aria-label="좌표평면 위의 이차함수 그래프"></svg>
+    <div class="eq" id="eq" aria-live="polite"></div><div class="eq2" id="eq2"></div>
+    <label>a (폭과 방향): <span id="av">1</span><input type="range" id="a" min="-3" max="3" step="0.25" value="1"></label>
+    <label>p (꼭짓점의 x좌표): <span id="pv">0</span><input type="range" id="p" min="-6" max="6" step="1" value="0"></label>
+    <label>q (꼭짓점의 y좌표): <span id="qv">0</span><input type="range" id="q" min="-8" max="8" step="1" value="0"></label>
+  </section>
+  <section class="card" aria-label="분석">
+    <strong>그래프 읽기</strong>
+    <ul class="facts" id="facts"></ul>
+    <div id="disc"></div>
+    <div class="r"><button data-s="1,0,0">y = x²</button><button data-s="-1,2,3">위로 볼록</button><button data-s="2,-1,-4">폭이 좁게</button><button data-s="0.5,0,2">폭이 넓게</button></div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg', S = 10, R = 10;
+  const el = (p, n, a, t) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; p.appendChild(e); return e; };
+  const f2 = (v) => (Number.isInteger(v) ? String(v) : (Math.round(v * 100) / 100).toString()).replace('-', '−');
+  function draw() {
+    const a = +$('a').value, p = +$('p').value, q = +$('q').value;
+    const sv = $('sv'); sv.textContent = '';
+    for (let i = -R; i <= R; i++) { el(sv, 'line', { x1: i * S, y1: -R * S, x2: i * S, y2: R * S, stroke: i ? '#efe6f6' : '#51607a', 'stroke-width': i ? 0.6 : 1.4 }); el(sv, 'line', { x1: -R * S, y1: i * S, x2: R * S, y2: i * S, stroke: i ? '#efe6f6' : '#51607a', 'stroke-width': i ? 0.6 : 1.4 }); }
+    [-8, -4, 4, 8].forEach((v) => { el(sv, 'text', { x: v * S, y: 9, 'font-size': 5, 'text-anchor': 'middle', fill: '#6a5880' }, v); el(sv, 'text', { x: -3, y: -v * S + 2, 'font-size': 5, 'text-anchor': 'end', fill: '#6a5880' }, v); });
+    if (a !== 0) { el(sv, 'line', { x1: p * S, y1: -R * S, x2: p * S, y2: R * S, stroke: '#ce93d8', 'stroke-dasharray': '3 2', 'stroke-width': 1 }); }
+    let d = ''; for (let x = -R; x <= R + 1e-9; x += 0.1) { const y = a * (x - p) * (x - p) + q; const Y = -y * S; if (Math.abs(Y) > R * S * 1.5) { d += ''; continue; } d += (d ? 'L' : 'M') + (x * S).toFixed(1) + ' ' + Y.toFixed(1); }
+    el(sv, 'path', { d, fill: 'none', stroke: '#6a1b9a', 'stroke-width': 3, 'stroke-linecap': 'round' });
+    el(sv, 'circle', { cx: p * S, cy: -q * S, r: 3.2, fill: '#e65100' });
+    // 일반형 y = ax² + bx + c
+    const B = -2 * a * p, C = a * p * p + q, D = B * B - 4 * a * C;
+    const roots = a !== 0 && D >= 0 ? [(-B - Math.sqrt(D)) / (2 * a), (-B + Math.sqrt(D)) / (2 * a)] : [];
+    roots.forEach((r) => { if (Math.abs(r) <= R) el(sv, 'circle', { cx: r * S, cy: 0, r: 3, fill: '#2e7d32' }); });
+    $('av').textContent = a; $('pv').textContent = p; $('qv').textContent = q;
+    $('eq').textContent = a === 0 ? `y = ${f2(q)} (이차함수가 아니에요)` : `y = ${f2(a)}(x ${p >= 0 ? '−' : '+'} ${Math.abs(p)})² ${q >= 0 ? '+' : '−'} ${Math.abs(q)}`;
+    $('eq2').textContent = a === 0 ? '' : `일반형: y = ${f2(a)}x² ${B >= 0 ? '+' : '−'} ${f2(Math.abs(B))}x ${C >= 0 ? '+' : '−'} ${f2(Math.abs(C))}`;
+    const f = $('facts'); f.textContent = '';
+    (a === 0 ? ['a가 0이면 직선이 돼요. a를 0이 아닌 값으로 바꿔 보세요.'] : [`꼭짓점: (${p}, ${q}) 🟠`, `축의 방정식: x = ${p}`, a > 0 ? `아래로 볼록 (a > 0) · 최솟값 ${q}` : `위로 볼록 (a < 0) · 최댓값 ${q}`, `|a| = ${Math.abs(a)} ${Math.abs(a) > 1 ? '→ 폭이 좁아요' : Math.abs(a) < 1 ? '→ 폭이 넓어요' : '→ y = x²과 폭이 같아요'}`, `y절편: ${f2(C)}`]).forEach((t) => { const li = document.createElement('li'); li.textContent = t; f.appendChild(li); });
+    const ds = $('disc'); ds.textContent = '';
+    if (a !== 0) { const n = D > 1e-9 ? 2 : Math.abs(D) <= 1e-9 ? 1 : 0; const sp = document.createElement('span'); sp.className = `tag t${n}`; sp.textContent = `x축과 만나는 점 ${n}개`; ds.appendChild(sp); ds.appendChild(document.createTextNode(` 판별식 D = b² − 4ac = ${f2(D)}${n === 2 ? ' > 0 → x절편 🟢 ' + roots.map(f2).join(', ') : n === 1 ? ' = 0 → 꼭짓점이 x축 위' : ' < 0 → 실근 없음'}`)); }
+  }
+  ['a', 'p', 'q'].forEach((id) => $(id).addEventListener('input', draw));
+  document.querySelectorAll('button[data-s]').forEach((b) => { b.onclick = () => { const [a, p, q] = b.dataset.s.split(',').map(Number); $('a').value = a; $('p').value = p; $('q').value = q; draw(); }; });
+  draw();
+</script>
+</body>
+</html>

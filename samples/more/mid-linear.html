@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일차함수 그래프 탐색기</title>
+<style>
+  :root { --b: #1565c0; --tx: #10243e; --mu: #55657d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #eef3fb; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 820px) { .wrap { grid-template-columns: 1fr 340px; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: var(--mu); font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(16,36,62,.12); display: grid; gap: 10px; align-content: start; }
+  svg { width: 100%; height: auto; background: #fff; border-radius: 12px; touch-action: none; }
+  label { display: grid; gap: 2px; font-weight: 700; } input[type=range] { width: 100%; height: 34px; accent-color: var(--b); }
+  .eq { font-size: clamp(1.5rem, 5vw, 2.1rem); font-weight: 800; text-align: center; color: var(--b); }
+  .facts { display: grid; gap: 4px; margin: 0; padding-left: 1.2em; font-size: .95rem; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border: 1px solid #c3d3ec; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #6aa3f5; outline-offset: 2px; }
+  .chk { background: #f4f8ff; border-radius: 12px; padding: 10px; display: grid; gap: 6px; } #fb { font-weight: 800; min-height: 1.5em; }
+  input[type=text] { font: inherit; padding: 8px; border: 1px solid #c3d3ec; border-radius: 10px; width: 6em; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>📈 일차함수 그래프 탐색기</h1><p class="sub">중2 수학 · 일차함수와 그래프. 기울기와 y절편을 바꾸며 그래프가 어떻게 움직이는지 관찰하고, 목표 그래프 맞히기 도전도 해 봐요.</p></header>
+  <section class="card" aria-label="그래프">
+    <svg id="sv" viewBox="-110 -110 220 220" role="img" aria-label="좌표평면 위의 일차함수 그래프"></svg>
+    <div class="eq" id="eq" aria-live="polite">y = 1x + 0</div>
+    <label>기울기 a: <span id="av">1</span><input type="range" id="a" min="-5" max="5" step="0.5" value="1"></label>
+    <label>y절편 b: <span id="bv">0</span><input type="range" id="b" min="-8" max="8" step="1" value="0"></label>
+  </section>
+  <section class="card" aria-label="읽어 보기">
+    <strong>그래프 읽기</strong>
+    <ul class="facts" id="facts"></ul>
+    <div class="chk">
+      <strong>🎯 도전: 점선 그래프와 겹치게 만들어요</strong>
+      <div class="r"><button id="nt">새 목표 만들기</button><button id="show">정답 식 보기</button></div>
+      <div id="fb" role="status" aria-live="polite"></div>
+    </div>
+    <div class="r"><button data-p="1,0">y = x</button><button data-p="2,-3">y = 2x − 3</button><button data-p="-1,4">y = −x + 4</button><button data-p="0,5">y = 5</button></div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg', S = 10, R = 10; // 한 칸 10
+  let target = null;
+  const el = (p, n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; };
+  const num = (v) => (Math.abs(v) < 1e-9 ? 0 : v);
+  const term = (a, b) => { const A = a === 1 ? '' : a === -1 ? '−' : String(a).replace('-', '−'); const left = a === 0 ? '' : `${A}x`; const B = b === 0 ? (a === 0 ? '0' : '') : (a === 0 ? '' : b > 0 ? ' + ' : ' − ') + String(Math.abs(b)); return `y = ${left}${a === 0 && b < 0 ? '−' + Math.abs(b) : B}`; };
+  function draw() {
+    const a = +$('a').value, b = +$('b').value;
+    const sv = $('sv'); sv.textContent = '';
+    for (let i = -R; i <= R; i++) { el(sv, 'line', { x1: i * S, y1: -R * S, x2: i * S, y2: R * S, stroke: i ? '#e7ecf5' : '#51607a', 'stroke-width': i ? 0.6 : 1.4 }); el(sv, 'line', { x1: -R * S, y1: i * S, x2: R * S, y2: i * S, stroke: i ? '#e7ecf5' : '#51607a', 'stroke-width': i ? 0.6 : 1.4 }); }
+    [-8, -4, 4, 8].forEach((v) => { const t = el(sv, 'text', { x: v * S, y: 9, 'font-size': 5, 'text-anchor': 'middle', fill: '#55657d' }); t.textContent = v; const u = el(sv, 'text', { x: -3, y: -v * S + 2, 'font-size': 5, 'text-anchor': 'end', fill: '#55657d' }); u.textContent = v; });
+    if (target) line(sv, target.a, target.b, '#e65100', '3 2.5', 2);
+    line(sv, a, b, '#1565c0', null, 3);
+    el(sv, 'circle', { cx: 0, cy: -b * S, r: 3, fill: '#e65100' });
+    const x0 = a !== 0 ? -b / a : null; if (x0 !== null && Math.abs(x0) <= R) el(sv, 'circle', { cx: x0 * S, cy: 0, r: 3, fill: '#2e7d32' });
+    $('av').textContent = a; $('bv').textContent = b; $('eq').textContent = term(a, b);
+    const f = $('facts'); f.textContent = '';
+    [`기울기는 ${a}${a > 0 ? ' (오른쪽 위로 올라가요)' : a < 0 ? ' (오른쪽 아래로 내려가요)' : ' (수평선이에요)'}`, `y절편은 ${b} → 점 (0, ${b}) 🟠`, x0 === null ? 'x절편은 없어요 (x축과 평행).' : `x절편은 ${num(x0).toFixed(Number.isInteger(x0) ? 0 : 2)} → 점 (${num(x0).toFixed(Number.isInteger(x0) ? 0 : 2)}, 0) 🟢`, `x가 1 늘 때 y는 ${a} 만큼 변해요.`].forEach((t) => { const li = document.createElement('li'); li.textContent = t; f.appendChild(li); });
+    if (target && Math.abs(a - target.a) < 1e-9 && b === target.b) $('fb').textContent = '🎉 맞혔어요! 점선과 겹쳤어요.'; else if (target) $('fb').textContent = '';
+  }
+  function line(sv, a, b, color, dash, w) {
+    const x1 = -R, x2 = R; const at = { x1: x1 * S, y1: -(a * x1 + b) * S, x2: x2 * S, y2: -(a * x2 + b) * S, stroke: color, 'stroke-width': w, 'stroke-linecap': 'round' };
+    if (dash) at['stroke-dasharray'] = dash;
+    el(sv, 'line', at);
+  }
+  $('a').addEventListener('input', draw); $('b').addEventListener('input', draw);
+  document.querySelectorAll('button[data-p]').forEach((bt) => { bt.onclick = () => { const [a, b] = bt.dataset.p.split(',').map(Number); $('a').value = a; $('b').value = b; draw(); }; });
+  $('nt').onclick = () => { const as = [-3, -2, -1, -0.5, 0.5, 1, 2, 3]; target = { a: as[crypto.getRandomValues(new Uint32Array(1))[0] % as.length], b: (crypto.getRandomValues(new Uint32Array(1))[0] % 9) - 4 }; $('fb').textContent = '점선 그래프를 보고 기울기와 y절편을 맞춰 보세요.'; draw(); };
+  $('show').onclick = () => { if (target) $('fb').textContent = `정답: ${term(target.a, target.b)}`; };
+  draw();
+</script>
+</body>
+</html>

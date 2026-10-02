@@ -12,8 +12,8 @@ import { lessonInput, toolInput, workInput } from './fixtures.mjs';
 const none = { ok: false, reason: tp.REASON.NO_TAILPRINT };
 const codes = (r) => r.errors.map((e) => e.code).sort();
 
-test('카테고리 정의: 수업 5개·업무 9개, 하위 id는 카테고리 안에서 겹치지 않는다', () => {
-  assert.deepEqual(CATEGORIES.lesson.map((c) => c.id), ['classroom_tool', 'subject_activity', 'assessment', 'project', 'creative']);
+test('카테고리 정의: 수업 6개·업무 9개, 하위 id는 카테고리 안에서 겹치지 않는다', () => {
+  assert.deepEqual(CATEGORIES.lesson.map((c) => c.id), ['classroom_tool', 'teaching_material', 'subject_activity', 'assessment', 'project', 'creative']);
   assert.equal(CATEGORIES.work.length, 9);
   for (const list of Object.values(CATEGORIES)) {
     for (const c of list) assert.equal(new Set(c.subs.map((s) => s.id)).size, c.subs.length, c.id);

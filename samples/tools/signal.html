@@ -3,32 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>집중 신호등</title>
+<title>이해 신호등</title>
 <style>
-  html, body { height: 100%; margin: 0; font-family: system-ui, sans-serif; }
-  body { display: grid; grid-template-rows: auto 1fr; transition: background 0.3s; }
-  .bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; background: rgba(255,255,255,0.85); }
-  button { font-size: 1.1rem; padding: 10px 16px; border-radius: 10px; border: 0; cursor: pointer; color: #fff; }
-  #msg { display: grid; place-items: center; text-align: center; font-size: clamp(2.5rem, 11vw, 7rem); font-weight: 800; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.25); padding: 16px; }
-  .edit { flex: 1 1 200px; font-size: 1rem; padding: 8px; }
+  :root { --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 10px; }
+  .lights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .lights button { min-height: 120px; border: 4px solid transparent; border-radius: 20px; font: inherit; font-weight: 800; font-size: 1.1rem; color: #fff; cursor: pointer; display: grid; place-items: center; gap: 2px; }
+  .lights button span.e { font-size: 2.4rem; }
+  .g { background: #1f9d55; } .y { background: #e0a100; } .rd { background: #d93025; }
+  .lights button:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  .bars { display: grid; gap: 8px; } .bar { display: grid; grid-template-columns: 5em 1fr 3em; gap: 8px; align-items: center; }
+  .track { height: 22px; background: #eee; border-radius: 999px; overflow: hidden; } .track i { display: block; height: 100%; width: 0; transition: width .3s; }
+  #verdict { font-weight: 800; font-size: 1.15rem; min-height: 1.6em; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .sm { font: inherit; font-weight: 700; min-height: 44px; padding: 0 16px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  input[type=text] { font: inherit; padding: 8px 10px; border: 1px solid #e1e2e4; border-radius: 10px; flex: 1; min-width: 160px; }
+  @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
 </style>
 </head>
 <body>
-<div class="bar">
-  <button style="background:#2e7d32" data-c="green">초록: 자유롭게</button>
-  <button style="background:#c99a06" data-c="yellow">노랑: 작게 말해요</button>
-  <button style="background:#c62828" data-c="red">빨강: 모두 집중!</button>
-  <input class="edit" id="custom" aria-label="안내 문구 바꾸기" placeholder="안내 문구를 직접 적어도 돼요">
+<div class="wrap">
+  <header><h1>🚦 이해 신호등</h1><p class="sub">지금 설명이 이해되나요? 초록·노랑·빨강 중 하나를 눌러요. 선생님 화면에서 같이 모아 볼 수 있어요.</p></header>
+  <section class="card" aria-label="질문">
+    <div class="r"><label for="q"><strong>지금 묻는 내용</strong></label><input type="text" id="q" value="오늘 배운 분수의 크기 비교"></div>
+    <div class="lights">
+      <button class="g" data-k="g" aria-label="초록 이해했어요"><span class="e" aria-hidden="true">🟢</span>이해했어요</button>
+      <button class="y" data-k="y" aria-label="노랑 조금 헷갈려요"><span class="e" aria-hidden="true">🟡</span>조금 헷갈려요</button>
+      <button class="rd" data-k="r" aria-label="빨강 도움이 필요해요"><span class="e" aria-hidden="true">🔴</span>도움이 필요해요</button>
+    </div>
+    <p class="sub">한 번 눌렀다가 마음이 바뀌면 다른 색을 누르거나 [한 표 빼기]를 눌러요. 화면 한 곳에 모아 세는 방식이라 이름은 남지 않아요.</p>
+  </section>
+  <section class="card" aria-label="결과">
+    <div class="bars" id="bars"></div>
+    <div id="verdict" aria-live="polite"></div>
+    <div class="r"><button class="sm" id="minus">한 표 빼기</button><button class="sm" id="reset">새 질문으로 비우기</button></div>
+  </section>
 </div>
-<div id="msg" aria-live="polite">자유롭게 이야기해요</div>
 <script>
-  const S = { green: ['#2e7d32', '자유롭게 이야기해요'], yellow: ['#c99a06', '옆 친구에게만 작게'], red: ['#c62828', '모두 집중! 🤫'] };
-  const msg = document.getElementById('msg');
-  function set(c) { document.body.style.background = S[c][0]; msg.textContent = document.getElementById('custom').value.trim() || S[c][1]; }
-  document.querySelectorAll('button[data-c]').forEach((b) => (b.onclick = () => set(b.dataset.c)));
-  // 키보드: 1·2·3
-  document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; ({ 1: 'green', 2: 'yellow', 3: 'red' })[e.key] && set({ 1: 'green', 2: 'yellow', 3: 'red' }[e.key]); });
-  set('green');
+  const $ = (id) => document.getElementById(id);
+  const K = { g: ['초록', '#1f9d55'], y: ['노랑', '#e0a100'], r: ['빨강', '#d93025'] };
+  let c = { g: 0, y: 0, r: 0 }, last = null;
+  function draw() {
+    const total = c.g + c.y + c.r || 1;
+    const bars = $('bars'); bars.textContent = '';
+    for (const k of ['g', 'y', 'r']) {
+      const row = document.createElement('div'); row.className = 'bar';
+      const l = document.createElement('span'); l.textContent = K[k][0];
+      const t = document.createElement('div'); t.className = 'track'; const i = document.createElement('i'); i.style.width = `${(c[k] / total) * 100}%`; i.style.background = K[k][1]; t.appendChild(i);
+      const n = document.createElement('strong'); n.textContent = c[k];
+      row.append(l, t, n); bars.appendChild(row);
+    }
+    const sum = c.g + c.y + c.r;
+    $('verdict').textContent = !sum ? '아직 누른 사람이 없어요.' : c.r / sum >= 0.3 ? '🔴 빨강이 많아요. 다시 설명해 줄까요?' : (c.y + c.r) / sum >= 0.5 ? '🟡 절반 넘게 헷갈려요. 예를 하나 더 보여 주세요.' : '🟢 대부분 이해했어요. 다음으로 넘어가요!';
+  }
+  document.querySelectorAll('.lights button').forEach((b) => { b.onclick = () => { c[b.dataset.k]++; last = b.dataset.k; draw(); }; });
+  $('minus').onclick = () => { if (last && c[last] > 0) { c[last]--; } else { const k = ['r', 'y', 'g'].find((x) => c[x] > 0); if (k) c[k]--; } draw(); };
+  $('reset').onclick = () => { if (c.g + c.y + c.r && !confirm('모은 표를 비울까요?')) return; c = { g: 0, y: 0, r: 0 }; last = null; draw(); };
+  draw();
 </script>
 </body>
 </html>

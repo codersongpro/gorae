@@ -21,6 +21,9 @@ export const CATEGORIES = {
       ['random_order', '랜덤발표·순서정하기'], ['scoreboard', '점수판·보상'], ['quiz_game', '퀴즈·게임'],
       ['noise', '소음·집중관리'], ['qr_share', 'QR·링크·공유'], ['opinion', '토론·의견수합'],
       ['collaboration', '협업 활동'], ['presentation', '발표·시각화'], ['etc', '기타 수업도구']]) },
+    { id: 'teaching_material', label: '수업자료', subs: subs([
+      ['intro', '도입·동기유발'], ['slides', '설명·발표 슬라이드'], ['worksheet', '활동지·학습지'], ['wrapup', '정리·성찰'],
+      ['parent', '학부모·안내 자료'], ['etc', '기타 수업자료']]) },
     // 교과활동의 하위 카테고리는 '활동 유형'을 겸한다
     { id: 'subject_activity', label: '교과활동', detail: true, subs: subs([
       ['concept', '개념 학습'], ['practice', '연습·문제풀이'], ['game', '게임·퀴즈'], ['simulation', '시뮬레이션·탐구'],

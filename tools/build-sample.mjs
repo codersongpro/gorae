@@ -45,7 +45,7 @@ const signed = [
   works[1], // 구구단 번개 퀴즈: 미검수 (얕은 바다 시연)
   works[2], // 곱셈 연습 카드: 미검수 (위조 시연에 사용)
   await tp.signWork(works[3], guard.privateKey, { ...signOpts, badge: 'clear', pick: false }),
-  await tp.signWork(works[4], guard.privateKey, { ...signOpts, badge: 'clear', pick: false }), // 교실 모래시계 타이머
+  await tp.signWork({ ...works[4], html: await readFile(new URL('../samples/more/timer.html', import.meta.url), 'utf8') }, guard.privateKey, { ...signOpts, badge: 'clear', pick: false }), // 교실 모래시계 타이머
   await tp.signWork(works[5], guard.privateKey, { ...signOpts, badge: 'shallow', pick: false }), // 설문 CSV 집계기: 교사용(얕은 바다, 검수됨)
 ];
 

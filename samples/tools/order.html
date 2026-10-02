@@ -5,44 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>발표 순서 정하기</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #fbf7f1; color: #1f2328; }
-  h1 { margin: 0 0 8px; font-size: 1.4rem; }
-  textarea { width: 100%; box-sizing: border-box; min-height: 100px; font-size: 1rem; padding: 8px; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #8a6d3b; color: #fff; cursor: pointer; }
-  #now { font-size: clamp(2.5rem, 12vw, 5.5rem); font-weight: 800; text-align: center; background: #fff; border-radius: 16px; padding: 20px; margin: 12px 0; }
-  ol { font-size: 1.15rem; columns: 2; }
-  li.done { color: #9aa3ab; text-decoration: line-through; }
-  li.cur { font-weight: 800; color: #8a6d3b; }
+  :root { --b: #3366ff; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .wrap { grid-template-columns: 300px 1fr; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  textarea { width: 100%; min-height: 140px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; resize: vertical; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, textarea:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: n; }
+  li { counter-increment: n; display: grid; grid-template-columns: 2.4em 1fr auto; align-items: center; gap: 8px; background: #fff; border-radius: 12px; padding: 8px 12px; box-shadow: 0 1px 3px rgba(23,23,23,.08); border-left: 6px solid transparent; }
+  li::before { content: counter(n); font-weight: 800; color: var(--b); font-size: 1.2rem; }
+  li.now { border-left-color: #ff9200; background: #fff8e8; } li.done { opacity: .5; text-decoration: line-through; }
+  li button { min-height: 40px; padding: 0 12px; }
+  #cur { text-align: center; font-size: clamp(1.8rem, 8vw, 3.4rem); font-weight: 800; min-height: 1.4em; }
+  .msg { color: var(--mu); min-height: 1.5em; }
 </style>
 </head>
 <body>
-<h1>🎤 발표 순서 정하기</h1>
-<textarea id="list" aria-label="발표할 목록">1모둠
-2모둠
-3모둠
-4모둠
-5모둠</textarea>
-<div class="row">
-  <button id="shuffle">순서 섞기</button>
-  <button id="next">다음 발표!</button>
+<div class="wrap">
+  <header><h1>🔢 발표 순서 정하기</h1><p class="sub">번호나 별명을 적고 순서를 무작위로 정해요. 순서를 정한 뒤에는 한 명씩 불러요.</p></header>
+  <section class="card" aria-label="설정">
+    <label for="list"><strong>발표할 사람</strong> (한 줄에 하나)</label>
+    <textarea id="list">1번
+2번
+3번
+4번
+5번
+6번</textarea>
+    <label class="r"><input type="checkbox" id="first"> 첫 번째로 할 사람 정해 두기</label>
+    <input id="firstv" style="display:none;font:inherit;padding:8px;border:1px solid #e1e2e4;border-radius:10px" aria-label="첫 번째 발표자" placeholder="예: 3번">
+    <div class="r"><button class="p" id="go">순서 정하기</button><button id="copy">복사</button></div>
+    <div class="msg" id="msg" role="status"></div>
+  </section>
+  <section aria-label="결과">
+    <div id="cur" aria-live="polite">&nbsp;</div>
+    <div class="r" style="justify-content:center;margin:6px 0"><button id="nextb" class="p">다음 발표자 ▶</button><button id="undo">되돌리기</button></div>
+    <ol id="out"></ol>
+  </section>
 </div>
-<div id="now" aria-live="polite">순서를 섞어 주세요</div>
-<ol id="order"></ol>
 <script>
+  const $ = (id) => document.getElementById(id);
   const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
-  let order = []; let cur = -1;
+  let order = [], pos = -1, done = new Set();
+  const people = () => $('list').value.split('\n').map((s) => s.trim()).filter(Boolean);
   function draw() {
-    const ol = document.getElementById('order'); ol.textContent = '';
-    order.forEach((x, i) => { const li = document.createElement('li'); li.textContent = x; if (i < cur) li.className = 'done'; if (i === cur) li.className = 'cur'; ol.appendChild(li); });
-    document.getElementById('now').textContent = cur < 0 ? '준비!' : cur < order.length ? order[cur] : '모두 발표했어요 👏';
+    const ol = $('out'); ol.textContent = '';
+    order.forEach((p, i) => {
+      const li = document.createElement('li'); li.className = i === pos ? 'now' : done.has(i) ? 'done' : '';
+      const s = document.createElement('span'); s.textContent = p;
+      const b = document.createElement('button'); b.textContent = done.has(i) ? '다시' : '완료'; b.setAttribute('aria-label', `${p} ${b.textContent}`);
+      b.onclick = () => { done.has(i) ? done.delete(i) : done.add(i); if (pos === i) pos = -1; draw(); };
+      li.append(s, b); ol.appendChild(li);
+    });
+    $('cur').textContent = pos >= 0 ? `🎤 ${order[pos]}` : ' ';
   }
-  document.getElementById('shuffle').onclick = () => {
-    order = document.getElementById('list').value.split('\n').map((s) => s.trim()).filter(Boolean);
-    for (let i = order.length - 1; i > 0; i--) { const j = rand(i + 1); [order[i], order[j]] = [order[j], order[i]]; }
-    cur = -1; draw();
+  $('go').onclick = () => {
+    const a = people(); if (!a.length) { $('msg').textContent = '목록을 먼저 적어 주세요.'; return; }
+    for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+    const f = $('first').checked ? $('firstv').value.trim() : '';
+    if (f && a.includes(f)) { a.splice(a.indexOf(f), 1); a.unshift(f); } else if (f) $('msg').textContent = '첫 번째 발표자가 목록에 없어요.';
+    order = a; pos = -1; done = new Set(); if (!f || a.includes(f)) $('msg').textContent = `${a.length}명의 순서를 정했어요.`; draw();
   };
-  document.getElementById('next').onclick = () => { if (order.length && cur < order.length) cur++; draw(); };
+  $('nextb').onclick = () => { if (!order.length) return; if (pos >= 0) done.add(pos); const n = order.findIndex((_, i) => i > pos && !done.has(i)); pos = n; if (n < 0) $('msg').textContent = '모두 발표했어요! 🎉'; draw(); };
+  $('undo').onclick = () => { if (pos >= 0) { pos = -1; draw(); } else if (done.size) { done.delete([...done].pop()); draw(); } };
+  $('first').onchange = () => { $('firstv').style.display = $('first').checked ? 'block' : 'none'; };
+  $('copy').onclick = async () => { const t = order.map((p, i) => `${i + 1}. ${p}`).join('\n'); try { await navigator.clipboard.writeText(t); $('msg').textContent = '복사했어요.'; } catch { $('msg').textContent = '복사하지 못했어요.'; } };
+  $('go').click();
 </script>
 </body>
 </html>

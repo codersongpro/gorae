@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘의 학습 문제 도입 화면</title>
+<style>
+  :root { --b: #1b6ec2; --tx: #14213d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: #eaf3ff; color: var(--tx); font: 18px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .edit, .show { max-width: 900px; margin: 0 auto; padding: 16px; display: grid; gap: 10px; }
+  .card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 8px; }
+  input[type=text], textarea { width: 100%; font: inherit; padding: 10px; border: 1px solid #c9d3f5; border-radius: 10px; }
+  textarea { min-height: 110px; }
+  button { font: inherit; font-weight: 700; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; background: var(--b); color: #fff; cursor: pointer; }
+  button.g { background: #fff; color: var(--tx); border: 1px solid #c9d3f5; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #5cc7da; outline-offset: 2px; }
+  .show { display: none; } body.on .edit { display: none; } body.on .show { display: grid; }
+  .goal { background: var(--b); color: #fff; border-radius: 22px; padding: clamp(18px, 5vw, 40px); }
+  .goal small { opacity: .85; font-size: 1rem; } .goal h1 { margin: 4px 0 0; font-size: clamp(1.8rem, 7vw, 3.6rem); line-height: 1.3; }
+  .bag { font-size: clamp(1.1rem, 3vw, 1.6rem); }
+  ol.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: s; }
+  ol.steps li { counter-increment: s; }
+  ol.steps button { width: 100%; text-align: left; background: #fff; color: var(--tx); border: 3px solid transparent; font-size: clamp(1.1rem, 3.4vw, 1.8rem); min-height: 64px; display: flex; gap: 12px; align-items: center; }
+  ol.steps button::before { content: counter(s); background: #cfe3f7; border-radius: 50%; width: 2em; height: 2em; display: inline-grid; place-items: center; font-weight: 800; flex: none; }
+  ol.steps li.now button { border-color: #ff9200; background: #fff8e8; } ol.steps li.now button::before { background: #ff9200; color: #fff; }
+  ol.steps li.past button { opacity: .5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<section class="edit" aria-label="입력">
+  <h1 style="margin:0;font-size:1.3rem">📋 오늘의 학습 문제 도입 화면</h1>
+  <div class="card">
+    <label for="goal"><strong>학습 문제</strong></label><input type="text" id="goal" value="분모가 다른 분수의 크기를 비교할 수 있다">
+    <label for="bag"><strong>준비물</strong></label><input type="text" id="bag" value="교과서, 공책, 색연필">
+    <label for="steps"><strong>활동 순서</strong> (한 줄에 하나)</label>
+    <textarea id="steps">짝과 피자 그림으로 크기 비교해 보기
+통분하는 방법 알아보기
+문제 풀어 보기
+오늘 배운 것 말해 보기</textarea>
+    <div class="row"><button id="go">화면에 띄우기</button></div>
+  </div>
+</section>
+<section class="show" aria-label="수업 화면">
+  <div class="goal"><small>오늘의 학습 문제</small><h1 id="g"></h1></div>
+  <p class="bag" id="b"></p>
+  <ol class="steps" id="s"></ol>
+  <div class="row"><button class="g" id="prev">◀ 이전 활동</button><button id="next">다음 활동 ▶</button><button class="g" id="back">고치기</button></div>
+</section>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let list = [], cur = 0;
+  function draw() {
+    const ol = $('s'); ol.textContent = '';
+    list.forEach((t, i) => { const li = document.createElement('li'); li.className = i === cur ? 'now' : i < cur ? 'past' : ''; const b = document.createElement('button'); b.textContent = t; b.onclick = () => { cur = i; draw(); }; li.appendChild(b); ol.appendChild(li); });
+  }
+  $('go').onclick = () => {
+    list = $('steps').value.split('\n').map((s) => s.trim()).filter(Boolean); cur = 0;
+    $('g').textContent = $('goal').value.trim() || '오늘의 학습 문제'; $('b').textContent = $('bag').value.trim() ? `🎒 준비물: ${$('bag').value.trim()}` : '';
+    document.body.classList.add('on'); draw();
+  };
+  $('next').onclick = () => { cur = Math.min(list.length - 1, cur + 1); draw(); }; $('prev').onclick = () => { cur = Math.max(0, cur - 1); draw(); };
+  $('back').onclick = () => document.body.classList.remove('on');
+  document.addEventListener('keydown', (e) => { if (!document.body.classList.contains('on')) return; if (e.key === 'ArrowRight') $('next').click(); if (e.key === 'ArrowLeft') $('prev').click(); });
+</script>
+</body>
+</html>

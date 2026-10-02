@@ -5,40 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>회의록 정리기</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f7f7f5; color: #1f2328; }
-  h1 { font-size: 1.4rem; margin: 0 0 8px; }
-  label { display: block; margin: 8px 0 4px; font-weight: 700; }
-  input, textarea { width: 100%; box-sizing: border-box; font-size: 1rem; padding: 8px; }
-  textarea { min-height: 110px; }
-  button { margin-top: 10px; font-size: 1.05rem; padding: 10px 16px; border-radius: 10px; border: 0; background: #8a6d3b; color: #fff; cursor: pointer; }
-  pre { white-space: pre-wrap; background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+  :root { --b: #3366ff; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
+  @media (min-width: 800px) { .wrap { grid-template-columns: 1fr 1fr; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; align-content: start; }
+  textarea, input[type=text], input[type=date] { width: 100%; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; }
+  textarea { min-height: 240px; resize: vertical; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  h2 { font-size: 1.05rem; margin: 10px 0 2px; color: #0054d1; } h2:first-child { margin-top: 0; } ul { margin: 0; padding-left: 1.2em; } .none { color: var(--mu); }
+  .todo { display: flex; gap: 8px; align-items: flex-start; } .todo.d span { text-decoration: line-through; color: var(--mu); }
+  .hint { color: var(--mu); font-size: .85rem; }
 </style>
 </head>
 <body>
-<h1>📝 회의록 정리기</h1>
-<p>회의 중 메모를 붙여 넣으면 안건·결정·할 일로 나눠 정리해요. 내용은 이 화면 밖으로 나가지 않아요.</p>
-<label for="topic">회의 주제</label>
-<input id="topic" value="학년 협의회 (10월 체험학습)">
-<label for="memo">메모 (한 줄에 하나, "결정:" "할 일:"로 시작하면 따로 모아요)</label>
-<textarea id="memo">체험학습 장소 후보 두 곳 비교
-결정: 과학관으로 간다
-할 일: 버스 견적 받기 (3반)
-할 일: 가정통신문 초안 (1반)
-안전 교육은 출발 전날 실시</textarea>
-<button id="go">정리하기</button>
-<pre id="out" aria-live="polite"></pre>
+<div class="wrap">
+  <header><h1>📝 회의록 정리기</h1><p class="sub">메모를 붙여 넣고 [정리하기]를 누르면 논의·결정·할 일로 나눠 줘요. 내용은 이 화면 밖으로 나가지 않아요.</p></header>
+  <section class="card" aria-label="메모">
+    <label for="title"><strong>회의 이름</strong></label><input type="text" id="title" value="학년 협의회">
+    <div class="r"><label>날짜 <input type="date" id="date"></label></div>
+    <label for="memo"><strong>메모</strong></label>
+    <textarea id="memo">현장체험학습 일정 논의
+결정: 체험학습은 11월 둘째 주 목요일로 한다
+버스는 2대로 신청하는 방향
+할 일: 버스 신청서 제출 (학년부장, 이번 주)
+할 일: 가정통신문 초안 작성 (담임, 다음 주)
+안전교육 자료 공유 필요
+결정: 안전교육은 출발 전날 학급별로 실시</textarea>
+    <p class="hint">줄머리에 <b>결정:</b> 또는 <b>할 일:</b>을 쓰면 따로 모아요. 나머지는 논의로 들어가요. 학생 이름 같은 개인정보는 적지 않아요.</p>
+    <div class="r"><button class="p" id="go">정리하기</button><button id="copy">정리본 복사</button></div>
+  </section>
+  <section class="card" aria-label="정리본"><div id="out" aria-live="polite"></div></section>
+</div>
 <script>
-  document.getElementById('go').onclick = () => {
-    const lines = document.getElementById('memo').value.split('\n').map((s) => s.trim()).filter(Boolean);
-    const pick = (p) => lines.filter((l) => l.startsWith(p)).map((l) => '• ' + l.slice(p.length).trim());
-    const rest = lines.filter((l) => !/^(결정:|할 일:)/.test(l)).map((l) => '• ' + l);
-    const today = new Date().toISOString().slice(0, 10);
-    document.getElementById('out').textContent = [
-      `[회의록] ${document.getElementById('topic').value}  (${today})`, '',
-      '■ 논의', ...rest, '', '■ 결정 사항', ...pick('결정:'), '', '■ 할 일', ...pick('할 일:'),
-    ].join('\n');
+  const $ = (id) => document.getElementById(id);
+  $('date').valueAsDate = new Date();
+  let lastText = '';
+  function parse() {
+    const g = { talk: [], decide: [], todo: [] };
+    $('memo').value.split('\n').map((s) => s.trim()).filter(Boolean).forEach((l) => {
+      const m = l.match(/^(결정|할\s*일)\s*[:：]\s*(.+)$/);
+      if (m) g[m[1].startsWith('결정') ? 'decide' : 'todo'].push(m[2]); else g.talk.push(l);
+    });
+    return g;
+  }
+  function section(out, title, items, todo) {
+    const h = document.createElement('h2'); h.textContent = title; out.appendChild(h);
+    if (!items.length) { const p = document.createElement('p'); p.className = 'none'; p.textContent = '없음'; out.appendChild(p); return; }
+    if (todo) items.forEach((t) => { const d = document.createElement('label'); d.className = 'todo'; const c = document.createElement('input'); c.type = 'checkbox'; const s = document.createElement('span'); s.textContent = t; c.onchange = () => d.classList.toggle('d', c.checked); d.append(c, s); out.appendChild(d); });
+    else { const ul = document.createElement('ul'); items.forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); out.appendChild(ul); }
+  }
+  $('go').onclick = () => {
+    const g = parse(), out = $('out'); out.textContent = '';
+    const t = document.createElement('h2'); t.style.fontSize = '1.25rem'; t.style.color = 'inherit'; t.textContent = `${$('title').value.trim() || '회의'} · ${$('date').value}`; out.appendChild(t);
+    section(out, '논의', g.talk); section(out, '결정 사항', g.decide); section(out, '할 일 (끝낸 것은 체크)', g.todo, true);
+    lastText = `[${$('title').value.trim() || '회의'}] ${$('date').value}\n\n■ 논의\n${g.talk.map((x) => '- ' + x).join('\n') || '없음'}\n\n■ 결정 사항\n${g.decide.map((x) => '- ' + x).join('\n') || '없음'}\n\n■ 할 일\n${g.todo.map((x) => '□ ' + x).join('\n') || '없음'}`;
   };
-  document.getElementById('go').click();
+  $('copy').onclick = async () => {
+    if (!lastText) $('go').click();
+    try { await navigator.clipboard.writeText(lastText); $('copy').textContent = '복사했어요 ✓'; } catch { $('copy').textContent = '복사하지 못했어요'; }
+    setTimeout(() => { $('copy').textContent = '정리본 복사'; }, 1800);
+  };
+  $('go').click();
 </script>
 </body>
 </html>

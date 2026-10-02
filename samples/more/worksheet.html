@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>빈칸 채우기 활동지 만들기</title>
+<style>
+  :root { --b: #3366ff; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.7 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 14px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  textarea, input[type=text] { width: 100%; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; } textarea { min-height: 150px; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  .paper { background: #fff; border: 1px solid #e1e2e4; border-radius: 6px; padding: 28px; font-size: 1.1rem; line-height: 2.2; }
+  .paper h2 { margin: 0 0 4px; font-size: 1.3rem; } .paper .meta { color: var(--mu); font-size: .9rem; margin-bottom: 10px; }
+  .blank { display: inline-block; min-width: 5em; border: 0; border-bottom: 2px solid var(--tx); background: transparent; font: inherit; text-align: center; padding: 0 4px; }
+  .ans { color: #b00c0c; font-weight: 800; border-bottom: 2px solid #b00c0c; padding: 0 6px; }
+  .tabs { display: flex; gap: 8px; } .tabs button[aria-pressed=true] { background: #eef2ff; border-color: var(--b); }
+  @media print { body { background: #fff; padding: 0; } .noprint { display: none !important; } .paper { border: 0; padding: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="noprint"><h1>📄 빈칸 채우기 활동지 만들기</h1><p class="sub">본문에서 가릴 낱말을 [대괄호]로 감싸면 빈칸 활동지와 정답지가 만들어져요. 인쇄하면 활동지만 나와요.</p></header>
+  <section class="card noprint">
+    <label for="t"><strong>활동지 제목</strong></label><input type="text" id="t" value="물의 순환 핵심어 정리">
+    <label for="src"><strong>본문</strong></label>
+    <textarea id="src">바다나 강의 물이 햇빛을 받아 [수증기]가 되는 것을 [증발]이라고 해요. 하늘 높은 곳에서 수증기가 차가워져 작은 물방울이 되는 것은 [응결]이고, 물방울이 모여 [구름]이 돼요. 구름 속 물방울이 커져 땅으로 내리는 것을 [강수]라고 해요.</textarea>
+    <div class="r"><button class="p" id="go">활동지 만들기</button>
+      <span class="tabs" role="group" aria-label="보기"><button id="vs" aria-pressed="true">활동지</button><button id="va" aria-pressed="false">정답지</button></span>
+      <button id="pr">인쇄</button></div>
+  </section>
+  <section class="paper" id="paper" aria-live="polite"></section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let showAns = false;
+  function draw() {
+    const p = $('paper'); p.textContent = '';
+    const h = document.createElement('h2'); h.textContent = $('t').value.trim() + (showAns ? ' (정답)' : ''); p.appendChild(h);
+    const m = document.createElement('div'); m.className = 'meta'; m.textContent = '학년 반 번호 별명: __________'; p.appendChild(m);
+    const body = document.createElement('p'); let n = 0;
+    $('src').value.split(/(\[[^\]]+\])/).forEach((seg) => {
+      const x = seg.match(/^\[([^\]]+)\]$/);
+      if (!x) { body.appendChild(document.createTextNode(seg)); return; }
+      n++;
+      if (showAns) { const s = document.createElement('span'); s.className = 'ans'; s.textContent = x[1]; body.appendChild(s); }
+      else { const i = document.createElement('input'); i.className = 'blank'; i.type = 'text'; i.setAttribute('aria-label', `${n}번 빈칸`); i.size = Math.max(4, x[1].length * 2); body.appendChild(i); }
+    });
+    p.appendChild(body);
+    if (!n) { const w = document.createElement('p'); w.className = 'noprint'; w.textContent = '[대괄호]로 감싼 낱말이 없어요.'; p.appendChild(w); }
+  }
+  $('go').onclick = () => { showAns = false; $('vs').setAttribute('aria-pressed', 'true'); $('va').setAttribute('aria-pressed', 'false'); draw(); };
+  $('vs').onclick = () => { showAns = false; $('vs').setAttribute('aria-pressed', 'true'); $('va').setAttribute('aria-pressed', 'false'); draw(); };
+  $('va').onclick = () => { showAns = true; $('va').setAttribute('aria-pressed', 'true'); $('vs').setAttribute('aria-pressed', 'false'); draw(); };
+  $('pr').onclick = () => window.print();
+  draw();
+</script>
+</body>
+</html>

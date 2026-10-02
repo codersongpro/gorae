@@ -5,57 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>시계 읽기 연습</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f6f9f4; color: #1f2328; text-align: center; }
-  svg { width: min(70vw, 260px); height: auto; }
-  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 360px; margin: 12px auto; }
-  button { font-size: 1.3rem; padding: 12px; border-radius: 12px; border: 0; background: #3f7a76; color: #fff; cursor: pointer; }
-  #msg { font-size: 1.4rem; font-weight: 800; min-height: 1.6em; }
+  :root { --b: #3366ff; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 560px; margin: 0 auto; display: grid; gap: 12px; justify-items: center; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 0; font-size: .9rem; text-align: center; }
+  .top { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-weight: 700; }
+  svg { width: min(72vw, 300px); height: auto; background: #fff; border-radius: 50%; box-shadow: 0 2px 10px rgba(23,23,23,.12); }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+  button { font: inherit; font-weight: 800; font-size: 1.2rem; min-height: 56px; border: 2px solid #e1e2e4; border-radius: 14px; background: #fff; color: var(--tx); cursor: pointer; }
+  button:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  button.ok { background: #e1f6e8; border-color: #1f9d55; } button.no { background: #ffe9e9; border-color: #d93025; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+  .ctl button { font-size: 1rem; min-height: 44px; padding: 0 14px; }
+  #fb { min-height: 1.6em; font-weight: 700; } select { font: inherit; padding: 8px; border-radius: 10px; border: 1px solid #e1e2e4; }
 </style>
 </head>
 <body>
-<h1>🕒 시계 읽기 연습</h1>
-<svg viewBox="-110 -110 220 220" aria-label="시계">
-  <circle r="100" fill="#fff" stroke="#3f7a76" stroke-width="6"/>
-  <g id="ticks"></g>
-  <line id="hour" x1="0" y1="0" x2="0" y2="-50" stroke="#1f2328" stroke-width="8" stroke-linecap="round"/>
-  <line id="min" x1="0" y1="0" x2="0" y2="-80" stroke="#c0392b" stroke-width="5" stroke-linecap="round"/>
-  <circle r="6" fill="#1f2328"/>
-</svg>
-<p>몇 시 몇 분일까요?</p>
-<div class="opts" id="opts"></div>
-<p id="msg" aria-live="polite"></p>
-<p>맞힌 문제: <b id="score">0</b></p>
+<div class="wrap">
+  <h1>🕒 시계 읽기 연습</h1>
+  <p class="sub">바늘 시계를 보고 몇 시 몇 분인지 골라요. 단계를 고를 수 있어요.</p>
+  <div class="ctl"><label>단계 <select id="lv"><option value="60">정각 (몇 시)</option><option value="30">30분 단위</option><option value="5" selected>5분 단위</option><option value="1">1분 단위</option></select></label>
+    <label><input type="checkbox" id="dg" checked> 디지털 시계도 보여 주기(정답 뒤)</label></div>
+  <div class="top"><span id="no"></span><span id="sc"></span><span id="st"></span></div>
+  <svg viewBox="-110 -110 220 220" role="img" id="face" aria-label="시계"></svg>
+  <div id="dgt" style="font-size:2rem;font-weight:800;min-height:1.3em" aria-live="polite"></div>
+  <div class="choices" id="ch"></div>
+  <div id="fb" role="status"></div>
+</div>
 <script>
-  const ticks = document.getElementById('ticks');
-  for (let i = 1; i <= 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
-    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    t.setAttribute('x', Math.sin(a) * 80); t.setAttribute('y', -Math.cos(a) * 80 + 7);
-    t.setAttribute('text-anchor', 'middle'); t.setAttribute('font-size', '18'); t.textContent = i;
-    ticks.appendChild(t);
-  }
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
   const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
-  const label = (h, m) => `${h}시` + (m ? ` ${m}분` : '');
-  let answer = '', score = 0;
-  function next() {
-    const h = 1 + rand(12), m = rand(12) * 5;
-    document.getElementById('hour').setAttribute('transform', `rotate(${(h % 12) * 30 + m / 2})`);
-    document.getElementById('min').setAttribute('transform', `rotate(${m * 6})`);
-    answer = label(h, m);
-    const set = new Set([answer]);
-    while (set.size < 4) set.add(label(1 + rand(12), rand(12) * 5));
-    const box = document.getElementById('opts'); box.textContent = '';
-    [...set].sort(() => rand(3) - 1).forEach((o) => {
-      const b = document.createElement('button'); b.textContent = o;
-      b.onclick = () => {
-        const ok = o === answer;
-        document.getElementById('msg').textContent = ok ? '정답! 👏' : `아쉬워요. 정답은 ${answer}`;
-        if (ok) document.getElementById('score').textContent = ++score;
-        setTimeout(next, 900);
-      };
-      box.appendChild(b);
-    });
+  let q, n = 0, score = 0, streak = 0, best = 0, locked = false;
+  const el = (name, attrs) => { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const fmt = (h, m) => `${h}시 ${m === 0 ? '정각' : m + '분'}`;
+  function face(h, m) {
+    const f = $('face'); f.textContent = '';
+    f.appendChild(el('circle', { r: 104, fill: '#fff', stroke: '#171719', 'stroke-width': 3 }));
+    for (let i = 0; i < 60; i++) { const a = (i * 6 * Math.PI) / 180, big = i % 5 === 0; f.appendChild(el('line', { x1: Math.sin(a) * (big ? 88 : 96), y1: -Math.cos(a) * (big ? 88 : 96), x2: Math.sin(a) * 100, y2: -Math.cos(a) * 100, stroke: '#171719', 'stroke-width': big ? 2.5 : 1 })); }
+    for (let i = 1; i <= 12; i++) { const a = (i * 30 * Math.PI) / 180, t = el('text', { x: Math.sin(a) * 72, y: -Math.cos(a) * 72 + 6, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 800, fill: '#171719' }); t.textContent = i; f.appendChild(t); }
+    const hand = (deg, len, w, c) => { const a = (deg * Math.PI) / 180; f.appendChild(el('line', { x1: 0, y1: 0, x2: Math.sin(a) * len, y2: -Math.cos(a) * len, stroke: c, 'stroke-width': w, 'stroke-linecap': 'round' })); };
+    hand(((h % 12) + m / 60) * 30, 48, 6, '#171719'); hand(m * 6, 76, 3.5, '#3366ff'); f.appendChild(el('circle', { r: 5, fill: '#171719' }));
+    f.setAttribute('aria-label', '시계 그림. 정답을 고르면 시각을 알려 줘요.');
   }
+  function next() {
+    locked = false; $('fb').textContent = ''; $('dgt').textContent = '';
+    const step = +$('lv').value, h = 1 + rand(12), m = step === 60 ? 0 : rand(Math.floor(60 / step)) * step;
+    q = { h, m }; face(h, m);
+    const set = new Set([fmt(h, m)]);
+    while (set.size < 4) { const hh = rand(4) === 0 ? 1 + rand(12) : h, mm = step === 60 ? 0 : rand(Math.floor(60 / step)) * step; set.add(fmt(hh, mm)); }
+    const arr = [...set]; for (let i = 3; i > 0; i--) { const j = rand(i + 1); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    const ch = $('ch'); ch.textContent = '';
+    arr.forEach((t) => { const b = document.createElement('button'); b.textContent = t; b.onclick = () => pick(b, t); ch.appendChild(b); });
+    $('no').textContent = `${n + 1}번째 문제`; $('sc').textContent = `맞힌 수 ${score}`; $('st').textContent = streak > 1 ? `🔥 ${streak}연속` : '';
+  }
+  function pick(b, t) {
+    if (locked) return; locked = true; const ok = t === fmt(q.h, q.m);
+    n++; if (ok) { score++; streak++; best = Math.max(best, streak); } else streak = 0;
+    b.classList.add(ok ? 'ok' : 'no');
+    if (!ok) [...$('ch').children].forEach((x) => { if (x.textContent === fmt(q.h, q.m)) x.classList.add('ok'); });
+    $('fb').textContent = ok ? '⭕ 맞았어요!' : `❌ 정답은 ${fmt(q.h, q.m)}예요. 짧은 바늘이 시, 긴 바늘이 분!`;
+    if ($('dg').checked) $('dgt').textContent = `${q.h}:${String(q.m).padStart(2, '0')}`;
+    $('sc').textContent = `맞힌 수 ${score}`; $('st').textContent = streak > 1 ? `🔥 ${streak}연속` : '';
+    setTimeout(next, ok ? 1100 : 2400);
+  }
+  $('lv').onchange = () => { n = 0; score = 0; streak = 0; next(); };
   next();
 </script>
 </body>

@@ -5,43 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>영어 단어 짝 맞추기</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6fb; color: #1f2328; }
-  h1 { font-size: 1.4rem; margin: 0 0 8px; }
-  #grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 520px; }
-  .c { aspect-ratio: 1; border: 0; border-radius: 14px; font-size: 1.1rem; font-weight: 700; background: #5b4a8a; color: #5b4a8a; cursor: pointer; }
-  .c.open, .c.done { background: #fff; color: #1f2328; outline: 3px solid #5b4a8a; }
-  .c.done { outline-color: #2e7d32; color: #2e7d32; }
-  #msg { font-weight: 800; min-height: 1.5em; }
+  :root { --b: #5b37ed; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-weight: 700; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .c { aspect-ratio: 1 / 1; min-height: 72px; border: 0; border-radius: 14px; background: var(--b); color: #fff; font: inherit; font-size: 1.8rem; cursor: pointer; display: grid; place-items: center; padding: 4px; }
+  .c span { font-size: clamp(.9rem, 3.4vw, 1.25rem); font-weight: 800; text-align: center; }
+  .c.up { background: #fff; color: var(--tx); border: 3px solid var(--b); } .c.done { background: #e1f6e8; color: #1a7a42; border: 3px solid #1f9d55; cursor: default; }
+  .c:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid #a99af7; outline-offset: 2px; }
+  button.g, select { font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  #win { font-weight: 800; color: #1a7a42; min-height: 1.5em; } .turn { padding: 2px 10px; border-radius: 999px; background: #eee5ff; color: #33198f; }
 </style>
 </head>
 <body>
-<h1>🔤 영어 단어 짝 맞추기</h1>
-<p>같은 뜻의 영어 단어와 우리말 카드를 찾아요. <span id="msg" aria-live="polite"></span></p>
-<div id="grid"></div>
+<div class="wrap">
+  <header><h1>🔤 영어 단어 짝 맞추기</h1><p class="sub">영어 카드와 우리말 뜻 카드를 뒤집어 짝을 찾아요. 짝과 번갈아 하는 대결 모드도 있어요.</p></header>
+  <div class="bar">
+    <label>주제 <select id="set"><option value="food">음식</option><option value="animal">동물</option><option value="school">학교</option></select></label>
+    <label>모드 <select id="mode"><option value="solo">혼자</option><option value="duo">둘이서 번갈아</option></select></label>
+    <button class="g" id="new">새로 섞기</button>
+  </div>
+  <div class="bar"><span id="try"></span><span id="pairs"></span><span class="turn" id="turn" hidden></span></div>
+  <div class="grid" id="grid" role="group" aria-label="카드"></div>
+  <div id="win" role="status" aria-live="polite"></div>
+</div>
 <script>
-  const words = [['apple', '사과'], ['school', '학교'], ['friend', '친구'], ['happy', '행복한'], ['book', '책'], ['water', '물'], ['rain', '비'], ['blue', '파란색']];
+  const SETS = {
+    food: [['apple', '사과'], ['bread', '빵'], ['milk', '우유'], ['rice', '밥'], ['egg', '달걀'], ['fish', '생선'], ['cake', '케이크'], ['grape', '포도']],
+    animal: [['dog', '개'], ['cat', '고양이'], ['bird', '새'], ['whale', '고래'], ['rabbit', '토끼'], ['horse', '말'], ['lion', '사자'], ['turtle', '거북']],
+    school: [['book', '책'], ['pencil', '연필'], ['desk', '책상'], ['bag', '가방'], ['teacher', '선생님'], ['friend', '친구'], ['board', '칠판'], ['ruler', '자']],
+  };
+  const $ = (id) => document.getElementById(id);
   const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
-  const cards = words.flatMap(([en, ko], i) => [{ t: en, k: i }, { t: ko, k: i }]);
-  for (let i = cards.length - 1; i > 0; i--) { const j = rand(i + 1); [cards[i], cards[j]] = [cards[j], cards[i]]; }
-  let first = null, lock = false, found = 0, tries = 0;
-  const grid = document.getElementById('grid');
-  cards.forEach((c) => {
-    const b = document.createElement('button'); b.className = 'c'; b.textContent = c.t; b.setAttribute('aria-label', '카드');
-    b.onclick = () => {
-      if (lock || b.classList.contains('open') || b.classList.contains('done')) return;
-      b.classList.add('open');
-      if (!first) { first = { b, c }; return; }
-      tries++;
-      if (first.c.k === c.k) {
-        first.b.className = b.className = 'c done'; found++; first = null;
-        document.getElementById('msg').textContent = found === words.length ? `모두 찾았어요! (${tries}번 시도)` : '';
-      } else {
-        lock = true;
-        setTimeout(() => { first.b.classList.remove('open'); b.classList.remove('open'); first = null; lock = false; }, 700);
-      }
-    };
-    grid.appendChild(b);
-  });
+  let cards, open, tries, found, turn, pts, busy;
+  function speak(t) { try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch { /* 소리 없이 */ } }
+  function build() {
+    const pairs = SETS[$('set').value];
+    cards = pairs.flatMap(([en, ko], i) => [{ id: i, t: en, en: true }, { id: i, t: ko, en: false }]);
+    for (let i = cards.length - 1; i > 0; i--) { const j = rand(i + 1); [cards[i], cards[j]] = [cards[j], cards[i]]; }
+    open = []; tries = 0; found = 0; turn = 0; pts = [0, 0]; busy = false; $('win').textContent = ''; draw();
+  }
+  function draw() {
+    const g = $('grid'); g.textContent = '';
+    cards.forEach((c, i) => {
+      const b = document.createElement('button'); b.className = 'c' + (c.done ? ' done' : open.includes(i) ? ' up' : '');
+      const up = c.done || open.includes(i);
+      if (up) { const s = document.createElement('span'); s.textContent = c.t; b.appendChild(s); b.setAttribute('aria-label', c.t); } else { b.textContent = '🐳'; b.setAttribute('aria-label', `${i + 1}번 카드, 뒤집기`); }
+      b.disabled = c.done; b.onclick = () => flip(i); g.appendChild(b);
+    });
+    $('try').textContent = `시도 ${tries}번`; $('pairs').textContent = `찾은 짝 ${found}/${cards.length / 2}`;
+    const duo = $('mode').value === 'duo'; $('turn').hidden = !duo; if (duo) $('turn').textContent = `${turn + 1}번 친구 차례 (${pts[0]} : ${pts[1]})`;
+  }
+  function flip(i) {
+    if (busy || open.includes(i) || cards[i].done) return;
+    open.push(i); if (cards[i].en) speak(cards[i].t); draw();
+    if (open.length < 2) return;
+    tries++; busy = true; const [a, b] = open.map((k) => cards[k]);
+    if (a.id === b.id && a.en !== b.en) {
+      a.done = b.done = true; found++; pts[turn]++; open = []; busy = false; draw();
+      if (found === cards.length / 2) $('win').textContent = $('mode').value === 'duo' ? (pts[0] === pts[1] ? '🎉 비겼어요!' : `🎉 ${pts[0] > pts[1] ? 1 : 2}번 친구가 이겼어요! (${pts[0]} : ${pts[1]})`) : `🎉 ${tries}번 만에 모두 찾았어요!`;
+    } else setTimeout(() => { open = []; busy = false; if ($('mode').value === 'duo') turn = 1 - turn; draw(); }, 1000);
+  }
+  $('new').onclick = build; $('set').onchange = build; $('mode').onchange = build;
+  build();
 </script>
 </body>
 </html>

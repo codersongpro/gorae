@@ -3,52 +3,76 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>찬반 의견 모으기</title>
+<title>즉석 투표</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6f8; color: #1f2328; }
-  h1 { margin: 0 0 8px; font-size: 1.4rem; }
-  #q { width: 100%; box-sizing: border-box; font-size: 1.3rem; padding: 10px; font-weight: 700; }
-  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0; }
-  .opt { border: 0; border-radius: 18px; padding: 18px; color: #fff; font-size: 1.4rem; font-weight: 800; cursor: pointer; }
-  .opt span { display: block; font-size: 3rem; }
-  .bar { height: 28px; display: flex; border-radius: 14px; overflow: hidden; background: #ddd; }
-  .bar div { transition: width 0.3s; }
-  .row { display: flex; gap: 8px; margin-top: 10px; }
-  .sub { font-size: 1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #dde5ee; cursor: pointer; }
+  :root { --b: #3366ff; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .wrap { grid-template-columns: 300px 1fr; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  textarea, input[type=text] { width: 100%; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; }
+  textarea { min-height: 110px; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 16px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  .r { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .opt { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+  .opt button { min-height: 64px; text-align: left; font-size: 1.1rem; position: relative; overflow: hidden; z-index: 0; }
+  .opt button i { position: absolute; inset: 0 auto 0 0; background: #dbe6ff; width: 0; z-index: -1; transition: width .3s; }
+  .opt.win button { border-color: var(--b); } .cnt { font-size: 1.4rem; font-weight: 800; min-width: 2.5em; text-align: right; }
+  #q { font-size: 1.3rem; font-weight: 800; } #who { color: var(--mu); }
+  @media (prefers-reduced-motion: reduce) { .opt button i { transition: none; } }
 </style>
 </head>
 <body>
-<h1>🙋 찬반 의견 모으기</h1>
-<input id="q" aria-label="질문" value="급식 시간에 음악을 틀어도 될까요?">
-<div class="opts" id="opts"></div>
-<div class="bar" id="bar" aria-hidden="true"></div>
-<p id="sum"></p>
-<div class="row">
-  <button class="sub" id="undo">한 표 취소</button>
-  <button class="sub" id="reset">처음부터</button>
-  <label><input type="checkbox" id="hide"> 결과 가리기</label>
+<div class="wrap">
+  <header><h1>🗳️ 즉석 투표</h1><p class="sub">질문과 선택지를 적고 투표를 받아요. 한 화면을 돌려 쓰는 방식이라 누가 무엇을 골랐는지는 남지 않아요.</p></header>
+  <section class="card" aria-label="설정">
+    <label for="qin"><strong>질문</strong></label>
+    <input type="text" id="qin" value="이번 학급 행사는 무엇이 좋을까요?">
+    <label for="opts"><strong>선택지</strong> (한 줄에 하나, 최대 8개)</label>
+    <textarea id="opts">체육 대회
+영화 보기
+보드게임 하는 날
+소풍</textarea>
+    <label class="r"><input type="checkbox" id="hide" checked> 마감 전에는 결과 숨기기</label>
+    <div class="r"><button class="p" id="open">투표 시작</button><button id="close">마감하고 결과 보기</button></div>
+  </section>
+  <section class="card" aria-label="투표">
+    <div id="q">투표를 시작해 주세요.</div>
+    <div id="list"></div>
+    <div id="who" aria-live="polite"></div>
+    <div class="r"><button id="undo">방금 표 취소</button><button id="clr">표 모두 지우기</button></div>
+  </section>
 </div>
 <script>
-  const O = [{ k: '찬성', c: '#2e7d32', n: 0 }, { k: '반대', c: '#c62828', n: 0 }, { k: '잘 모르겠어요', c: '#6b7480', n: 0 }];
-  const hist = [];
-  function render() {
-    const total = O.reduce((a, o) => a + o.n, 0);
-    const hide = document.getElementById('hide').checked;
-    const opts = document.getElementById('opts'); opts.textContent = '';
-    O.forEach((o, i) => {
-      const b = document.createElement('button'); b.className = 'opt'; b.style.background = o.c;
-      b.innerHTML = '<span></span>'; b.firstChild.textContent = hide ? '?' : o.n; b.append(o.k);
-      b.onclick = () => { o.n++; hist.push(i); render(); };
-      opts.appendChild(b);
+  const $ = (id) => document.getElementById(id);
+  let opts = [], votes = [], hist = [], isOpen = false;
+  function draw() {
+    const total = votes.reduce((a, b) => a + b, 0), max = Math.max(0, ...votes), show = !isOpen || !$('hide').checked;
+    const box = $('list'); box.textContent = '';
+    opts.forEach((o, i) => {
+      const row = document.createElement('div'); row.className = 'opt' + (!isOpen && max > 0 && votes[i] === max ? ' win' : '');
+      const b = document.createElement('button'); b.disabled = !isOpen; b.setAttribute('aria-label', `${o} 투표`);
+      const bar = document.createElement('i'); bar.style.width = show && total ? `${(votes[i] / total) * 100}%` : '0';
+      b.append(bar, document.createTextNode(o)); b.onclick = () => { votes[i]++; hist.push(i); draw(); };
+      const n = document.createElement('span'); n.className = 'cnt'; n.textContent = show ? votes[i] : '?';
+      row.append(b, n); box.appendChild(row);
     });
-    const bar = document.getElementById('bar'); bar.textContent = '';
-    if (!hide) O.forEach((o) => { const d = document.createElement('div'); d.style.background = o.c; d.style.width = (total ? (o.n / total) * 100 : 0) + '%'; bar.appendChild(d); });
-    document.getElementById('sum').textContent = '모두 ' + total + '표' + (hide ? ' (결과 가림)' : '');
+    $('who').textContent = !opts.length ? '' : isOpen ? `지금까지 ${total}표` : total ? `마감 · 총 ${total}표${max ? ' · 1위: ' + opts.filter((_, i) => votes[i] === max).join(', ') : ''}` : '마감 · 표가 없어요';
   }
-  document.getElementById('undo').onclick = () => { const i = hist.pop(); if (i !== undefined) O[i].n--; render(); };
-  document.getElementById('reset').onclick = () => { O.forEach((o) => (o.n = 0)); hist.length = 0; render(); };
-  document.getElementById('hide').onchange = render;
-  render();
+  $('open').onclick = () => {
+    opts = $('opts').value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 8);
+    if (opts.length < 2) { $('who').textContent = '선택지를 두 개 이상 적어 주세요.'; return; }
+    votes = opts.map(() => 0); hist = []; isOpen = true; $('q').textContent = $('qin').value.trim() || '투표'; draw();
+  };
+  $('close').onclick = () => { isOpen = false; draw(); };
+  $('undo').onclick = () => { const i = hist.pop(); if (i !== undefined) { votes[i]--; draw(); } };
+  $('clr').onclick = () => { if (votes.some(Boolean) && !confirm('모든 표를 지울까요?')) return; votes = opts.map(() => 0); hist = []; draw(); };
+  $('hide').onchange = draw;
+  $('open').click();
 </script>
 </body>
 </html>

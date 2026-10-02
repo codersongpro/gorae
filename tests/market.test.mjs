@@ -90,7 +90,7 @@ test('공유 묶음: 업로드 파일 + 폼 문항(닉네임·제목·앱 종류
   assert.deepEqual(p.prefill, { nickname: '파란 고래', title: '럭키드로우', kind: ['수업자료'], description: '무작위로 뽑아요', format: 'HTML 파일', address: '' });
   const web = buildSharePackage({ ...work, type: 'url', artifactType: 'webapp', url: 'https://app.example.com', html: undefined, domain: 'work', category: 'student_life', subcategory: 'guidance' }, { nickname: '노을', privacyChecked: true });
   assert.deepEqual([web.prefill.kind, web.prefill.format], [['학생관리'], '배포한 웹 앱']);
-  assert.ok(web.prefill.address.startsWith('https://app.example.com\n[고래곳간 작품 정보]'));
+  assert.equal(web.prefill.address, 'https://app.example.com'); // 주소 칸에는 주소만
   // 체크박스(복수 선택)는 같은 entry를 여러 번 붙인다
   const url = new URL(buildPrefillUrl('https://docs.google.com/forms/d/e/F/viewform', { kind: 'entry.3' }, { kind: ['교무행정', '학생관리'] }));
   assert.deepEqual(url.searchParams.getAll('entry.3'), ['교무행정', '학생관리']);

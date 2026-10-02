@@ -325,3 +325,17 @@ article.card .card-head { padding-bottom: var(--space-1); border-bottom: var(--b
 .card:has(.more-menu[open]) { position: relative; z-index: 6; }
 .zone { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: baseline; }
 .more-menu[open] > summary::before, .add-menu[open] > summary::before { content: none; }
+
+/* 탭 2개 · 곳간 전환 스위치 · 학교급 칩 · 선택 바 */
+.tabs.two { grid-template-columns: repeat(2, 1fr); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; padding: var(--space-1); gap: var(--space-1); border-radius: var(--radius-lg); background: var(--color-fill); }
+.seg button { min-height: var(--touch-min); border: 0; border-radius: var(--radius-md); background: transparent; font-weight: var(--font-weight-bold); color: var(--color-text-muted); }
+.seg button[aria-pressed="true"] { background: var(--color-surface-raised); color: var(--color-catalog); box-shadow: var(--shadow-sm); }
+.level-chips { display: flex; gap: var(--space-2); }
+.level-chips .chip[aria-pressed="true"] { background: var(--color-primary); color: var(--color-primary-text); border-color: var(--color-primary); }
+.section.has-bar { padding-bottom: calc(var(--touch-min) * 3); }
+.select-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: var(--space-2) var(--space-3); background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent); backdrop-filter: blur(var(--space-3)); border-top: calc(var(--border-width) * 2) solid var(--color-primary); box-shadow: 0 calc(var(--space-1) * -1) var(--space-4) color-mix(in srgb, var(--color-text) 14%, transparent); }
+.select-inner { max-width: var(--panel-width); margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.select-inner strong { margin-right: auto; }
+.more-menu.up .menu-pop { top: auto; bottom: 100%; right: auto; left: 0; }
+.more-menu.up > summary { font-size: var(--font-size-sm); }

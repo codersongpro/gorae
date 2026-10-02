@@ -29,7 +29,7 @@ export function filterEntries(entries, c = {}) {
     if (c.domain && m.domain !== c.domain) return false;
     if (c.category && m.category !== c.category) return false;
     if (c.subcategory && m.subcategory !== c.subcategory) return false;
-    if (c.schoolLevel && m.schoolLevel !== c.schoolLevel) return false;
+    if (c.schoolLevel && m.schoolLevel && m.schoolLevel !== c.schoolLevel) return false; // 학교급이 없는 작품은 공통이라 늘 보인다
     if (c.grade && m.gradeLabel !== c.grade) return false;
     if (c.subject && m.subject !== c.subject) return false;
     if (c.standard && !m.standard.includes(c.standard)) return false;

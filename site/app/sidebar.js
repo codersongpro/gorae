@@ -26,8 +26,8 @@ import { S } from './ui/strings.js';
 import { exportBundle, previewImport, importSelected } from './core/bundle.js';
 import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { createPack, serializePack } from './shared/pack.js';
-import { buildClassBundle, CLASS_URL } from './core/classpack.js';
-import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
+import { buildClassBundle } from './core/classpack.js';
+import { topBar, tabsBar, catalogView, mypodView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
 import { pinView, marketView, marketRunConfirm, guideView, serviceBand, flowView } from './ui/views.js';
 import { isRestricted } from './core/reference.js';
@@ -55,8 +55,7 @@ const state = {
   source: 'network', listRejected: false, notice: '', openId: null,
   entries: [], list: null,
   create: { kind: 'create', errors: [], warnings: [], input: { artifactType: 'html', domain: '', category: '', subcategory: '', audience: [], tags: [] } }, // kind: create | edit | remix
-  selected: [], packName: '', exportOut: null,
-  classSelected: [], className: '', classNote: '', classOut: null,
+  selected: [], schoolLevel: '',
   imp: { preview: null, errors: [], selected: [] },
 };
 // 새 작품 입력 기본값: 형태는 HTML, 수업/업무·카테고리는 직접 고르게 비워 둔다
@@ -394,40 +393,36 @@ async function submitCreate(input) {
 const startEdit = (entry) => go({ screen: 'create', create: { kind: 'edit', targetId: entry.work.id, errors: [], warnings: [], input: editInput(entry.work) } });
 const startRemix = (entry) => isRestricted(entry.work, state.mode) ? go({ notice: S.reference.blocked }) : go({ screen: 'create', create: { kind: 'remix', errors: [], warnings: [], input: remixInput(entry.work) } });
 
-// 꾸러미 내보내기: 고른 작품을 파일/클립보드용 텍스트로 만든다
-async function doExport(name) {
-  if (!state.selected.length) return go({ notice: S.bundle.pickFirst, packName: name });
-  if (state.selected.length > 10) return go({ notice: S.bundle.tooMany, packName: name });
-  if ((await store.list()).some((r) => state.selected.includes(r.id) && isRestricted(r.work, state.mode))) return go({ notice: S.reference.blocked, packName: name });
-  const out = exportBundle(await store.list(), state.selected, { name });
-  go({ exportOut: out, packName: name, notice: '' });
+// 내 곳간 선택 바: 고른 작품으로 꾸러미 파일 저장 · 클래스 공유 · 팀보드 · 수업 진행
+async function pickedRecords(max = 10) {
+  const all = await store.list();
+  const recs = all.filter((r) => state.selected.includes(r.id));
+  if (!recs.length) return { error: S.bundle.pickFirst };
+  if (recs.length > max) return { error: S.bundle.tooMany };
+  if (recs.some((r) => isRestricted(r.work, state.mode))) return { error: S.reference.blocked };
+  return { all, recs };
 }
-function saveTextFile(text, fileName, type = 'application/json') {
-  const blob = new Blob([text], { type });
-  const a = h('a', { href: URL.createObjectURL(blob), download: fileName });
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+async function savePack() {
+  const p = await pickedRecords();
+  if (p.error) return go({ notice: p.error });
+  const out = exportBundle(p.all, p.recs.map((r) => r.id), { name: S.sel.packName });
+  saveTextFile(out.text, out.fileName);
+  go({ notice: S.sel.packSaved(out.count) });
 }
-const saveFile = () => saveTextFile(state.exportOut.text, state.exportOut.fileName);
-
-// 학급 꾸러미: 교사고래 모드에서만. 꾸러미 + 웨일 클래스 공지 문구를 함께 만든다
-async function buildClass(name, note) {
-  const nm = name.trim() || S.classPack.defaultName;
-  const out = buildClassBundle(await store.list(), state.classSelected, { name: nm, teacherNote: note });
-  if (!out.ok) return go({ className: name, classNote: note, notice: out.error === 'NONE' ? S.classPack.none : S.classPack.tooMany });
-  go({ className: name, classNote: note, classOut: out, notice: '' });
+async function shareSelectionToClass() {
+  const p = await pickedRecords();
+  if (p.error) return go({ notice: p.error });
+  const out = buildClassBundle(p.all, p.recs.map((r) => r.id), { name: S.classPack.defaultName, teacherNote: '' });
+  if (!out.ok) return go({ notice: out.error === 'NONE' ? S.classPack.none : S.classPack.tooMany });
+  await navigator.clipboard.writeText(out.assignment + '\n\n받는 방법: 첨부한 꾸러미 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.');
+  saveTextFile(out.packText, out.fileName);
+  go({ notice: S.sel.classDone(out.count) });
 }
-async function copyClass(kind) {
-  const o = state.classOut;
-  await navigator.clipboard.writeText(kind === 'all' ? o.combined : kind === 'notice' ? o.notice : kind === 'assignment' ? o.assignment : o.packText);
-  go({ notice: S.classPack.copied[kind] });
-}
-const openClass = () => chrome.tabs.create({ url: CLASS_URL });
 
 // ----- 수업 진행: 고른 작품을 도입 → 활동 → 정리 순서로 한 단계씩 연다
 async function startFlow() {
-  if (!state.classSelected.length) return go({ notice: S.classPack.none });
-  const flow = { ids: [...state.classSelected], i: 0 };
+  if (!state.selected.length) return go({ notice: S.classPack.none });
+  const flow = { ids: [...state.selected], i: 0 };
   await storage.set('flow', flow);
   go({ screen: 'flow', flow });
 }
@@ -469,10 +464,6 @@ function serviceTop() {
     onGoTab: (tab) => go({ tab, screen: 'main' }), onRun: run, onFlow: () => state.flow && go({ screen: 'flow' }), hasFlow: !!(state.flow && state.flow.ids && state.flow.ids.length),
   });
 }
-async function copyPack() {
-  await navigator.clipboard.writeText(state.exportOut.text);
-  go({ notice: S.bundle.copied });
-}
 
 async function checkImport(text) {
   const existingIds = new Set((await store.list()).map((r) => r.id));
@@ -513,6 +504,7 @@ function watchMore() {
   moreObserver = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { moreObserver.disconnect(); btn.click(); } }, { rootMargin: '120px' });
   moreObserver.observe(btn);
 }
+const onSwitch = (tab) => go({ tab, notice: '', openId: null, confirmUrl: null, limit: PAGE_SIZE });
 let lastScreen = null;
 async function render() {
   // 화면이 바뀌면(예: 사용 방법을 열면) 맨 위부터 보이게 한다
@@ -535,7 +527,7 @@ async function render() {
     const entries = await verifyWorks(steps.map((st) => st.work));
     const i = Math.min(Math.max(0, (state.flow && state.flow.i) || 0), Math.max(0, steps.length - 1));
     return app.replaceChildren(flowView({
-      steps, entries, i, onBack: () => go({ screen: 'main', tab: 'class' }), onRun: run,
+      steps, entries, i, onBack: () => go({ screen: 'main', tab: 'mypod' }), onRun: run,
       onPrev: () => moveFlow(Math.max(0, i - 1)), onNext: () => moveFlow(Math.min(steps.length - 1, i + 1)), onJump: moveFlow,
     }));
   }
@@ -575,7 +567,7 @@ async function render() {
     const pending = Object.values(state.mySpouts).filter((v) => !v.sent).length;
     body = catalogView({
       entries: state.entries, visible, state,
-      top: serviceTop(), ui: cardUi(), onFilter: (p) => go({ ...p, notice: '', limit: PAGE_SIZE }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
+      top: serviceTop(), ui: cardUi(), onSwitch, onFilter: (p) => go({ ...p, notice: '', limit: PAGE_SIZE }), onAdd: addToMypod, onRun: run, onToggleDetail: toggleDetail,
       onRemix: startRemix, share: shareProps(), submit: submitProps(false),
       spout: spoutProps(),
       sendBar: spoutSendBar({ pending, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
@@ -586,7 +578,7 @@ async function render() {
       m: state.market, onRefresh: refreshMarket, onImport: importFromMarket, onReview: (e) => importFromMarket(e, { review: true }), mode: state.mode, onPreview: previewFromMarket,
       spout: spoutProps(), web: globalThis.GORAE_WEB === true,
       sendBar: spoutSendBar({ pending: Object.values(state.mySpouts).filter((v) => !v.sent).length, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
-      ui: cardUi(), onFilter: (p) => { state.market = { ...state.market, ...p }; state.limit = PAGE_SIZE; render(); },
+      ui: cardUi(), onSwitch, onFilter: (p) => { state.market = { ...state.market, ...p }; state.limit = PAGE_SIZE; render(); },
     });
   } else if (state.tab === 'mypod') {
     const all = await store.list();
@@ -600,18 +592,11 @@ async function render() {
       records, entriesById: new Map(entries.map((e) => [e.work.id, { ...e, source: (records.find((r) => r.id === e.work.id) || {}).source }])), state,
       onRun: run, onRemove: removeRecord, onToggleDetail: toggleDetail,
       onEdit: startEdit, onRemix: startRemix,
-      onSelect: (id, on) => { state.selected = toggleIn(state.selected, id, on); },
-      onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
+      onSelect: (id, on) => go({ selected: toggleIn(state.selected, id, on) }),
+      bar: { onPack: savePack, onClass: shareSelectionToClass, onTeamboardCards: copyTeamboardCards, onTeamboardFile: saveTeamboardPack, onFlow: startFlow, onClear: () => go({ selected: [] }) },
       share: shareProps(), submit: submitProps(true),
       onSearch: (q) => go({ mypodQuery: q, limit: PAGE_SIZE }), total: all.length,
-      top: serviceTop(), onTeamboard: copyTeamboardCards, onTeamboardFile: saveTeamboardPack, ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
-    });
-  } else {
-    body = classView({
-      mode: state.mode, records: state.mode === 'mother' ? await store.list() : [], state,
-      onSelect: (id, on) => { state.classSelected = toggleIn(state.classSelected, id, on); },
-      onBuild: buildClass, out: state.classOut, onCopy: copyClass, onFlow: startFlow,
-      onSaveFile: () => saveTextFile(state.classOut.packText, state.classOut.fileName), onOpenClass: openClass,
+      top: serviceTop(), ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
     });
   }
   app.replaceChildren(
@@ -620,12 +605,12 @@ async function render() {
       // 학생고래로는 바로, 교사고래로는 암호를 거쳐서 바꾼다
       if (state.mode === 'mother') {
         await storage.set('mode', 'baby');
-        return go({ mode: 'baby', notice: '', classOut: null });
+        return go({ mode: 'baby', notice: '' });
       }
       go({ screen: 'pin', pin: { has: await hasPin(storage), error: '', askReset: false } });
     }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' }), () => go({ screen: 'guide' }),
       () => go({ screen: 'main', tab: 'catalog', openId: null, confirmUrl: null, confirmMarket: null, notice: '' })),
-    tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null, limit: PAGE_SIZE }))),
+    tabsBar(state.tab, (tab) => go({ tab: tab === 'catalog' && state.tab === 'market' ? 'market' : tab, notice: '', openId: null, confirmUrl: null, limit: PAGE_SIZE }))),
     // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
     ...[
       state.confirmUrl ? urlConfirmView({ info: state.confirmUrl, onOpen: openConfirmed, onCancel: () => go({ confirmUrl: null }) }) : null,
@@ -647,8 +632,6 @@ if (state.mode === 'mother' && !(await hasPin(storage))) state.mode = 'baby';
 try {
   const sample = await (await fetch(chrome.runtime.getURL('sample/mypod-samples.json'))).json();
   await seedMypod({ storage, store, samples: sample.works });
-  state.classSelected = await samplesInMypod(store, sample.works);
-  if (state.classSelected.length) state.className = sample.className;
 } catch { /* 샘플이 없어도 된다 */ }
 try {
   await loadAll();

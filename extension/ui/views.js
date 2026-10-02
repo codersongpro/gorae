@@ -37,12 +37,15 @@ export const emptyState = (title, { icon = '🐋', text = '', action = null } = 
   h('div', { class: 'empty' }, h('span', { class: 'icon', 'aria-hidden': 'true' }, icon), h('h3', {}, title),
     text ? h('p', {}, text) : null, action ? h('button', { onclick: action.onClick }, action.label) : null);
 
+// 탭은 두 개: 곳간(인증 · 나눔은 위쪽 스위치로 전환) / 내 곳간
 export function tabsBar(current, onSelect) {
-  return h('div', { class: 'tabs', role: 'tablist' },
-    ['catalog', 'market', 'mypod', 'class'].map((k) =>
-      h('button', { class: `tab ${k}`, role: 'tab', 'data-tour': `tab-${k}`, 'aria-selected': String(current === k), onclick: () => onSelect(k) },
-        S.tabs[k])));
+  const tabs = [['catalog', ['catalog', 'market']], ['mypod', ['mypod']]];
+  return h('div', { class: 'tabs two', role: 'tablist' },
+    tabs.map(([k, set]) => h('button', { class: `tab ${k}`, role: 'tab', 'data-tour': `tab-${k}`, 'aria-selected': String(set.includes(current)), onclick: () => onSelect(k) }, S.tabs[k])));
 }
+// 인증 곳간 ↔ 나눔 곳간 전환 스위치
+export const segSwitch = (current, onSwitch) => h('div', { class: 'seg', role: 'group', 'aria-label': S.seg.label },
+  ['catalog', 'market'].map((k) => h('button', { type: 'button', 'data-tour': `seg-${k}`, 'aria-pressed': String(current === k), onclick: () => onSwitch(k) }, S.seg[k])));
 
 export function topBar(mode, onToggle, onCreate, onImport, onGuide, onHome) {
   const teacher = mode === 'mother';
@@ -73,32 +76,35 @@ function select(label, value, options, onChange, labels = {}, allLabel = S.filte
       })));
 }
 
-// 찾기: 검색어·수업/업무·카테고리는 늘 보이고, 나머지는 '자세한 조건' 안에
+// 찾기: 검색·학교급 칩·분류·정렬만 보이고, 나머지 조건은 [필터] 하나에 모은다
 function findBar({ entries, state, onFilter, sortSel }) {
   const Fd = S.find;
   const cat = findCategory(state.domain, state.category);
   const q = h('input', { type: 'search', placeholder: Fd.search, 'aria-label': Fd.search, value: state.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
   const tags = topTags(entries);
+  // 분류: 수업/업무와 카테고리를 한 칸에 (수업 › 수업도구 …)
+  const catSel = h('label', {}, Fd.categoryOne,
+    h('select', { onchange: (e) => { const [d, c] = e.target.value.split('/'); onFilter({ domain: d || '', category: c || '', subcategory: '' }); } },
+      h('option', { value: '' }, Fd.categoryAll),
+      DOMAINS.map((d) => h('optgroup', { label: d.label }, categoriesOf(d.id).map((c) => h('option', { value: `${d.id}/${c.id}`, selected: state.domain === d.id && state.category === c.id }, c.label))))));
+  const levels = [['', Fd.levelAll], ['elementary', '초'], ['middle', '중'], ['high', '고']];
   return h('div', { class: 'filters', 'data-tour': 'find' },
     h('div', { class: 'wide' }, q),
-    select(S.form.domain, state.domain, DOMAINS, (v) => onFilter({ domain: v, category: '', subcategory: '' }), {}, Fd.domainAll),
-    state.domain ? select(S.form.category, state.category, categoriesOf(state.domain), (v) => onFilter({ category: v, subcategory: '' }), {}, Fd.categoryAll) : null,
-    cat ? select(cat.detail ? S.form.activityType : S.form.subcategory, state.subcategory, cat.subs, (v) => onFilter({ subcategory: v }), {}, Fd.subAll) : null,
+    h('div', { class: 'wide level-chips', role: 'group', 'aria-label': Fd.level },
+      levels.map(([id, label]) => h('button', { type: 'button', class: 'chip', 'aria-pressed': String((state.schoolLevel || '') === id), onclick: () => onFilter({ schoolLevel: id }) }, label))),
+    catSel,
     sortSel,
     h('details', { class: 'wide', open: state.moreOpen || null, ontoggle: (e) => { state.moreOpen = e.target.open; } },
       h('summary', {}, Fd.more),
       h('div', { class: 'filters' },
+        cat ? select(cat.detail ? S.form.activityType : S.form.subcategory, state.subcategory, cat.subs, (v) => onFilter({ subcategory: v }), {}, Fd.subAll) : null,
         select(Fd.grade, state.grade, facetValues(entries, 'gradeLabel'), (v) => onFilter({ grade: v })),
         select(S.filter.subject, state.subject, facetValues(entries, 'subject'), (v) => onFilter({ subject: v })),
-        select(Fd.audience, state.audience, AUDIENCES, (v) => onFilter({ audience: v })),
-        select(Fd.group, state.groupType, GROUP_TYPES, (v) => onFilter({ groupType: v })),
         select(Fd.time, state.maxMinutes, TIME_OPTIONS.map((t) => ({ id: t.minutes, label: t.label })), (v) => onFilter({ maxMinutes: v })),
-        select(S.filter.badge, state.badge, ['clear', 'shallow', 'whirlpool'], (v) => onFilter({ badge: v }), S.badge),
-        h('label', { class: 'check wide' }, h('input', { type: 'checkbox', checked: state.pickOnly, onchange: (e) => onFilter({ pickOnly: e.target.checked }) }), S.filter.pickOnly),
         tags.length ? h('div', { class: 'row wide' }, h('span', { class: 'muted' }, Fd.tag),
           tags.map((t) => h('button', { class: state.tag === t ? 'chip primary' : 'chip', onclick: () => onFilter({ tag: state.tag === t ? '' : t }) }, '#' + t))) : null,
-        h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) }, Fd.reset))));
+        h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', schoolLevel: '', grade: '', subject: '', maxMinutes: '', tag: '' }) }, Fd.reset))));
 }
 
 // 지금 보고 있는 웨일 서비스에 맞춘 안내 띠 (클래스·팀보드·웨일온)
@@ -110,12 +116,12 @@ export function serviceBand({ service, label, mode, recommended = [], onGoTab, o
     h('p', {}, h('strong', {}, V.title(label))),
     h('p', { class: 'muted' }, V[service].text),
     service === 'class' ? h('div', { class: 'row' },
-      teacher ? h('button', { class: 'primary', onclick: () => onGoTab('class') }, V.class.go) : h('p', { class: 'muted' }, V.class.needTeacher)) : null,
+      teacher ? h('button', { class: 'primary', onclick: () => onGoTab('mypod') }, V.class.go) : h('p', { class: 'muted' }, V.class.needTeacher)) : null,
     service === 'teamboard' ? h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => onGoTab('mypod') }, V.teamboard.go)) : null,
     service === 'remote' ? h('div', { class: 'svc-rec' },
       recommended.length ? recommended.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run)))
         : h('p', { class: 'muted' }, V.remote.none),
-      teacher ? h('div', { class: 'row' }, h('button', { onclick: () => onGoTab('class') }, V.remote.flow), hasFlow ? h('button', { class: 'primary', onclick: onFlow }, V.remote.resume) : null) : null) : null);
+      teacher ? h('div', { class: 'row' }, h('button', { onclick: () => onGoTab('mypod') }, V.remote.flow), hasFlow ? h('button', { class: 'primary', onclick: onFlow }, V.remote.resume) : null) : null) : null);
 }
 
 // 수업 진행 화면: 도입 → 활동 → 정리 순서로 한 단계씩 실행한다
@@ -186,11 +192,12 @@ function featuredBand(entries, state, onRun) {
     shown.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run))));
 }
 
-export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar, ui, top }) {
+export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar, ui, top, onSwitch }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
+    segSwitch('catalog', onSwitch),
     zoneBand('catalog'),
     top || null,
     featuredBand(entries, state, onRun),
@@ -341,7 +348,7 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
 }
 
 // 나눔 곳간: 시트 목록 → 검색·분류 거르기 → 가져오기
-export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onReview, mode = 'baby', spout, sendBar, web = false, ui }) {
+export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onReview, onSwitch, mode = 'baby', spout, sendBar, web = false, ui }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
@@ -358,6 +365,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
   const teacher = mode === 'mother';
   const isEx = (id) => !!(ui && ui.expanded && ui.expanded[id]);
   return h('section', { class: 'section' },
+    segSwitch('market', onSwitch),
     zoneBand('market'),
     sendBar || null,
     h('div', { class: 'filters' },
@@ -409,24 +417,33 @@ export function marketRunConfirm({ title, onRun, onCancel }) {
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly, top, onTeamboard, onTeamboardFile }) {
+// 선택 바: 내 곳간에서 작품을 체크하면 아래에 뜬다 (꾸러미·클래스·팀보드·수업 진행을 한곳에서)
+function selectBar({ count, teacher, bar }) {
+  const T = S.sel;
+  return h('div', { class: 'select-bar', role: 'region', 'aria-label': T.label },
+    h('div', { class: 'select-inner' },
+      h('strong', {}, T.count(count)),
+      h('details', { class: 'more-menu up', 'data-tour': 'select-share' },
+        h('summary', { 'aria-label': T.share }, T.share + ' ▲'),
+        h('div', { class: 'menu-pop', role: 'menu' },
+          menuItem(T.pack, bar.onPack),
+          teacher ? menuItem(T.class, bar.onClass) : null,
+          menuItem(S.svc.teamboard.cards, bar.onTeamboardCards),
+          menuItem(S.svc.teamboard.file, bar.onTeamboardFile))),
+      teacher ? h('button', { class: 'primary', 'data-tour': 'flow-start', title: T.flowHint, onclick: bar.onFlow }, T.flow) : null,
+      h('button', { onclick: bar.onClear }, T.clear)));
+}
+
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, share, submit, onSearch, total, ui, onFav, onFavOnly, top, bar }) {
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
   q.addEventListener('change', () => onSearch(q.value.trim()));
-  const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
-  return h('section', { class: 'section' },
+  const selected = state.selected || [];
+  return h('section', { class: `section${selected.length ? ' has-bar' : ''}` },
     top || null,
     total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
     state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
     total ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!state.favOnly, onchange: (e) => onFavOnly(e.target.checked) }), S.fav.only) : null,
     listTools(records.map((r) => r.id)),
-    records.length ? h('div', { class: 'card' },
-      h('p', {}, S.bundle.exportTitle),
-      nameInput,
-      h('button', { onclick: () => onExport(nameInput.value) }, S.bundle.exportBtn),
-      h('button', { 'data-tour': 'teamboard-cards', title: S.svc.teamboard.cardsHint, onclick: onTeamboard }, S.svc.teamboard.cards),
-      h('button', { 'data-tour': 'teamboard-file', title: S.svc.teamboard.fileHint, onclick: onTeamboardFile }, S.svc.teamboard.file),
-      exportOut ? h('div', { class: 'detail' }, h('p', {}, S.bundle.madeN(exportOut.count, exportOut.fileName)),
-        h('div', { class: 'row' }, h('button', { onclick: onSaveFile }, S.bundle.saveFile), h('button', { onclick: onCopy }, S.bundle.copy))) : null) : null,
     records.length ? [...sliceOf(records, ui).map((r) => {
       const w = r.work;
       const tags = [`출처: ${S.source[r.source] || r.source}`, `버전 ${w.version}`];
@@ -436,43 +453,11 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
       return workCard(entriesById.get(r.id), {
         mode: state.mode, ui, fav: !!r.favorite, onFav, onRun, onRemove, onToggleDetail, onEdit, onRemix, share, submit, open: state.openId === r.id, report: r.checkReport,
         selectBox: h('label', { class: 'check' },
-          h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
+          h('input', { type: 'checkbox', checked: selected.includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), S.sel.pick),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),
       });
-    }), moreButton(records.length, sliceOf(records, ui).length, ui)] : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐋', text: S.empty.mypod }));
-}
-
-export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass, onFlow }) {
-  const C = S.classPack;
-  if (mode !== 'mother') return h('section', { class: 'section' }, h('p', { class: 'notice' }, C.needMother));
-  if (!records.length) return h('section', { class: 'section' }, h('p', { class: 'muted' }, C.empty));
-  const nameInput = h('input', { 'aria-label': C.name, placeholder: C.name, value: state.className || '' });
-  const noteInput = h('textarea', { 'aria-label': C.note, placeholder: C.note }, state.classNote || '');
-  return h('section', { class: 'section' },
-    h('h2', {}, C.title),
-    h('p', { class: 'muted' }, C.steps),
-    h('p', {}, C.pick),
-    records.map((r) => h('label', { class: 'check' },
-      h('input', { type: 'checkbox', checked: (state.classSelected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }),
-      `${r.work.title} (${[r.work.grade, r.work.subject].filter(Boolean).join('·')})`)),
-    nameInput, noteInput,
-    h('div', { class: 'row' },
-      h('button', { class: 'primary', onclick: () => onBuild(nameInput.value, noteInput.value) }, C.build),
-      h('button', { 'data-tour': 'flow-start', onclick: onFlow, title: C.flowHint }, C.flow)),
-    h('p', { class: 'muted' }, C.flowHint),
-    out ? h('div', { class: 'card' },
-      h('p', {}, C.madeN(out.count)),
-      h('p', { class: 'muted' }, C.guide),
-      out.tooLong ? h('p', { class: 'notice error' }, C.tooLong) : null,
-      // 클래스 글은 글자 수 제한이 있어서 '짧은 안내문 + 꾸러미 파일 첨부'가 기본이다
-      h('ol', { class: 'guide-list' }, C.attachSteps.map((t) => h('li', {}, t))),
-      h('div', { class: 'row' },
-        h('button', { class: 'primary', onclick: onSaveFile }, C.saveFile),
-        h('button', { class: 'primary', onclick: () => onCopy('assignment') }, C.copyAssignment),
-        h('button', { onclick: () => onCopy('notice') }, C.copyNotice)),
-      h('details', {}, h('summary', {}, C.moreCopy),
-        h('div', { class: 'row' }, h('button', { onclick: () => onCopy('all') }, C.copyAll), h('button', { onclick: () => onCopy('pack') }, C.copyPack))),
-      h('button', { onclick: onOpenClass }, C.openClass)) : null);
+    }), moreButton(records.length, sliceOf(records, ui).length, ui)] : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐋', text: S.empty.mypod }),
+    selected.length ? selectBar({ count: selected.length, teacher: state.mode === 'mother', bar }) : null);
 }
 
 export function runView({ entry, onBack, onOpenTab }) {

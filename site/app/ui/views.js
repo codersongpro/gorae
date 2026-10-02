@@ -116,7 +116,7 @@ export function serviceBand({ service, label, mode, recommended = [], onGoTab, o
     h('p', {}, h('strong', {}, V.title(label))),
     h('p', { class: 'muted' }, V[service].text),
     service === 'class' ? h('div', { class: 'row' },
-      teacher ? h('button', { class: 'primary', onclick: () => onGoTab('mypod') }, V.class.go) : h('p', { class: 'muted' }, V.class.needTeacher)) : null,
+      h('button', { class: 'primary', onclick: () => onGoTab('mypod') }, V.class.go)) : null,
     service === 'teamboard' ? h('div', { class: 'row' }, h('button', { class: 'primary', onclick: () => onGoTab('mypod') }, V.teamboard.go)) : null,
     service === 'remote' ? h('div', { class: 'svc-rec' },
       recommended.length ? recommended.map((e) => h('div', { class: 'row' }, h('span', {}, e.work.title), h('button', { class: 'chip', disabled: !canRun(e).ok, onclick: () => onRun(e) }, S.actions.run)))
@@ -427,7 +427,7 @@ function selectBar({ count, teacher, bar }) {
         h('summary', { 'aria-label': T.share }, T.share + ' ▲'),
         h('div', { class: 'menu-pop', role: 'menu' },
           menuItem(T.pack, bar.onPack),
-          teacher ? menuItem(T.class, bar.onClass) : null,
+          menuItem(T.class, bar.onClass), // 학생고래도 쓸 수 있다
           menuItem(S.svc.teamboard.cards, bar.onTeamboardCards),
           menuItem(S.svc.teamboard.file, bar.onTeamboardFile))),
       teacher ? h('button', { class: 'primary', 'data-tour': 'flow-start', title: T.flowHint, onclick: bar.onFlow }, T.flow) : null,

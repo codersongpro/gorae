@@ -26,8 +26,7 @@ test('팀보드 전시 카드: 만든이는 별명·학교급만, 리믹스 안�
   const { text } = buildShare('teamboard', work, { link: LINK });
   assert.ok(text.includes('작품명: 분수 피자 게임'));
   assert.ok(text.includes('만든이: 파란고래 · 초등'));
-  assert.ok(text.includes('▶ 바로 실행
-' + LINK));
+  assert.ok(text.includes('▶ 바로 실행\n' + LINK));
   assert.ok(text.includes('이 작품을 리믹스해 보세요'));
 });
 

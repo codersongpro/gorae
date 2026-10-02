@@ -5,6 +5,7 @@ import { createChromeStorage } from './core/storage.js';
 import { buildRunMessage, canRun } from './core/runner.js';
 import { displayBadge } from './core/trust.js';
 import { h } from './ui/dom.js';
+import { whaleIcon } from './ui/icons.js';
 import { S } from './ui/strings.js';
 
 const bar = document.getElementById('bar');
@@ -23,7 +24,7 @@ if (!ticket) {
   } else {
     const b = displayBadge(entry);
     bar.replaceChildren(...[
-      h('h1', {}, (ticket.status && ticket.status.ok ? '🐋 ' : '🫍 ') + ticket.work.title),
+      h('h1', { class: 'run-title' }, whaleIcon(!!(ticket.status && ticket.status.ok), ticket.status && ticket.status.ok ? S.whaleIcon.ok : S.whaleIcon.no), ticket.work.title),
       h('span', { class: `badge ${b}` }, S.badge[b]),
       h('span', { class: 'muted' }, S.run.running),
       ticket.work.referenceOnly === true ? h('span', { class: 'ref-band', role: 'note' }, S.reference.runBand) : null,

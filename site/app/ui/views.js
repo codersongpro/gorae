@@ -580,19 +580,14 @@ export function guideView({ onStartTour, onBack, onCopy, web = false }) {
     h('div', { class: 'row' }, h('button', { onclick: onBack }, S.actions.back), h('h2', {}, G.title)),
     web ? installSec() : null,
     h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: () => onStartTour('main') }, G.start))),
-    sec(G.rolesTitle, h('p', { class: 'muted' }, G.rolesIntro),
-      h('dl', { class: 'guide-dl' }, G.roles.map((r) => [h('dt', {}, `${r.icon} ${r.name}`), h('dd', {}, r.text)]).flat())),
-    sec(G.badgesTitle, h('p', { class: 'muted' }, G.badgesIntro),
-      h('div', { class: 'guide-rows' }, ['clear', 'shallow', 'whirlpool'].map((b) =>
-        h('div', { class: 'guide-row' }, h('span', { class: `badge ${b}` }, S.badge[b]), h('p', {}, G.badgeText[b]))))),
-    sec(G.marksTitle, h('p', { class: 'muted' }, G.marksIntro),
-      h('div', { class: 'guide-rows' }, G.marks.map((m) =>
-        h('div', { class: 'guide-row' }, h('span', { class: m.cls ? `badge ${m.cls}` : 'badge' }, m.label), h('p', {}, m.text))))),
-    sec(G.signTitle, h('p', {}, G.signText), h('ul', { class: 'guide-list' }, G.signStates.map((t) => h('li', {}, t)))),
+    ...G.sections.map((sc) => sec(sc.title,
+      sc.intro ? h('p', { class: 'muted' }, sc.intro) : null,
+      sc.rows ? h('div', { class: 'guide-rows' }, sc.rows.map((r) => h('div', { class: 'guide-row' },
+        r.badges ? h('span', { class: 'guide-badges' }, r.badges.map(([l, c]) => h('span', { class: `badge ${c}` }, l))) : h('span', { class: `badge ${r.cls || ''}`.trim() }, r.label), r.text ? h('p', {}, r.text) : null))) : null,
+      sc.items ? h('ul', { class: 'guide-list' }, sc.items.map((t) => h('li', {}, t))) : null)),
     web ? null : sec(G.web.goTitle,
       h('p', {}, G.web.goIntro),
       h('p', {}, h('a', { class: 'btn', href: G.web.url, target: '_blank', rel: 'noopener noreferrer' }, G.web.goBtn)),
       h('p', { class: 'muted' }, G.web.goNote)),
-    sec(G.podsTitle, h('ul', { class: 'guide-list' }, G.pods.map((t) => h('li', {}, t)))),
     h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length)));
 }

@@ -349,3 +349,6 @@ button.in-mine { background: var(--color-mypod-soft); color: var(--color-mypod);
 .select-inner { position: relative; }
 .more-menu .menu-pop { right: 0; left: auto; min-width: min(15em, 100%); max-width: 100%; }
 .more-menu.up .menu-pop { left: 0; right: auto; top: auto; bottom: 100%; }
+
+.guide-badges { display: inline-flex; gap: var(--space-1); }
+.guide-row .badge.verified, .guide-row .badge.popular { white-space: normal; }

@@ -32,7 +32,7 @@ test('내 곳간 샘플은 처음 한 번만 담기고, 지운 뒤 다시 열어
 });
 
 test('나눔 곳간 샘플은 네트워크 없이 미리 실행·가져오기가 되고, 업로드 파일과 같은 검증을 거친다', async () => {
-  assert.equal(market.length, 6);
+  assert.equal(market.length, 8);
   for (const entry of market) {
     assert.equal(entry.sample, true);
     const { works, warnings } = await fetchEntryWorks(entry, { fetchFn: noFetch, config });

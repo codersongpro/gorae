@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 고장 소개 모둠 발표</title>
+<style>
+  :root { --b: #1f8a52; --tx: #14301f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: #e9f6ee; color: var(--tx); font: 17px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .edit, .stage { max-width: 960px; margin: 0 auto; padding: 14px; display: grid; gap: 12px; }
+  .card { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 8px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #4a6b57; font-size: .9rem; }
+  .part { display: grid; grid-template-columns: 5.5em 1fr; gap: 8px; align-items: start; }
+  .part label { font-weight: 800; color: var(--b); padding-top: 8px; }
+  input[type=text], textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid #c8dccf; border-radius: 10px; } textarea { min-height: 70px; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 1px solid #c8dccf; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #6cc48d; outline-offset: 2px; }
+  .stage { display: none; } body.on .edit { display: none; } body.on .stage { display: grid; }
+  .slide { min-height: min(56vh, 480px); border-radius: 24px; background: linear-gradient(150deg, #1f8a52, #0f5a33); color: #fff; padding: clamp(18px, 5vw, 48px); display: grid; align-content: center; gap: 14px; }
+  .slide .who { justify-self: start; background: rgba(255,255,255,.2); border-radius: 999px; padding: 4px 16px; font-weight: 800; }
+  .slide h2 { margin: 0; font-size: clamp(1.8rem, 6vw, 3rem); line-height: 1.25; } .slide p { margin: 0; font-size: clamp(1.1rem, 3.4vw, 1.7rem); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  #clock { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; } #clock.low { color: #d93025; }
+  .dots { display: flex; gap: 6px; } .dots i { width: 12px; height: 12px; border-radius: 50%; background: #b7d6c3; } .dots i.on { background: var(--b); }
+</style>
+</head>
+<body>
+<section class="edit" aria-label="발표 준비">
+  <header><h1>🏘️ 우리 고장 소개 모둠 발표</h1><p class="sub">3학년 사회 · 우리 고장의 모습. 모둠원이 한 장씩 맡아 소개해요. 실제 이름 대신 1번~4번으로 적어요.</p></header>
+  <div class="card">
+    <label for="town"><strong>우리 고장 이름</strong></label><input type="text" id="town" value="바다마을">
+    <div class="part"><label for="p1">1번 · 위치</label><textarea id="p1">산과 바다 사이에 있는 작은 마을이에요. 학교는 마을 가운데에 있어요.</textarea></div>
+    <div class="part"><label for="p2">2번 · 자연</label><textarea id="p2">뒷산에는 소나무가 많고, 앞에는 넓은 바다가 있어요. 가을에는 단풍이 예뻐요.</textarea></div>
+    <div class="part"><label for="p3">3번 · 사람들</label><textarea id="p3">많은 분들이 고기를 잡거나 농사를 지어요. 시장에서는 싱싱한 생선을 팔아요.</textarea></div>
+    <div class="part"><label for="p4">4번 · 자랑거리</label><textarea id="p4">해마다 열리는 바다 축제가 가장 큰 자랑이에요. 모두 함께 준비해요.</textarea></div>
+    <label for="sec"><strong>한 사람이 말하는 시간(초)</strong></label><input type="text" id="sec" value="45" inputmode="numeric">
+    <div><button class="p" id="go">발표 시작</button></div>
+  </div>
+</section>
+<section class="stage" aria-label="발표">
+  <div class="slide" id="slide" aria-live="polite"></div>
+  <div class="bar"><span id="clock" role="timer">00:45</span><span class="dots" id="dots" aria-hidden="true"></span>
+    <span><button id="prev">◀ 이전</button> <button class="p" id="next">다음 ▶</button> <button id="back">고치기</button></span></div>
+</section>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const labels = ['위치', '자연', '사람들', '자랑거리'];
+  let parts = [], i = 0, left = 45, iv = null, per = 45;
+  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  function showSlide() {
+    const s = parts[i], sl = $('slide'); sl.textContent = '';
+    const who = document.createElement('span'); who.className = 'who'; who.textContent = i === 0 ? '시작' : `${i}번 친구 차례`;
+    const h = document.createElement('h2'); const p = document.createElement('p');
+    if (i === 0) { h.textContent = `${$('town').value.trim() || '우리 고장'}을(를) 소개해요`; p.textContent = '모둠 친구 4명이 차례로 말해요.'; }
+    else { h.textContent = labels[i - 1]; p.textContent = s; }
+    sl.append(who, h, p);
+    $('dots').textContent = ''; parts.forEach((_, k) => { const d = document.createElement('i'); if (k === i) d.className = 'on'; $('dots').appendChild(d); });
+    clearInterval(iv); left = per; $('clock').textContent = fmt(left); $('clock').className = '';
+    if (i > 0) iv = setInterval(() => { left = Math.max(0, left - 1); $('clock').textContent = fmt(left); $('clock').className = left <= 10 ? 'low' : ''; if (!left) clearInterval(iv); }, 1000);
+    $('prev').disabled = i === 0; $('next').disabled = i === parts.length - 1;
+  }
+  $('go').onclick = () => { parts = ['', $('p1').value.trim(), $('p2').value.trim(), $('p3').value.trim(), $('p4').value.trim()]; per = Math.max(10, Math.min(300, +$('sec').value || 45)); i = 0; document.body.classList.add('on'); showSlide(); };
+  $('next').onclick = () => { i = Math.min(parts.length - 1, i + 1); showSlide(); }; $('prev').onclick = () => { i = Math.max(0, i - 1); showSlide(); };
+  $('back').onclick = () => { clearInterval(iv); document.body.classList.remove('on'); };
+  document.addEventListener('keydown', (e) => { if (!document.body.classList.contains('on')) return; if (e.key === 'ArrowRight') $('next').click(); if (e.key === 'ArrowLeft') $('prev').click(); });
+</script>
+</body>
+</html>

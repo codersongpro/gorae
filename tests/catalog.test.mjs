@@ -39,8 +39,8 @@ test('AC-001 인터넷이 되면 목록과 족보를 받아 작품 카드를 만
   assert.equal(res.source, 'network');
   assert.equal(res.offline, false);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.length, 20); // 샘플 6개 + 기본 수업도구 7개 + 추가 샘플 3개
-  assert.equal(entries.filter((e) => e.status.ok).length, 18); // 미검수 시연용 2개(구구단·곱셈 카드)만 빼고 검증 통과
+  assert.equal(entries.length, 22); // 샘플 6개 + 기본 수업도구 7개 + 추가 샘플 3개
+  assert.equal(entries.filter((e) => e.status.ok).length, 20); // 미검수 시연용 2개(구구단·곱셈 카드)만 빼고 검증 통과
 });
 
 test('AC-002 한 번 받은 뒤 인터넷이 끊겨도 사본으로 보여 주고 배지 검증도 된다', async () => {
@@ -49,7 +49,7 @@ test('AC-002 한 번 받은 뒤 인터넷이 끊겨도 사본으로 보여 주�
   const res = await loadCatalog({ fetchFn: downFetch, storage, config: CONFIG, resolveLocal });
   assert.deepEqual([res.source, res.offline], ['cache', true]);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.filter((e) => displayBadge({ status: e.status }) === 'clear').length, 16);
+  assert.equal(entries.filter((e) => displayBadge({ status: e.status }) === 'clear').length, 18);
 });
 
 test('처음부터 인터넷이 없으면 번들 샘플 목록을 쓴다', async () => {
@@ -61,7 +61,7 @@ test('AC-003 초4·수학 3건 중 고래 픽 1건을 필터하면 1건만 나�
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const g4 = filterEntries(entries, { grade: '초4', subject: '수학', mode: 'mother' });
-  assert.equal(g4.length, 3);
+  assert.equal(g4.length, 4);
   const picked = filterEntries(entries, { grade: '초4', subject: '수학', pickOnly: true, mode: 'mother' });
   assert.deepEqual(picked.map((e) => e.work.id), ['sample-fraction-pizza']);
 });
@@ -70,7 +70,7 @@ test('학생고래 모드는 맑은 바다(검증 통과)만 보인다', async (
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const baby = filterEntries(entries, { mode: 'baby' });
-  assert.ok(baby.length === 16 && baby.every((e) => displayBadge(e) === 'clear'));
+  assert.ok(baby.length === 18 && baby.every((e) => displayBadge(e) === 'clear'));
 });
 
 test('정렬: 고래 픽 먼저 / 새로 들어옴 / 물뿜기 많은 순', async () => {

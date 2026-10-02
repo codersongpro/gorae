@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>비와 비율 연습 활동지</title>
+<style>
+  :root { --b: #5b37ed; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #f7f7f8; color: var(--tx); font: 16px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: var(--mu); font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  select, input[type=text] { font: inherit; padding: 8px; border: 1px solid #e1e2e4; border-radius: 10px; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #a99af7; outline-offset: 2px; }
+  .paper { background: #fff; border: 1px solid #e1e2e4; border-radius: 6px; padding: 24px; }
+  .paper h2 { margin: 0 0 4px; font-size: 1.3rem; } .meta { color: var(--mu); margin-bottom: 12px; }
+  ol.qs { margin: 0; padding-left: 1.6em; display: grid; gap: 14px; } ol.qs li { line-height: 1.9; }
+  .blank { display: inline-block; min-width: 4.5em; border: 0; border-bottom: 2px solid var(--tx); background: transparent; font: inherit; text-align: center; padding: 0 4px; }
+  .ans { color: #b00c0c; font-weight: 800; border-bottom: 2px solid #b00c0c; padding: 0 6px; }
+  .tabs button[aria-pressed=true] { background: #eee5ff; border-color: var(--b); }
+  @media print { body { background: #fff; padding: 0; } .noprint { display: none !important; } .paper { border: 0; padding: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="noprint"><h1>🧮 비와 비율 연습 활동지</h1><p class="sub">6학년 수학 · 비와 비율. 문제를 무작위로 만들어 인쇄하는 활동지와 정답지예요.</p></header>
+  <section class="card noprint">
+    <div class="row">
+      <label>문제 종류 <select id="kind"><option value="ratio">비 → 비율(분수·소수)</option><option value="percent">비율 → 백분율(%)</option><option value="word">문장 속 비율</option><option value="mix">섞어서</option></select></label>
+      <label>문제 수 <select id="n"><option>6</option><option selected>8</option><option>10</option></select></label>
+    </div>
+    <div class="row"><button class="p" id="make">새 문제 만들기</button>
+      <span class="tabs" role="group" aria-label="보기"><button id="vs" aria-pressed="true">활동지</button><button id="va" aria-pressed="false">정답지</button></span>
+      <button id="pr">인쇄</button></div>
+  </section>
+  <section class="paper" id="paper" aria-live="polite"></section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  const pick = (a) => a[rand(a.length)];
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  const NICE = [[1, 2], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [1, 10], [3, 10], [7, 10], [9, 10], [1, 20], [3, 20], [13, 20]];
+  let qs = [], showAns = false;
+  function makeQ(kind) {
+    if (kind === 'mix') kind = pick(['ratio', 'percent', 'word']);
+    if (kind === 'ratio') { const [a, b] = pick(NICE), k = 1 + rand(4); const A = a * k, B = b * k; return { t: `비 ${A} : ${B}의 비율을 분수로 나타내면 ( ○ )이고, 소수로 나타내면 ( ○ )입니다.`, a: `${a}/${b}, ${a / b}`, blanks: 2 }; }
+    if (kind === 'percent') { const [a, b] = pick(NICE); const p = (a / b) * 100; return { t: `비율 ${a}/${b}을(를) 백분율로 나타내면 ( ○ )%입니다.`, a: `${p}`, blanks: 1 }; }
+    const [a, b] = pick(NICE), k = 2 + rand(4), tot = b * k, win = a * k;
+    return { t: `${tot}번 던져서 ${win}번 맞혔을 때, 던진 횟수에 대한 맞힌 횟수의 비율은 ( ○ )이고 백분율로는 ( ○ )%입니다.`, a: `${a}/${b}, ${(a / b) * 100}`, blanks: 2 };
+  }
+  function draw() {
+    const p = $('paper'); p.textContent = '';
+    const h = document.createElement('h2'); h.textContent = '비와 비율 연습' + (showAns ? ' (정답)' : ''); p.appendChild(h);
+    const m = document.createElement('div'); m.className = 'meta'; m.textContent = '학년 반 번호 별명: __________'; p.appendChild(m);
+    const ol = document.createElement('ol'); ol.className = 'qs';
+    qs.forEach((q) => {
+      const li = document.createElement('li'); const parts = q.t.split('( ○ )'); const answers = q.a.split(', ');
+      parts.forEach((txt, i) => {
+        li.appendChild(document.createTextNode(txt));
+        if (i < parts.length - 1) {
+          if (showAns) { const s = document.createElement('span'); s.className = 'ans'; s.textContent = answers[i]; li.appendChild(s); }
+          else { const inp = document.createElement('input'); inp.type = 'text'; inp.className = 'blank'; inp.setAttribute('aria-label', '정답 칸'); li.appendChild(inp); }
+        }
+      });
+      ol.appendChild(li);
+    });
+    p.appendChild(ol);
+  }
+  function make() { qs = Array.from({ length: +$('n').value }, () => makeQ($('kind').value)); draw(); }
+  const setView = (a) => { showAns = a; $('va').setAttribute('aria-pressed', a); $('vs').setAttribute('aria-pressed', !a); draw(); };
+  $('make').onclick = () => { showAns = false; setView(false); make(); };
+  $('vs').onclick = () => setView(false); $('va').onclick = () => setView(true); $('pr').onclick = () => window.print();
+  make();
+</script>
+</body>
+</html>

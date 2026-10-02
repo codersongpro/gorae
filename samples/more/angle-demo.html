@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>각도 시연 도구</title>
+<style>
+  :root { --b: #3366ff; --tx: #171719; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #eef2ff; color: var(--tx); font: 17px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 12px; }
+  @media (min-width: 760px) { .wrap { grid-template-columns: 1fr 320px; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { margin: 2px 0 0; color: #51567a; font-size: .9rem; }
+  .card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.1); display: grid; gap: 10px; align-content: start; }
+  svg { width: 100%; height: auto; background: #fff; border-radius: 12px; touch-action: none; cursor: grab; }
+  input[type=range] { width: 100%; height: 36px; accent-color: var(--b); }
+  .deg { font-size: clamp(2.6rem, 9vw, 4.2rem); font-weight: 800; text-align: center; line-height: 1.1; }
+  .kind { text-align: center; font-size: 1.4rem; font-weight: 800; border-radius: 12px; padding: 6px; }
+  .acute { background: #e1f6e8; color: #1a7a42; } .right { background: #fff3dd; color: #8a5200; } .obtuse { background: #ffe9e9; color: #b00c0c; } .straight { background: #eceef1; color: #3b3f46; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 14px; border: 1px solid #c9d3f5; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  .quiz { background: #f7f8ff; border-radius: 12px; padding: 10px; } #ans { min-height: 1.5em; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>📐 각도 시연 도구</h1><p class="sub">4학년 수학 · 각도. 칠판에서 각도기를 쓰기 전에, 각의 크기와 예각·직각·둔각을 눈으로 보여 줘요.</p></header>
+  <section class="card" aria-label="각도 그림">
+    <svg id="sv" viewBox="-20 -150 340 180" role="img" aria-label="각도기와 두 변으로 이루어진 각"></svg>
+    <label for="rng" class="sub">슬라이더를 움직이거나 그림의 점을 끌어 각도를 바꿔요</label>
+    <input type="range" id="rng" min="0" max="180" value="60">
+    <div class="row"><button data-d="30">30°</button><button data-d="60">60°</button><button data-d="90">직각 90°</button><button data-d="120">120°</button><button data-d="180">평각 180°</button></div>
+  </section>
+  <section class="card" aria-label="결과">
+    <div class="deg" id="deg" aria-live="polite">60°</div>
+    <div class="kind acute" id="kind">예각</div>
+    <p class="sub" id="why">0°보다 크고 90°보다 작아요.</p>
+    <div class="quiz">
+      <strong>맞혀 보기</strong>
+      <p id="q">숨긴 각도를 어림해서 눌러 보세요.</p>
+      <div class="row"><button data-a="acute">예각</button><button data-a="right">직각</button><button data-a="obtuse">둔각</button></div>
+      <div id="ans" role="status"></div>
+      <button id="nq">새 문제 (각도 숨기기)</button>
+    </div>
+  </section>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const R = 140, CX = 150, CY = 0;
+  let deg = 60, hidden = false, target = 0;
+  const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const kindOf = (d) => (d === 90 ? 'right' : d === 180 ? 'straight' : d < 90 ? 'acute' : 'obtuse');
+  const KIND = { acute: ['예각', '0°보다 크고 90°보다 작아요.'], right: ['직각', '정확히 90°예요. 종이를 접어 만든 모서리와 같아요.'], obtuse: ['둔각', '90°보다 크고 180°보다 작아요.'], straight: ['평각', '180°예요. 두 변이 일직선이에요.'] };
+  function draw() {
+    const sv = $('sv'); sv.textContent = '';
+    sv.appendChild(el('path', { d: `M ${CX - R} ${CY} A ${R} ${R} 0 0 1 ${CX + R} ${CY}`, fill: '#f3f6ff', stroke: '#9fb0e8', 'stroke-width': 2 }));
+    for (let a = 0; a <= 180; a += 10) {
+      const rad = (a * Math.PI) / 180, r1 = a % 30 === 0 ? R - 16 : R - 8;
+      sv.appendChild(el('line', { x1: CX + Math.cos(Math.PI - rad) * r1, y1: CY - Math.sin(rad) * r1 * -1 * -1, x2: CX + Math.cos(Math.PI - rad) * R, y2: CY - Math.sin(rad) * R, stroke: '#7b8bd0', 'stroke-width': a % 30 === 0 ? 2 : 1 }));
+    }
+    const shown = hidden ? 0 : deg, rad = (shown * Math.PI) / 180;
+    sv.appendChild(el('line', { x1: CX, y1: CY, x2: CX + R, y2: CY, stroke: '#171719', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+    const tx = CX + Math.cos(rad) * R, ty = CY - Math.sin(rad) * R;
+    sv.appendChild(el('line', { x1: CX, y1: CY, x2: tx, y2: ty, stroke: '#3366ff', 'stroke-width': 4, 'stroke-linecap': 'round' }));
+    sv.appendChild(el('path', { d: `M ${CX + 40} ${CY} A 40 40 0 0 0 ${CX + Math.cos(rad) * 40} ${CY - Math.sin(rad) * 40}`, fill: 'none', stroke: '#ff9200', 'stroke-width': 4 }));
+    const knob = el('circle', { cx: tx, cy: ty, r: 11, fill: '#3366ff', stroke: '#fff', 'stroke-width': 3, tabindex: 0, role: 'slider', 'aria-label': '각도 조절 점', 'aria-valuenow': deg, 'aria-valuemin': 0, 'aria-valuemax': 180 });
+    sv.appendChild(knob);
+    $('deg').textContent = hidden ? '? °' : `${deg}°`;
+    const k = kindOf(deg);
+    if (!hidden) { $('kind').textContent = KIND[k][0]; $('kind').className = `kind ${k}`; $('why').textContent = KIND[k][1]; } else { $('kind').textContent = '?'; $('kind').className = 'kind'; $('why').textContent = '각도를 숨겼어요. 어떤 각일까요?'; }
+    $('rng').value = deg;
+  }
+  function fromPoint(e) { const sv = $('sv'), r = sv.getBoundingClientRect(), vb = sv.viewBox.baseVal; const x = ((e.clientX - r.left) / r.width) * vb.width + vb.x - CX, y = -(((e.clientY - r.top) / r.height) * vb.height + vb.y - CY); let a = (Math.atan2(y, x) * 180) / Math.PI; if (a < 0) a = x < 0 ? 180 : 0; deg = Math.round(Math.max(0, Math.min(180, a))); draw(); }
+  let drag = false;
+  $('sv').addEventListener('pointerdown', (e) => { if (hidden) return; drag = true; $('sv').setPointerCapture(e.pointerId); fromPoint(e); });
+  $('sv').addEventListener('pointermove', (e) => { if (drag) fromPoint(e); }); $('sv').addEventListener('pointerup', () => { drag = false; });
+  $('rng').oninput = () => { if (hidden) return; deg = +$('rng').value; draw(); };
+  document.querySelectorAll('button[data-d]').forEach((b) => { b.onclick = () => { hidden = false; deg = +b.dataset.d; $('ans').textContent = ''; draw(); }; });
+  $('nq').onclick = () => { do { target = 5 + Math.floor(Math.random() * 35) * 5; } while (target === 90 && Math.random() < 0.5); deg = target; hidden = true; $('ans').textContent = ''; $('q').textContent = '각도기를 쓰지 않고 어림해서 골라요.'; draw(); };
+  document.querySelectorAll('button[data-a]').forEach((b) => { b.onclick = () => { if (!hidden) { $('ans').textContent = '먼저 [새 문제]를 눌러 각도를 숨겨 주세요.'; return; } const ok = kindOf(target) === b.dataset.a; $('ans').textContent = ok ? `⭕ 맞아요! ${target}°는 ${KIND[kindOf(target)][0]}이에요.` : `❌ 아니에요. 정답은 ${KIND[kindOf(target)][0]} (${target}°)`; hidden = false; draw(); }; });
+  draw();
+</script>
+</body>
+</html>

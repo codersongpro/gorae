@@ -30,6 +30,24 @@ export const catalogExtras = [
     addedAt: '2026-10-02T02:00:00Z',
   }),
   lesson({
+    file: 'angle-demo.html', id: 'sample-angle-demo', title: '각도 시연 도구 (예각·직각·둔각)', category: 'teaching_material', subcategory: 'slides', badge: 'clear',
+    schoolLevel: 'elementary', grade: '4', subject: '수학', area: '도형과 측정', unit: '각도', topic: '예각, 직각, 둔각 알아보기', estimatedMinutes: 15, groupType: 'whole_class', audience: ['teacher'],
+    tags: ['시연', '전자칠판', '각도'], author: '송프로 · 초등',
+    description: '슬라이더나 점을 끌어 각을 바꾸며 예각·직각·둔각을 보여 주고, 숨긴 각도를 어림해 맞히는 퀴즈도 낼 수 있어요.',
+    howToUse: '전자칠판에 띄우고 점을 끌어 각을 바꾸세요. [새 문제]를 누르면 각도를 숨기고 예각·직각·둔각을 고르게 할 수 있어요.',
+    promptRecipe: '4학년 각도 수업에서 쓸 시연 도구를 만들어 줘. 반원 각도기 위에서 점을 끌어 각을 바꾸고, 각도에 따라 예각·직각·둔각이 표시되게 해 줘. 각도를 숨기고 어림해 맞히는 퀴즈도 넣어 줘.',
+    addedAt: '2026-10-02T04:00:00Z',
+  }),
+  lesson({
+    file: 'ratio-worksheet.html', id: 'sample-ratio-worksheet', title: '비와 비율 연습 활동지 만들기', category: 'teaching_material', subcategory: 'worksheet', badge: 'clear',
+    schoolLevel: 'elementary', grade: '6', subject: '수학', area: '변화와 관계', unit: '비와 비율', topic: '비율을 분수·소수·백분율로 나타내기', estimatedMinutes: 20, groupType: 'individual', audience: ['teacher'],
+    tags: ['활동지', '인쇄', '평가준비'], author: '송프로 · 초등',
+    description: '비율을 분수·소수·백분율로 바꾸는 문제를 무작위로 만들어 활동지와 정답지를 인쇄할 수 있어요.',
+    howToUse: '문제 종류와 개수를 고르고 [새 문제 만들기]를 누르세요. [정답지]로 바꿔 확인하고 [인쇄]하면 활동지만 나와요.',
+    promptRecipe: '6학년 비와 비율 연습 활동지를 무작위로 만들어 주는 도구를 만들어 줘. 비를 비율로, 비율을 백분율로, 문장 속 비율 세 종류가 있고 정답지와 인쇄 기능도 넣어 줘.',
+    addedAt: '2026-10-02T04:30:00Z',
+  }),
+  lesson({
     file: 'lesson-intro.html', id: 'sample-lesson-intro', title: '오늘의 학습 문제 도입 화면', category: 'teaching_material', subcategory: 'intro', badge: 'clear',
     schoolLevel: 'elementary', grade: '5', subject: '수학', area: '수와 연산', unit: '약분과 통분', topic: '분모가 다른 분수의 크기 비교', estimatedMinutes: 5, groupType: 'whole_class', audience: ['teacher'],
     tags: ['도입', '전자칠판', '수업열기'], author: '송프로 · 초등',
@@ -97,6 +115,18 @@ export const marketSamples = [
       description: '친구 발표를 듣고 별을 누르고, 좋은 점과 더 좋아질 점을 한 가지씩 쓰는 카드예요.',
       howToUse: '항목마다 별을 누르고 한 줄씩 쓴 뒤 [평가 카드 만들기]를 눌러요.',
       promptRecipe: '친구 발표를 평가하는 카드 만들어 줘. 별 3개 중에 고르고, 좋은 점이랑 더 좋아질 점을 쓰게 해 줘. 상처 주는 말 쓰지 말라는 안내도 넣어 줘.', addedAt: '2026-09-30T00:00:00Z' }) },
+  { file: 'group-town.html', nickname: '바람 고래', whale: '학생고래', kinds: ['수업자료'], timestamp: '2026. 10. 2',
+    work: lesson({ id: 'share-group-town', title: '우리 고장 소개 모둠 발표', category: 'classroom_tool', subcategory: 'presentation', schoolLevel: 'elementary', grade: '3', subject: '사회', area: '지리', unit: '우리 고장의 모습', topic: '우리 고장 소개하기',
+      estimatedMinutes: 20, groupType: 'group', audience: ['teacher', 'student'], tags: ['발표', '모둠활동', '사회'], author: '바람 고래 · 초등',
+      description: '모둠 친구 4명이 위치·자연·사람들·자랑거리를 한 장씩 맡아 우리 고장을 소개하는 발표 화면이에요. 한 사람마다 말하는 시간을 재 줘요.',
+      howToUse: '내용을 채우고 [발표 시작]을 눌러요. 1번 친구부터 차례로 말하고, 오른쪽 아래 시간이 줄어들어요. ← → 키로 넘겨요.',
+      promptRecipe: '3학년 사회 우리 고장 소개 발표를 모둠 4명이 나눠서 하는 화면을 만들어 줘. 위치, 자연, 사람들, 자랑거리 4장이고 한 사람마다 45초 타이머가 있어야 해. 이름 대신 1번~4번으로 쓰게 해 줘.', addedAt: '2026-10-02T03:00:00Z' }) },
+  { file: 'group-plant.html', nickname: '새싹 고래', whale: '학생고래', kinds: ['수업자료'], timestamp: '2026. 10. 2',
+    work: lesson({ id: 'share-group-plant', title: '식물 관찰 기록 발표판', category: 'subject_activity', subcategory: 'creation', schoolLevel: 'elementary', grade: '4', subject: '과학', area: '생명', unit: '식물의 한살이', topic: '강낭콩 관찰 기록 발표',
+      estimatedMinutes: 25, groupType: 'group', audience: ['teacher', 'student'], tags: ['발표', '모둠활동', '관찰'], author: '새싹 고래 · 초등',
+      description: '모둠이 며칠째·모습·키·관찰 내용을 기록해 두면, 시간 순서 카드와 키 막대로 한눈에 발표할 수 있어요.',
+      howToUse: '날짜와 모습, 키, 관찰한 내용을 적고 [기록 추가]를 눌러요. 모두 모이면 [발표 화면 켜기]로 크게 보여 주세요.',
+      promptRecipe: '4학년 과학 식물의 한살이 관찰 기록을 날짜별 카드로 모아 발표하는 화면을 만들어 줘. 모습은 씨앗, 싹, 잎, 꽃, 열매 중에서 고르고, 키는 막대로 비교해 줘. 사진이나 이름은 넣지 않게 해 줘.', addedAt: '2026-10-02T03:30:00Z' }) },
 ];
 
 // 내 곳간 샘플 (처음 실행 때 한 번 담김, 직접 만든 작품처럼)

@@ -87,6 +87,10 @@ const featured = await signFeatured(
 const catalog = { updatedAt: '2026-10-01T02:00:00Z', items: signed, exeItems, featured };
 await writeFile(new URL('../site/catalog.json', import.meta.url), JSON.stringify(catalog, null, 2));
 await writeFile(new URL('../site/reviewers.json', import.meta.url), JSON.stringify(list, null, 2));
+// 시험용 고정 사본: 검수 도구에서 [검수 완료]를 누르면 site/catalog.json이 계속 바뀌므로, 시험은 이 사본으로 한다
+await mkdir(new URL('../tests/data/', import.meta.url), { recursive: true });
+await writeFile(new URL('../tests/data/catalog.json', import.meta.url), JSON.stringify(catalog, null, 2));
+await writeFile(new URL('../tests/data/reviewers.json', import.meta.url), JSON.stringify(list, null, 2));
 await writeFile(
   new URL('../extension/core/rootkey.js', import.meta.url),
   `// 관리 공개키 (현재 값은 테스트용 — 운영 전에 실제 뿌리 공개키로 교체)\nexport const ROOT_PUBLIC_JWK = ${JSON.stringify(root.publicJwk)};\n`,

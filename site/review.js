@@ -346,6 +346,65 @@ function viewSpout() {
     state.spoutDone ? catalogOut() : null);
 }
 
+// ---------- 깃허브에 바로 게시 (서버 없이: 깃허브 API + 이 브라우저에만 저장한 토큰) ----------
+// 토큰은 이 저장소 하나의 Contents 쓰기 권한만 가진 '세분화된 토큰'을 쓴다. 이 브라우저 밖으로는 api.github.com 외에 보내지 않는다.
+const GH = { owner: 'codersongpro', repo: 'gorae', branch: 'main', path: 'site/catalog.json' };
+const GH_API = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`;
+const ghHeaders = (token) => ({ Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
+const b64encode = (text) => { const bytes = new TextEncoder().encode(text); let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(bin); };
+const b64decode = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, '')), (c) => c.charCodeAt(0)));
+class GhError extends Error { constructor(status, detail) { super(detail || String(status)); this.status = status; } }
+async function ghRead(token) {
+  const res = await fetch(`${GH_API}?ref=${GH.branch}`, { headers: ghHeaders(token), cache: 'no-store' });
+  if (!res.ok) throw new GhError(res.status, res.status === 401 || res.status === 403 ? '토큰이 맞지 않거나 권한이 없어요.' : res.status === 404 ? '저장소나 파일을 찾지 못했어요.' : '깃허브에서 읽지 못했어요.');
+  const j = await res.json();
+  return { sha: j.sha, catalog: JSON.parse(b64decode(j.content)) };
+}
+async function ghWrite(token, catalog, sha, message) {
+  const res = await fetch(GH_API, { method: 'PUT', headers: { ...ghHeaders(token), 'Content-Type': 'application/json' }, body: JSON.stringify({ message, content: b64encode(JSON.stringify(catalog, null, 2)), sha, branch: GH.branch }) });
+  if (!res.ok) throw new GhError(res.status, res.status === 409 || res.status === 422 ? 'CONFLICT' : res.status === 401 || res.status === 403 ? '토큰에 쓰기 권한(Contents: Read and write)이 없어요.' : '깃허브에 쓰지 못했어요.');
+}
+// 서명된 항목 하나를 깃허브의 최신 catalog.json에 합쳐 올린다 (다른 사람이 먼저 올렸어도 덮어쓰지 않도록 매번 최신본에 합친다)
+async function publishItem(item, title) {
+  const rec = await loadKey('ghtoken');
+  if (!rec || !rec.token) return { skipped: true };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { sha, catalog } = await ghRead(rec.token);
+    const merged = { ...upsertCatalogItem(catalog, item), updatedAt: new Date().toISOString() };
+    try {
+      await ghWrite(rec.token, merged, sha, `검수 완료: ${title}`);
+      state.catalog = merged;
+      return { ok: true };
+    } catch (e) {
+      if (!(e instanceof GhError) || e.message !== 'CONFLICT') throw e; // 충돌이면 최신본을 다시 받아 한 번 더
+    }
+  }
+  throw new GhError(409, '다른 변경과 겹쳐서 올리지 못했어요. 잠시 뒤 다시 눌러 주세요.');
+}
+async function saveToken(token) {
+  const t = String(token || '').trim();
+  if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(t)) return say('깃허브 토큰 형식이 아니에요. github_pat_ 로 시작하는 토큰을 붙여 넣어 주세요.', true);
+  await saveKey({ slot: 'ghtoken', token: t });
+  state.hasToken = true;
+  say('게시용 토큰을 이 브라우저에 저장했어요. 이제 [검수 완료]를 누르면 바로 올라가요.');
+}
+async function clearToken() { await saveKey({ slot: 'ghtoken', token: '' }); state.hasToken = false; say('저장한 토큰을 지웠어요.'); }
+function tokenCard() {
+  const inp = h('input', { type: 'password', 'aria-label': '깃허브 토큰', placeholder: 'github_pat_… (이 브라우저에만 저장돼요)', autocomplete: 'off' });
+  return h('div', { class: 'card' },
+    h('h3', {}, '게시 설정 (검수 완료를 바로 올리기)'),
+    state.hasToken ? h('p', { class: 'ok' }, '✔ 게시용 토큰이 저장되어 있어요. [검수 완료]를 누르면 바로 인증 곳간 목록에 올라가요.')
+      : h('p', { class: 'notice' }, '토큰이 없어서 [검수 완료] 뒤에 catalog.json을 직접 올려야 해요. 아래 토큰을 한 번 저장하면 바로 올라가요.'),
+    h('details', {}, h('summary', {}, '토큰 만드는 방법'),
+      h('ol', { class: 'guide-list' },
+        h('li', {}, h('a', { href: 'https://github.com/settings/personal-access-tokens/new', target: '_blank', rel: 'noopener noreferrer' }, 'GitHub → Fine-grained token 만들기'), '를 열어요.'),
+        h('li', {}, 'Repository access는 [Only select repositories]에서 gorae 하나만 골라요.'),
+        h('li', {}, 'Permissions → Repository permissions → [Contents]를 [Read and write]로 해요. 만료일은 짧게(예: 30일) 정해요.'),
+        h('li', {}, '[Generate token]으로 나온 github_pat_… 값을 아래에 붙여 넣고 저장해요.'))),
+    inp,
+    h('div', { class: 'row' }, h('button', { onclick: () => saveToken(inp.value) }, '토큰 저장'), state.hasToken ? h('button', { class: 'secondary', onclick: clearToken }, '토큰 지우기') : null));
+}
+
 // ---------- 검수 도구 로그인 (임시: 검수 도구 비밀번호) ----------
 const REVIEW_BACKUP_URL = 'reviewer.keybackup.json';
 const SESSION_FLAG = 'gorae-review-session';
@@ -431,6 +490,7 @@ function viewQueue() {
       pending.length ? h('h3', {}, `검수 대기 ${pending.length}개`) : null, ...pending.map(row),
       done.length ? h('h3', {}, `검수 완료 ${done.length}개`) : null, ...done.map(row)),
     ...(open && !q.done[open.id] ? (q.drafts[open.id] || []).map(draftCard) : []),
+    tokenCard(),
     state.catalogChanged ? catalogOut() : null);
 }
 async function finish(d) {
@@ -442,8 +502,16 @@ async function finish(d) {
   d.check = await v.verify(res.item);
   state.catalog = upsertCatalogItem(state.catalog, res.item);
   state.catalogChanged = true;
-  if (d.quick) state.queue.done[d.quick] = true;
-  say(`✔ '${d.work.title}' 검수 완료! 아래 [게시하기]에서 catalog.json을 올리면 모두의 인증 곳간에 보여요.` + (d.check.ok ? '' : ' (주의: 지금 불러온 고래 족보로는 서명이 확인되지 않아요.)'));
+  const warn = d.check.ok ? '' : ' (주의: 지금 불러온 고래 족보로는 서명이 확인되지 않아요.)';
+  try {
+    const pub = await publishItem(res.item, d.work.title);
+    if (d.quick) state.queue.done[d.quick] = true;
+    if (pub.skipped) say(`✔ '${d.work.title}' 검수 완료! 토큰이 없어 아래 [게시하기]로 catalog.json을 직접 올려야 해요.` + warn);
+    else say(`✔ '${d.work.title}' 검수 완료! 깃허브에 올렸어요. 1~2분 뒤 모두의 인증 곳간에 보여요.` + warn);
+  } catch (e) {
+    if (d.quick) state.queue.done[d.quick] = true;
+    say(`검수 서명은 찍었지만 깃허브에 올리지 못했어요: ${e.message} 아래 [게시하기]로 직접 올릴 수 있어요.`, true);
+  }
 }
 
 // ---------- 화면 ----------
@@ -469,6 +537,7 @@ function render() {
 
 (async () => {
   try { state.reviewer = (await loadKey('reviewer')) || null; } catch { state.reviewer = null; }
+  try { const t = await loadKey('ghtoken'); state.hasToken = !!(t && t.token); } catch { state.hasToken = false; }
   try { state.session = !!state.reviewer && sessionStorage.getItem(SESSION_FLAG) === '1'; } catch { state.session = false; }
   await ensureSiteData();
   render();

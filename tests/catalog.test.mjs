@@ -10,7 +10,7 @@ import { filterEntries, sortEntries } from '../extension/core/filter.js';
 import { ROOT_PUBLIC_JWK } from '../extension/core/rootkey.js';
 import { checkHtml } from '../extension/core/checker.js';
 
-const site = (f) => JSON.parse(readFileSyncUtf8(new URL(`../site/${f}`, import.meta.url)));
+const site = (f) => JSON.parse(readFileSyncUtf8(new URL(`./data/${f}`, import.meta.url)));
 import { readFileSync } from 'node:fs';
 function readFileSyncUtf8(u) {
   return readFileSync(u, 'utf8');

@@ -7,7 +7,7 @@ import { filterEntries, sortEntries } from './core/filter.js';
 import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
 import { buildShare } from './core/share.js';
 import { buildSharePackage, buildSongSubmission, validFormUrl } from './core/submit.js';
-import { detectService, orderShareKinds, SERVICE_LABEL, isExamLocked } from './core/services.js';
+import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
 import { seedMypod, samplesInMypod } from './core/seed.js';
@@ -28,7 +28,7 @@ import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
-import { pinView, marketView, marketRunConfirm, examLockView, guideView, serviceBand, flowView } from './ui/views.js';
+import { pinView, marketView, marketRunConfirm, guideView, serviceBand, flowView } from './ui/views.js';
 import { isRestricted } from './core/reference.js';
 import { PAGE_SIZE } from './ui/views.js';
 import { buildFlowSteps, recommendForRemote } from './core/flow.js';
@@ -204,7 +204,7 @@ async function refreshService() {
 }
 const shareProps = () => ({
   kinds: orderShareKinds(state.service),
-  serviceLabel: ['class', 'teamboard', 'ubt'].includes(state.service) ? SERVICE_LABEL[state.service] : null,
+  serviceLabel: ['class', 'teamboard'].includes(state.service) ? SERVICE_LABEL[state.service] : null,
   onShare: shareWork,
   onLink: copyViewerLink,
 });
@@ -488,8 +488,6 @@ function showToast() {
 }
 
 async function render() {
-  // 시험 잠금: 학생고래 모드에서 메인 탭이 UBT면 다른 화면을 모두 가린다 (벗어나면 refreshService가 다시 그림)
-  if (isExamLocked(state.service, state.mode)) return app.replaceChildren(examLockView());
   if (state.screen === 'run') return;
   if (state.screen === 'create') {
     const k = state.create.kind;

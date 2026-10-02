@@ -1,9 +1,9 @@
-// 웨일 스페이스(클래스·팀보드·UBT)에 붙여 넣을 공유 묶음 만들기 (DOM 없음)
+// 웨일 스페이스(클래스·팀보드)에 붙여 넣을 공유 묶음 만들기 (DOM 없음)
 // 다른 서비스의 화면을 조작하지 않는다. 텍스트를 만들어 복사하면 교사·학생이 직접 붙여 넣는다.
 // 학급 명단·댓글·평가는 다루지 않는다 (웨일 서비스가 맡는다).
 import { normalizeWork } from '../shared/taxonomy.js';
 
-export const SHARE_KINDS = ['class', 'teamboard', 'ubt', 'space'];
+export const SHARE_KINDS = ['class', 'teamboard', 'space'];
 
 const FALLBACK_LINE = '※ 작품이 커서 링크를 만들 수 없어요. 꾸러미(.gorae.json) 파일을 받아 고래곳간 [가져오기]로 열어 주세요.';
 
@@ -50,22 +50,6 @@ const BUILDERS = {
       remixLine(w),
       '🔄 이 작품을 리믹스해 보세요. (고래곳간에서 [가져오기] 후 [리믹스])',
       '💬 칭찬과 제안은 팀보드 댓글로 남겨 주세요.',
-    ]),
-
-  // UBT 평가용 제출물 정리 (UBT 자체를 대신하지 않는다)
-  ubt: (w, link, status) =>
-    clean([
-      '[고래곳간 작품 제출]',
-      `작품명: ${w.title}`,
-      `학년·교과: ${classLabel(w)}`,
-      w.standard ? `성취기준: ${w.standard}` : null,
-      `작품 설명: ${w.description || w.howToUse}`,
-      w.path ? `분류: ${w.path}` : null,
-      `프롬프트 레시피: ${w.promptRecipe || '(기록 없음)'}`,
-      `버전: ${w.version}`,
-      w.remixOf ? `계보: ‘${w.remixOfTitle || w.remixOf}’을(를) 리믹스` : '계보: 새로 만든 작품',
-      reviewLine(status),
-      ...(link ? ['작품 실행 링크:', link] : [FALLBACK_LINE]),
     ]),
 
   // 그 밖의 웨일 스페이스 화면에 붙이는 간단한 소개

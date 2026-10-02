@@ -100,7 +100,7 @@ export const S = {
       promo: '🐋 웨일 사이드바로도 쓸 수 있어요 · 클래스·팀보드·웨일온과 이어 쓰기 → 설치 방법 보기',
       goTitle: '웹으로도 쓸 수 있어요', goIntro: '설치 없이 인터넷 주소로 열 수 있어요. 폰·태블릿·집 컴퓨터에서 쓸 때 편해요.', goBtn: '웹 버전 열기',
       goNote: '웹과 사이드바는 작품 저장 공간이 따로예요. 옮기려면 꾸러미 내보내기·가져오기를 쓰세요. 웹에서는 웨일 서비스 화면을 알아보는 기능과 시험 잠금이 없어요.',
-      installTitle: '웨일 사이드바로 설치하기', installIntro: '웨일 PC 브라우저에 확장앱으로 설치하면 클래스·팀보드·UBT 화면 옆에서 바로 쓸 수 있어요.',
+      installTitle: '웨일 사이드바로 설치하기', installIntro: '웨일 PC 브라우저에 확장앱으로 설치하면 클래스·팀보드 화면 옆에서 바로 쓸 수 있어요.',
       repo: 'https://github.com/codersongpro/gorae', zip: 'https://github.com/codersongpro/gorae/archive/refs/heads/main.zip',
       installSteps: [
         { text: '고래곳간 파일을 내려받아 압축을 풀어요. (GitHub의 [Code → Download ZIP]과 같아요)', links: [{ label: 'ZIP 바로 받기', href: 'https://github.com/codersongpro/gorae/archive/refs/heads/main.zip' }, { label: 'GitHub 저장소 열기', href: 'https://github.com/codersongpro/gorae' }] },
@@ -247,16 +247,11 @@ export const S = {
     thanks: '고마워요! 파수꾼고래가 집계하면 모두의 카드 숫자에 더해져요.',
     already: '이미 물뿜기를 했어요.',
   },
-  exam: {
-    title: '고래가 잠수 중이에요',
-    body: '웨일 UBT 시험 화면에서는 고래곳간을 쓸 수 없어요. 시험에 집중해요!',
-    hint: '시험 화면을 벗어나면 자동으로 다시 열려요.',
-  },
   featured: { title: '이달의 고래자리', hint: '(고래들이 고른 이달의 작품)' },
   lineage: (title) => `이 작품은 ‘${title}’을(를) 리믹스했습니다.`,
   share: {
     title: '웨일 스페이스에 공유 (붙여넣기용으로 복사돼요)',
-    kinds: { class: '클래스용 안내 복사', teamboard: '팀보드 전시용 복사', ubt: 'UBT 평가용 복사', space: '웨일 스페이스 공유 글 복사' },
+    kinds: { class: '클래스용 안내 복사', teamboard: '팀보드 전시용 복사', space: '웨일 스페이스 공유 글 복사' },
     nowOn: (label) => `지금 화면: ${label}`,
     link: '바로 실행 링크 복사',
     copied: (label) => `${label}을(를) 복사했어요. 붙여 넣기만 하세요.`,

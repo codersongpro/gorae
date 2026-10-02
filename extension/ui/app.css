@@ -148,7 +148,6 @@ details > summary { cursor: pointer; min-height: var(--touch-min); display: flex
 .exam-lock { text-align: center; padding: calc(var(--space-6) * 2) var(--space-4); background: var(--color-surface); min-height: 100vh; align-content: start; justify-items: center; }
 .exam-lock h2 { font-size: var(--font-size-xl); font-weight: 700; }
 .exam-lock p { font-size: var(--font-size-md); }
-.lock-whale { font-size: calc(var(--space-6) * 3); margin: 0; line-height: 1; }
 
 /* ---- 교사고래 암호 키패드 ---- */
 .pin h2 { font-size: var(--font-size-xl); font-weight: 700; }

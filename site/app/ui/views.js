@@ -551,15 +551,6 @@ export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onF
   return root;
 }
 
-// 시험 잠금 화면 (학생고래 모드 + 메인 탭이 UBT)
-export function examLockView() {
-  return h('section', { class: 'section exam-lock', role: 'alert' },
-    h('p', { class: 'lock-whale', 'aria-hidden': 'true' }, '🐋'),
-    h('h2', {}, S.exam.title),
-    h('p', {}, S.exam.body),
-    h('p', { class: 'muted' }, S.exam.hint));
-}
-
 // 사용 방법 화면: 등급(역할)·배지·표시 읽는 법을 한 곳에 모으고, 따라 해보기 버튼을 둔다
 export function guideView({ onStartTour, onBack, onCopy, web = false }) {
   const G = S.guide;

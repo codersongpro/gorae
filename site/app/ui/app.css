@@ -162,3 +162,23 @@ details > summary { cursor: pointer; min-height: var(--touch-min); display: flex
 .keypad button:disabled { background: var(--color-fill); color: var(--color-text-muted); border-color: transparent; }
 
 a.btn { display: inline-flex; align-items: center; min-height: var(--h-btn); padding: 0 var(--space-4); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); color: var(--color-text); font-weight: var(--font-weight-bold); text-decoration: none; white-space: nowrap; }
+
+/* 사용 방법 화면 · 따라 해보기 */
+.guide h2 { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); }
+.guide-hero { background: var(--color-primary-soft, var(--color-fill)); }
+.guide-dl { display: grid; gap: var(--space-2); margin: 0; }
+.guide-dl dt { font-weight: var(--font-weight-bold); }
+.guide-dl dd { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.guide-rows { display: grid; gap: var(--space-3); }
+.guide-row { display: grid; gap: var(--space-1); justify-items: start; }
+.guide-row p { margin: 0; font-size: var(--font-size-sm); }
+.guide-list { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); font-size: var(--font-size-sm); }
+.tour-root { position: fixed; inset: 0; z-index: 100; }
+.tour-hole { position: fixed; border-radius: var(--radius-md); box-shadow: 0 0 0 9999px rgba(23, 23, 25, 0.62), 0 0 0 3px var(--color-primary); transition: all 0.2s ease; pointer-events: none; opacity: 0; }
+.tour-tip { position: fixed; width: min(calc(var(--panel-width) - var(--space-5)), calc(100vw - var(--space-5))); box-sizing: border-box; padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface-raised); color: var(--color-text); box-shadow: var(--shadow-md); display: grid; gap: var(--space-2); }
+.tour-tip h3 { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); margin: 0; }
+.tour-tip p { margin: 0; font-size: var(--font-size-sm); }
+.tour-tip .tour-step { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
+.tour-actions { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; padding-top: var(--space-2); }
+.tour-actions .quit { margin-right: auto; border: 0; background: transparent; color: var(--color-text-muted); }
+@media (prefers-reduced-motion: reduce) { .tour-hole { transition: none; } }

@@ -5,21 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>모둠 편성기</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f3f8f6; color: #1f2328; }
-  h1 { margin: 0 0 8px; font-size: 1.4rem; }
-  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
-  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3f7a76; color: #fff; cursor: pointer; }
-  #out { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
-  .g { background: #fff; border-radius: 12px; padding: 10px; border-top: 6px solid #3f7a76; }
-  .g h2 { margin: 0 0 6px; font-size: 1.1rem; }
-  .g li { font-size: 1.1rem; }
+  :root { --b: #00788c; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .wrap { grid-template-columns: 320px 1fr; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  textarea { width: 100%; min-height: 130px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; resize: vertical; }
+  textarea.s { min-height: 64px; }
+  input[type=number] { width: 4.5em; font: inherit; padding: 6px; border: 1px solid #e1e2e4; border-radius: 8px; }
+  .r { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--b); color: #fff; cursor: pointer; }
+  button.g { background: #fff; color: var(--tx); border: 1px solid #e1e2e4; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #5cc7da; outline-offset: 2px; }
+  #out { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; align-content: start; }
+  .g1 { background: #fff; border-radius: 14px; padding: 12px; border-top: 6px solid var(--b); box-shadow: 0 1px 4px rgba(23,23,23,.08); }
+  .g1 h2 { font-size: 1.05rem; margin: 0 0 6px; } .g1 ul { margin: 0; padding-left: 1.1em; } .g1 li.lead { font-weight: 800; }
+  .warn { color: #b00c0c; font-weight: 700; min-height: 1.5em; }
 </style>
 </head>
 <body>
-<h1>👥 모둠 편성기</h1>
-<p>한 줄에 하나씩(번호나 별명) 적고, 모둠 수 또는 모둠당 인원을 고르세요.</p>
-<textarea id="list" aria-label="편성할 목록">1번
+<div class="wrap">
+  <header><h1>👥 모둠 편성기</h1><p class="sub">번호나 별명을 적고 모둠을 나눠요. 같이 두지 않을 짝도 정할 수 있어요.</p></header>
+  <section class="card" aria-label="설정">
+    <label for="list"><strong>구성원</strong> (한 줄에 하나)</label>
+    <textarea id="list">1번
 2번
 3번
 4번
@@ -31,33 +42,60 @@
 10번
 11번
 12번</textarea>
-<div class="row">
-  <label><input type="radio" name="by" value="groups" checked> 모둠 수</label>
-  <label><input type="radio" name="by" value="size"> 모둠당 인원</label>
-  <input type="number" id="n" min="1" max="30" value="4" style="width:4em" aria-label="숫자">
-  <button id="go">편성하기</button>
+    <label for="apart"><strong>같은 모둠에 두지 않을 짝</strong> (한 줄에 둘, 쉼표로)</label>
+    <textarea id="apart" class="s" placeholder="예: 3번, 7번"></textarea>
+    <div class="r"><label><input type="radio" name="by" value="groups" checked> 모둠 수</label><label><input type="radio" name="by" value="size"> 모둠당 인원</label><input id="n" type="number" min="1" max="30" value="4" aria-label="숫자"></div>
+    <label class="r"><input type="checkbox" id="lead" checked> 모둠마다 리더 한 명 뽑기</label>
+    <div class="r"><button id="go">편성하기</button><button class="g" id="copy">결과 복사</button></div>
+    <div class="warn" id="warn" role="status"></div>
+  </section>
+  <section><div id="out" aria-live="polite"></div></section>
 </div>
-<div id="out" aria-live="polite"></div>
 <script>
+  const $ = (id) => document.getElementById(id);
   const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
-  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  document.getElementById('go').onclick = () => {
-    const people = shuffle(document.getElementById('list').value.split('\n').map((s) => s.trim()).filter(Boolean));
-    const n = Math.max(1, +document.getElementById('n').value || 1);
-    const by = document.querySelector('input[type=radio]:checked').value;
-    const groups = Math.max(1, Math.min(people.length, by === 'groups' ? n : Math.ceil(people.length / n)));
-    const out = Array.from({ length: groups }, () => []);
-    people.forEach((p, i) => out[i % groups].push(p)); // 고르게 나눈다
-    const box = document.getElementById('out');
-    box.textContent = '';
-    out.forEach((members, i) => {
-      const card = document.createElement('div'); card.className = 'g';
-      const h = document.createElement('h2'); h.textContent = (i + 1) + '모둠 (' + members.length + ')';
+  const lines = (id) => $(id).value.split('\n').map((s) => s.trim()).filter(Boolean);
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  let last = [];
+  function build() {
+    const people = lines('list');
+    const n = Math.max(1, +$('n').value || 1);
+    const by = document.querySelector('input[name=by]:checked').value;
+    const k = Math.max(1, Math.min(people.length, by === 'groups' ? n : Math.ceil(people.length / n)));
+    const pairs = lines('apart').map((l) => l.split(/[,，]/).map((s) => s.trim()).filter(Boolean)).filter((p) => p.length >= 2);
+    const bad = (grp, p) => pairs.some((pr) => pr.includes(p) && pr.some((q) => q !== p && grp.includes(q)));
+    for (let tries = 0; tries < 400; tries++) {
+      const groups = Array.from({ length: k }, () => []);
+      let ok = true;
+      for (const p of shuffle([...people])) {
+        const open = groups.map((g, i) => i).filter((i) => groups[i].length <= Math.min(...groups.map((g) => g.length)) && !bad(groups[i], p));
+        if (!open.length) { ok = false; break; }
+        groups[open[rand(open.length)]].push(p);
+      }
+      if (ok) return { groups, ok: true };
+    }
+    return { groups: Array.from({ length: k }, () => []), ok: false };
+  }
+  $('go').onclick = () => {
+    const r = build(); last = r.groups;
+    $('warn').textContent = r.ok ? '' : '조건을 모두 지키는 편성을 찾지 못했어요. 짝 조건을 줄이거나 모둠 수를 바꿔 보세요.';
+    const out = $('out'); out.textContent = '';
+    if (!r.ok) return;
+    r.groups.forEach((g, i) => {
+      const box = document.createElement('div'); box.className = 'g1';
+      const h = document.createElement('h2'); h.textContent = `${i + 1}모둠 (${g.length}명)`;
       const ul = document.createElement('ul');
-      members.forEach((m) => { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); });
-      card.append(h, ul); box.appendChild(card);
+      const li0 = $('lead').checked ? rand(g.length) : -1;
+      g.forEach((m, j) => { const li = document.createElement('li'); li.textContent = m + (j === li0 ? ' ★리더' : ''); if (j === li0) li.className = 'lead'; ul.appendChild(li); });
+      box.append(h, ul); out.appendChild(box);
     });
   };
+  $('copy').onclick = async () => {
+    const text = last.map((g, i) => `${i + 1}모둠: ${g.join(', ')}`).join('\n');
+    try { await navigator.clipboard.writeText(text); $('warn').textContent = '복사했어요.'; }
+    catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); $('warn').textContent = '복사했어요.'; } catch { $('warn').textContent = '복사하지 못했어요. 직접 선택해서 복사해 주세요.'; } t.remove(); }
+  };
+  $('go').click();
 </script>
 </body>
 </html>

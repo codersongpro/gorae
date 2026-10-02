@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>교실 타이머</title>
+<style>
+  :root { --b: #3366ff; --tx: #171719; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; background: #eef2ff; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; transition: background .4s; }
+  body.warn { background: #fff4e0; } body.end { background: #ffe9e9; }
+  main { width: min(100%, 640px); text-align: center; }
+  h1 { font-size: 1.2rem; margin: 0 0 6px; }
+  #label { width: 100%; font: inherit; font-weight: 700; font-size: 1.4rem; text-align: center; border: 0; border-bottom: 2px solid #c9d3f5; background: transparent; padding: 6px; }
+  #time { font-size: clamp(4.5rem, 24vw, 11rem); font-weight: 800; line-height: 1.05; margin: 12px 0 8px; font-variant-numeric: tabular-nums; }
+  #bar { height: 14px; background: #fff; border-radius: 999px; overflow: hidden; margin-bottom: 16px; }
+  #fill { height: 100%; width: 100%; background: var(--b); border-radius: 999px; transition: width .3s linear; }
+  body.warn #fill { background: #ff9200; } body.end #fill { background: #e52222; }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 8px 0; }
+  button { font: inherit; font-weight: 700; min-height: 48px; padding: 0 20px; border: 1px solid #c9d3f5; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; min-width: 7em; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  input[type=number] { width: 5em; font: inherit; padding: 8px; border: 1px solid #c9d3f5; border-radius: 10px; text-align: center; }
+  .hint { color: #5a5c63; font-size: .85rem; }
+  @media (prefers-reduced-motion: reduce) { #fill, body { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>⏱️ 교실 타이머</h1>
+  <input id="label" value="모둠 토의" aria-label="활동 제목">
+  <div id="time" role="timer" aria-live="off">05:00</div>
+  <div id="bar" aria-hidden="true"><div id="fill"></div></div>
+  <div class="row" id="presets"></div>
+  <div class="row"><label>직접 <input id="custom" type="number" min="1" max="180" value="5"> 분</label><button id="set">맞추기</button></div>
+  <div class="row"><button class="p" id="go">시작 (스페이스)</button><button id="reset">처음으로 (R)</button></div>
+  <p class="hint">남은 시간이 20% 아래가 되면 주황색, 끝나면 빨간색과 알림음으로 알려요. 소리는 이 화면 안에서만 나요.</p>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  let total = 300, left = 300, iv = null, ac;
+  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  function beep(f, d = .25) { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; g.gain.value = .12; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d); } catch { /* 소리 없이 */ } }
+  function draw() {
+    $('time').textContent = fmt(left);
+    $('fill').style.width = `${total ? (left / total) * 100 : 0}%`;
+    document.body.className = left === 0 ? 'end' : left <= total * 0.2 ? 'warn' : '';
+    document.title = `${fmt(left)} · ${$('label').value}`;
+  }
+  function stop() { clearInterval(iv); iv = null; $('go').textContent = left === 0 ? '다시 시작 (스페이스)' : '계속 (스페이스)'; }
+  function tick() {
+    left = Math.max(0, left - 1); draw();
+    if (left <= 5 && left > 0) beep(660, .08);
+    if (left === 0) { stop(); [880, 1100, 880, 1100].forEach((f, i) => setTimeout(() => beep(f, .3), i * 380)); }
+  }
+  function toggle() {
+    if (iv) return stop();
+    if (left === 0) left = total;
+    $('go').textContent = '일시정지 (스페이스)'; iv = setInterval(tick, 1000); draw();
+  }
+  function setMin(m) { stop(); total = left = Math.max(1, Math.min(180, m)) * 60; $('go').textContent = '시작 (스페이스)'; draw(); }
+  [1, 3, 5, 10, 20].forEach((m) => { const b = document.createElement('button'); b.textContent = `${m}분`; b.onclick = () => setMin(m); $('presets').appendChild(b); });
+  $('set').onclick = () => setMin(+$('custom').value || 5);
+  $('go').onclick = toggle;
+  $('reset').onclick = () => { stop(); left = total; $('go').textContent = '시작 (스페이스)'; draw(); };
+  $('label').addEventListener('input', draw);
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); toggle(); } else if (e.key.toLowerCase() === 'r') $('reset').click();
+  });
+  draw();
+</script>
+</body>
+</html>

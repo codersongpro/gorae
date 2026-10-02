@@ -34,6 +34,13 @@ design/      tokens.css(디자인 토큰 계약), import/(Claude Design 결과�
 docs/        PRD.md 등 문서
 ```
 
+## 3-1. 사이드바와 웹 버전은 한 몸
+`extension/`(웨일 사이드바)를 고치면 웹 버전 `site/app/`도 반드시 같이 바뀌어야 한다.
+- 웹 버전은 `extension/` 코드를 `tools/sync.mjs`가 그대로 복사한 것이다. 웨일 전용 부분은 `site/app/web-shim.js`(chrome.* 대체)뿐이다.
+- 고친 뒤 `npm run sync` → `npm test`. 복사본이 어긋나면 `tests/sync.test.mjs`가 실패한다.
+- 배포 워크플로(.github/workflows/pages.yml)도 배포 전에 sync를 돌려 웹 버전을 항상 최신으로 올린다.
+- 웹에서 쓸 수 없는 기능(탭 주소 보기, 시험 잠금, 구글 드라이브 직접 받기)은 웹 버전에서 자동으로 빠지거나 안내로 대신한다.
+
 ## 4. 디자인 분리 규칙 (Claude Design 사용)
 디자인은 사용자가 Claude Design에서 별도로 만든다. 그래서:
 - 로직(core/, shared/)과 화면(ui/)을 반드시 분리한다. 디자인이 바뀌어도 core/는 수정하지 않아도 되게 한다.

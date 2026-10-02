@@ -46,7 +46,7 @@
         ],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "7lvL7sYvdr2yuixi7OL465sYMpwxAY8oAj2adzjeqC4G0M6gFR1H9TbMoPGwJkDRhhpY20rggfOE1RTGlbaq1w"
+        "sig": "KNRO7WAHlwQnJQNutfyyMwAVuKQNPTNBQDfqp_rlfS6gqEXiBO2eIf4Z5S3XTl4d3O_kafu4CfBkFPDwshwQDg"
       }
     },
     {
@@ -146,7 +146,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "-oEWOE_AtWttl0ODvm_D5CASB7zh-cSCEL0z234Qhdzhgs4lOFzKYNWfOEkN0ZVtvkshOSE4git1TPHGu4t8RQ"
+        "sig": "JmNWVivXfBDolrYF8bnT81SNEB6q2CqIkDUOt1AD4YERPLitJXY15PWY-DMTKC0cHeyRnLZhL8HMl8FHlFSL-w"
       }
     },
     {
@@ -180,7 +180,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "quxdr6ghQ5Z9SvNgG8o4lilXuVp9Q69IMZR_HL1R1PmA5NJawk4av2M7sTzzugbK6Rf-_l6eZwxATxvHjsVvIA"
+        "sig": "p1MdbsendQkOXZZpkw8tYOKg2M9vtXErObtGi7K_Vj0AIQ3s4_Eo32vJ_syouiN7vlrvqGJ0E2owsfVbvlWx-Q"
       }
     },
     {
@@ -214,7 +214,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "dl1eOzAVbM1zHJTWlrMHRUZpRAnDTF0w2AFkMsyfCSBmP055kTz7WO9QYzZArKHd3SgZLfELrwNTxJxxEjoBMg"
+        "sig": "o3Q-M2vKg7Yh8eEJml_7eX2PQeCcXK7iUTVvdPsudcZlW_FFF7TivA6SjwR1OVU_bLCyw4x9RLyxIYFdhvG-yA"
       }
     },
     {
@@ -241,15 +241,15 @@
       "description": "목록에서 무작위로 뽑아요. 뽑힌 항목 빼기, 여러 개 한 번에 뽑기가 돼요.",
       "howToUse": "번호나 별명을 한 줄에 하나씩 적고 [뽑기!]를 누르세요. 전자칠판에 띄우면 크게 보여요.",
       "promptRecipe": "교실용 랜덤 뽑기 도구를 만들어 줘. 목록은 한 줄에 하나, 뽑힌 항목 제외 옵션, 여러 개 뽑기, 결과를 크게 보여 주는 애니메이션. 외부 통신과 저장소는 쓰지 마.",
-      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>럭키드로우</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f7fb; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }\n  button.sub { background: #dde5ee; color: #1f2328; }\n  #stage { margin: 16px 0; min-height: 30vh; display: grid; place-items: center; background: #fff; border-radius: 16px; font-size: clamp(2.5rem, 12vw, 6rem); font-weight: 800; text-align: center; }\n  #stage.spin { color: #8a94a0; }\n  #log { color: #5b636b; }\n</style>\n</head>\n<body>\n<h1>🎲 럭키드로우</h1>\n<p>한 줄에 하나씩 적어요. 학생 번호나 별명을 쓰면 개인정보 걱정이 없어요.</p>\n<textarea id=\"list\" aria-label=\"뽑기 목록\">1번\n2번\n3번\n4번\n5번\n6번</textarea>\n<div class=\"row\">\n  <label><input type=\"checkbox\" id=\"remove\" checked> 뽑힌 항목은 빼기</label>\n  <label>한 번에 <input type=\"number\" id=\"count\" min=\"1\" max=\"20\" value=\"1\" style=\"width:4em\"> 개</label>\n</div>\n<div class=\"row\">\n  <button id=\"draw\">뽑기!</button>\n  <button class=\"sub\" id=\"reset\">처음부터</button>\n</div>\n<div id=\"stage\" aria-live=\"polite\">?</div>\n<p id=\"log\"></p>\n<script>\n  const listEl = document.getElementById('list');\n  const stage = document.getElementById('stage');\n  const log = document.getElementById('log');\n  let pool = null; const picked = [];\n  const items = () => listEl.value.split('\\n').map((s) => s.trim()).filter(Boolean);\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  document.getElementById('reset').onclick = () => { pool = null; picked.length = 0; stage.textContent = '?'; log.textContent = ''; };\n  document.getElementById('draw').onclick = () => {\n    if (!pool || !document.getElementById('remove').checked) pool = items().filter((x) => !(document.getElementById('remove').checked && picked.includes(x)));\n    if (!pool.length) { stage.textContent = '다 뽑았어요!'; return; }\n    const n = Math.min(pool.length, Math.max(1, +document.getElementById('count').value || 1));\n    stage.classList.add('spin');\n    let t = 0;\n    const iv = setInterval(() => { stage.textContent = pool[rand(pool.length)]; if (++t > 15) finish(); }, 60);\n    function finish() {\n      clearInterval(iv);\n      stage.classList.remove('spin');\n      const result = [];\n      for (let i = 0; i < n; i++) {\n        const k = rand(pool.length);\n        result.push(pool[k]);\n        if (document.getElementById('remove').checked) pool.splice(k, 1);\n      }\n      picked.push(...result);\n      stage.textContent = result.join(', ');\n      log.textContent = '지금까지: ' + picked.join(', ');\n    }\n  };\n</script>\n</body>\n</html>\n",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>럭키드로우</title>\n<style>\n  :root { --b: #3366ff; --bg: #f7f7f8; --tx: #171719; --mu: #5a5c63; --r: 14px; }\n  * { box-sizing: border-box; }\n  body { margin: 0; padding: 16px; background: var(--bg); color: var(--tx); font: 16px/1.5 \"Pretendard JP\", \"Malgun Gothic\", system-ui, sans-serif; word-break: keep-all; }\n  .wrap { max-width: 880px; margin: 0 auto; display: grid; gap: 14px; grid-template-columns: 1fr; }\n  @media (min-width: 760px) { .wrap { grid-template-columns: 300px 1fr; } header { grid-column: 1 / -1; } }\n  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }\n  .card { background: #fff; border-radius: var(--r); padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); }\n  textarea { width: 100%; min-height: 150px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; resize: vertical; }\n  label.o { display: flex; align-items: center; gap: 8px; min-height: 40px; }\n  input[type=number] { width: 4.5em; font: inherit; padding: 6px; border: 1px solid #e1e2e4; border-radius: 8px; }\n  button { font: inherit; font-weight: 700; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; background: var(--b); color: #fff; cursor: pointer; }\n  button.g { background: #fff; color: var(--tx); border: 1px solid #e1e2e4; }\n  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }\n  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }\n  #stage { min-height: 42vh; display: grid; place-items: center; text-align: center; font-size: clamp(2.4rem, 11vw, 6.5rem); font-weight: 800; background: linear-gradient(160deg, #eef2ff, #fff); border-radius: var(--r); padding: 16px; }\n  #stage.spin { color: #8a94a0; } #stage.win { animation: pop .5s ease; }\n  @keyframes pop { 0% { transform: scale(.85); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }\n  #hist { margin: 0; padding-left: 1.2em; color: var(--mu); } #hist li { margin: 2px 0; }\n  .chip { display: inline-block; padding: 2px 10px; background: #eef2ff; color: #0054d1; border-radius: 999px; font-size: .85rem; font-weight: 700; }\n  @media (prefers-reduced-motion: reduce) { #stage.win { animation: none; } }\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n  <header><h1>🎲 럭키드로우</h1><p class=\"sub\">한 줄에 하나씩 적고 뽑아요. 학생은 번호나 별명으로 적으면 안전해요. 입력한 내용은 이 화면 밖으로 나가지 않아요.</p></header>\n  <section class=\"card\" aria-label=\"설정\">\n    <label for=\"list\"><strong>뽑을 목록</strong> <span class=\"chip\" id=\"cnt\"></span></label>\n    <textarea id=\"list\">1번\n2번\n3번\n4번\n5번\n6번\n7번\n8번</textarea>\n    <label class=\"o\"><input type=\"checkbox\" id=\"remove\" checked> 뽑힌 항목은 다음에서 빼기</label>\n    <label class=\"o\"><input type=\"checkbox\" id=\"sound\" checked> 효과음</label>\n    <label class=\"o\">한 번에 <input type=\"number\" id=\"count\" min=\"1\" max=\"20\" value=\"1\"> 개 뽑기</label>\n    <div class=\"row\"><button class=\"g\" id=\"reset\">처음부터</button><button class=\"g\" id=\"shuf\">목록 섞기</button></div>\n  </section>\n  <section aria-label=\"결과\">\n    <div id=\"stage\" aria-live=\"polite\">?</div>\n    <div class=\"row\" style=\"margin-top:10px\"><button id=\"draw\">뽑기! (Enter)</button></div>\n    <div class=\"card\" style=\"margin-top:12px\"><strong>뽑힌 순서</strong><ol id=\"hist\"></ol></div>\n  </section>\n</div>\n<script>\n  const $ = (id) => document.getElementById(id);\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  const items = () => $('list').value.split('\\n').map((s) => s.trim()).filter(Boolean);\n  let picked = [];\n  let ac;\n  function beep(f, d = .12) {\n    if (!$('sound').checked) return;\n    try {\n      ac = ac || new (window.AudioContext || window.webkitAudioContext)();\n      const o = ac.createOscillator(), g = ac.createGain();\n      o.frequency.value = f; g.gain.value = .06; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d);\n    } catch { /* 소리를 낼 수 없으면 조용히 */ }\n  }\n  const pool = () => items().filter((x) => !($('remove').checked && picked.includes(x)));\n  const info = () => { $('cnt').textContent = `남은 ${pool().length}개 / 전체 ${items().length}개`; };\n  function drawHist() { $('hist').textContent = ''; picked.forEach((p) => { const li = document.createElement('li'); li.textContent = p; $('hist').appendChild(li); }); info(); }\n  let busy = false;\n  $('draw').onclick = () => {\n    if (busy) return;\n    const p = pool();\n    if (!p.length) { $('stage').textContent = '모두 뽑았어요!'; return; }\n    const n = Math.min(p.length, Math.max(1, +$('count').value || 1));\n    busy = true; $('stage').className = 'spin';\n    let t = 0;\n    const iv = setInterval(() => { $('stage').textContent = p[rand(p.length)]; beep(400 + (t % 6) * 60, .04); if (++t > 16) done(); }, 70);\n    function done() {\n      clearInterval(iv);\n      const rest = [...p], res = [];\n      for (let i = 0; i < n; i++) res.push(rest.splice(rand(rest.length), 1)[0]);\n      picked.push(...res);\n      $('stage').className = 'win'; $('stage').textContent = res.join(' · ');\n      beep(880, .25); drawHist(); busy = false;\n    }\n  };\n  $('reset').onclick = () => { picked = []; $('stage').className = ''; $('stage').textContent = '?'; drawHist(); };\n  $('shuf').onclick = () => { const a = items(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } $('list').value = a.join('\\n'); };\n  $('list').addEventListener('input', info);\n  $('remove').addEventListener('change', info);\n  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') $('draw').click(); });\n  drawHist();\n</script>\n</body>\n</html>\n",
       "tailprint": {
-        "contentHash": "72c77dbcc0b94bfc30b0fd684f045502d619c47d813d3c1b41cd5a24f9f7eb14",
+        "contentHash": "d92cb27c28425b48a9dc5663bfab09c09bdc40761cb8b2046b9c73d1e1a7afbc",
         "badge": "clear",
         "pick": true,
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "AZxWGUUHO_VE3O0_IZ2TM7gwJY4rc3dLHjKZa3Qerh00SklRCin-gtfLssaNr_vMZBLowGudP-vdj3yxM80j6g"
+        "sig": "wllVNda0VzqJaynOuWIfhbne8-N3UpaLGaWMvrSoDlG8iF0VwztfCKeHKqYXO0bng_Zs-mw8k5L6ycVEGcaFeA"
       }
     },
     {
@@ -277,15 +277,15 @@
       "description": "모둠별 점수를 크게 보여 주고, 1등 모둠을 표시해요.",
       "howToUse": "모둠 수를 정하고 [점수판 만들기]. 모둠 이름을 눌러 바꿀 수 있고 +1·+5·−1 버튼으로 점수를 줘요.",
       "promptRecipe": "모둠 수를 정하면 점수 카드가 생기는 점수판을 만들어 줘. +1, +5, −1 버튼, 모둠 이름 수정, 1등 강조.",
-      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>모둠 점수판</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f5f3fb; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #5b4a8a; color: #fff; cursor: pointer; }\n  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }\n  .t { background: #fff; border-radius: 16px; padding: 12px; text-align: center; }\n  .t input { font-size: 1.1rem; width: 100%; box-sizing: border-box; text-align: center; border: 0; border-bottom: 2px solid #ddd; }\n  .s { font-size: 3.5rem; font-weight: 800; margin: 6px 0; }\n  .t.top { outline: 4px solid #e2b33c; }\n</style>\n</head>\n<body>\n<h1>🏆 모둠 점수판</h1>\n<div class=\"row\">\n  <label>모둠 수 <input type=\"number\" id=\"n\" min=\"2\" max=\"12\" value=\"4\" style=\"width:4em\"></label>\n  <button id=\"make\">점수판 만들기</button>\n  <button id=\"zero\">모두 0점</button>\n</div>\n<div id=\"board\"></div>\n<script>\n  let teams = [];\n  function render() {\n    const max = Math.max(...teams.map((t) => t.score));\n    const board = document.getElementById('board'); board.textContent = '';\n    teams.forEach((t) => {\n      const box = document.createElement('div'); box.className = 't' + (t.score === max && max > 0 ? ' top' : '');\n      const title = document.createElement('input'); title.value = t.label; title.setAttribute('aria-label', '모둠 표시'); title.oninput = (e) => { t.label = e.target.value; };\n      const s = document.createElement('div'); s.className = 's'; s.textContent = t.score;\n      const row = document.createElement('div'); row.className = 'row'; row.style.justifyContent = 'center';\n      [[-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, label]) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { t.score += d; render(); }; row.appendChild(b); });\n      box.append(title, s, row); board.appendChild(box);\n    });\n  }\n  document.getElementById('make').onclick = () => { const n = Math.min(12, Math.max(2, +document.getElementById('n').value || 4)); teams = Array.from({ length: n }, (_, i) => ({ label: (i + 1) + '모둠', score: 0 })); render(); };\n  document.getElementById('zero').onclick = () => { teams.forEach((t) => (t.score = 0)); render(); };\n  document.getElementById('make').click();\n</script>\n</body>\n</html>\n",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>모둠 점수판</title>\n<style>\n  :root { --b: #5b37ed; --bg: #f7f7f8; --tx: #171719; --mu: #5a5c63; }\n  * { box-sizing: border-box; }\n  body { margin: 0; padding: 16px; background: var(--bg); color: var(--tx); font: 16px/1.5 \"Pretendard JP\", \"Malgun Gothic\", system-ui, sans-serif; word-break: keep-all; }\n  .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }\n  h1 { font-size: 1.3rem; margin: 0 auto 0 0; }\n  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 16px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }\n  button.p { background: var(--b); border-color: var(--b); color: #fff; }\n  button:focus-visible, input:focus-visible { outline: 3px solid #a99af7; outline-offset: 2px; }\n  input[type=number] { width: 4.5em; font: inherit; padding: 6px; border: 1px solid #e1e2e4; border-radius: 8px; }\n  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }\n  .t { background: #fff; border-radius: 16px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(23,23,23,.08); border: 3px solid transparent; transition: transform .2s; }\n  .t.lead { border-color: #ffb300; transform: translateY(-3px); } .t.win { background: #fff8e1; }\n  .t input.nm { width: 100%; font: inherit; font-weight: 700; text-align: center; border: 0; border-bottom: 2px solid #e1e2e4; padding: 4px; background: transparent; }\n  .sc { font-size: 3.6rem; font-weight: 800; line-height: 1.2; margin: 6px 0; font-variant-numeric: tabular-nums; }\n  .btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .btns button { padding: 0; }\n  .rank { font-size: .8rem; color: var(--mu); } .msg { min-height: 1.5em; font-weight: 800; color: #b26a00; }\n  @media (prefers-reduced-motion: reduce) { .t { transition: none; } }\n</style>\n</head>\n<body>\n<div class=\"top\">\n  <h1>🏆 모둠 점수판</h1>\n  <label>모둠 수 <input id=\"n\" type=\"number\" min=\"2\" max=\"12\" value=\"4\"></label>\n  <label>목표 점수 <input id=\"goal\" type=\"number\" min=\"0\" max=\"999\" value=\"0\" title=\"0이면 목표 없음\"></label>\n  <button class=\"p\" id=\"make\">점수판 만들기</button>\n  <button id=\"undo\">되돌리기</button>\n  <button id=\"sort\" aria-pressed=\"false\">순위로 정렬</button>\n  <button id=\"zero\">모두 0점</button>\n</div>\n<p class=\"msg\" id=\"msg\" aria-live=\"polite\"></p>\n<div id=\"board\"></div>\n<script>\n  const $ = (id) => document.getElementById(id);\n  let teams = [], hist = [], sorted = false;\n  let ac;\n  function beep(f, d = .15) { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; g.gain.value = .06; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d); } catch { /* 소리 없이 */ } }\n  function make() {\n    const n = Math.min(12, Math.max(2, +$('n').value || 4));\n    teams = Array.from({ length: n }, (_, i) => ({ label: `${i + 1}모둠`, score: 0 })); hist = []; render();\n  }\n  function change(t, d) { hist.push([t, t.score]); t.score += d; beep(d > 0 ? 660 : 330); render(); check(t); }\n  function check(t) {\n    const g = +$('goal').value || 0;\n    $('msg').textContent = g && t.score >= g ? `🎉 ${t.label}이(가) 목표 ${g}점을 넘었어요!` : '';\n    if (g && t.score >= g) beep(988, .4);\n  }\n  function render() {\n    const max = Math.max(...teams.map((t) => t.score));\n    const order = sorted ? [...teams].sort((a, b) => b.score - a.score) : teams;\n    const g = +$('goal').value || 0;\n    const board = $('board'); board.textContent = '';\n    order.forEach((t) => {\n      const box = document.createElement('div');\n      box.className = 't' + (t.score === max && max > 0 ? ' lead' : '') + (g && t.score >= g ? ' win' : '');\n      const nm = document.createElement('input'); nm.className = 'nm'; nm.value = t.label; nm.setAttribute('aria-label', '모둠 표시'); nm.oninput = () => { t.label = nm.value; };\n      const sc = document.createElement('div'); sc.className = 'sc'; sc.textContent = t.score; sc.setAttribute('aria-live', 'polite');\n      const rk = document.createElement('div'); rk.className = 'rank';\n      rk.textContent = sorted ? `${[...teams].sort((a, b) => b.score - a.score).findIndex((x) => x === t) + 1}위` : '';\n      const btns = document.createElement('div'); btns.className = 'btns';\n      [[-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, label]) => { const b = document.createElement('button'); b.textContent = label; b.setAttribute('aria-label', `${t.label} ${label}점`); b.onclick = () => change(t, d); btns.appendChild(b); });\n      box.append(nm, sc, rk, btns); board.appendChild(box);\n    });\n  }\n  $('make').onclick = make;\n  $('zero').onclick = () => { if (teams.some((t) => t.score) && !confirm('모든 점수를 0으로 되돌릴까요?')) return; hist = []; teams.forEach((t) => (t.score = 0)); $('msg').textContent = ''; render(); };\n  $('undo').onclick = () => { const h = hist.pop(); if (h) { h[0].score = h[1]; render(); } };\n  $('sort').onclick = (e) => { sorted = !sorted; e.target.setAttribute('aria-pressed', sorted); render(); };\n  make();\n</script>\n</body>\n</html>\n",
       "tailprint": {
-        "contentHash": "c26992a3f2af845d039c4d7af7c857e3fc27a1220228806ff7e9aa4f64212406",
+        "contentHash": "13e73ab01cb40821657e5904a8c8600d7c2d3c152a8914c4a93c9aa95822b173",
         "badge": "clear",
         "pick": true,
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "fNZXMUgD3pIwwHuNva1xcSh-HR9794dRu21Bk_yEV5IiTFeTklBeHjpIcgOjrFYnk_ZArUyWrbOIttChgjN9xw"
+        "sig": "lHn9-KNthSmE1K-Ade_01EW20PKYySSke6aFYHw4Hk8gy3Jp5OrQNMWDQoRDJWYLcA_Z_phsQr3iG9rzFx1YEA"
       }
     },
     {
@@ -312,15 +312,15 @@
       "description": "모둠 수나 모둠당 인원을 정하면 고르게 무작위로 나눠 줘요.",
       "howToUse": "번호나 별명을 적고 모둠 수(또는 인원)를 정한 뒤 [편성하기]를 누르세요. 다시 누르면 새로 섞여요.",
       "promptRecipe": "목록을 받아 모둠 수 또는 모둠당 인원 기준으로 고르게 무작위 편성하는 도구를 만들어 줘. 결과는 모둠 카드로 보여 줘.",
-      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>모둠 편성기</title>\n<style>\n  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f3f8f6; color: #1f2328; }\n  h1 { margin: 0 0 8px; font-size: 1.4rem; }\n  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }\n  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }\n  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3f7a76; color: #fff; cursor: pointer; }\n  #out { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }\n  .g { background: #fff; border-radius: 12px; padding: 10px; border-top: 6px solid #3f7a76; }\n  .g h2 { margin: 0 0 6px; font-size: 1.1rem; }\n  .g li { font-size: 1.1rem; }\n</style>\n</head>\n<body>\n<h1>👥 모둠 편성기</h1>\n<p>한 줄에 하나씩(번호나 별명) 적고, 모둠 수 또는 모둠당 인원을 고르세요.</p>\n<textarea id=\"list\" aria-label=\"편성할 목록\">1번\n2번\n3번\n4번\n5번\n6번\n7번\n8번\n9번\n10번\n11번\n12번</textarea>\n<div class=\"row\">\n  <label><input type=\"radio\" name=\"by\" value=\"groups\" checked> 모둠 수</label>\n  <label><input type=\"radio\" name=\"by\" value=\"size\"> 모둠당 인원</label>\n  <input type=\"number\" id=\"n\" min=\"1\" max=\"30\" value=\"4\" style=\"width:4em\" aria-label=\"숫자\">\n  <button id=\"go\">편성하기</button>\n</div>\n<div id=\"out\" aria-live=\"polite\"></div>\n<script>\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }\n  document.getElementById('go').onclick = () => {\n    const people = shuffle(document.getElementById('list').value.split('\\n').map((s) => s.trim()).filter(Boolean));\n    const n = Math.max(1, +document.getElementById('n').value || 1);\n    const by = document.querySelector('input[type=radio]:checked').value;\n    const groups = Math.max(1, Math.min(people.length, by === 'groups' ? n : Math.ceil(people.length / n)));\n    const out = Array.from({ length: groups }, () => []);\n    people.forEach((p, i) => out[i % groups].push(p)); // 고르게 나눈다\n    const box = document.getElementById('out');\n    box.textContent = '';\n    out.forEach((members, i) => {\n      const card = document.createElement('div'); card.className = 'g';\n      const h = document.createElement('h2'); h.textContent = (i + 1) + '모둠 (' + members.length + ')';\n      const ul = document.createElement('ul');\n      members.forEach((m) => { const li = document.createElement('li'); li.textContent = m; ul.appendChild(li); });\n      card.append(h, ul); box.appendChild(card);\n    });\n  };\n</script>\n</body>\n</html>\n",
+      "html": "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>모둠 편성기</title>\n<style>\n  :root { --b: #00788c; --tx: #171719; --mu: #5a5c63; }\n  * { box-sizing: border-box; }\n  body { margin: 0; padding: 16px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 \"Pretendard JP\", \"Malgun Gothic\", system-ui, sans-serif; word-break: keep-all; }\n  .wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 14px; }\n  @media (min-width: 760px) { .wrap { grid-template-columns: 320px 1fr; } header { grid-column: 1 / -1; } }\n  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }\n  .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }\n  textarea { width: 100%; min-height: 130px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; resize: vertical; }\n  textarea.s { min-height: 64px; }\n  input[type=number] { width: 4.5em; font: inherit; padding: 6px; border: 1px solid #e1e2e4; border-radius: 8px; }\n  .r { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }\n  button { font: inherit; font-weight: 700; min-height: 46px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--b); color: #fff; cursor: pointer; }\n  button.g { background: #fff; color: var(--tx); border: 1px solid #e1e2e4; }\n  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #5cc7da; outline-offset: 2px; }\n  #out { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; align-content: start; }\n  .g1 { background: #fff; border-radius: 14px; padding: 12px; border-top: 6px solid var(--b); box-shadow: 0 1px 4px rgba(23,23,23,.08); }\n  .g1 h2 { font-size: 1.05rem; margin: 0 0 6px; } .g1 ul { margin: 0; padding-left: 1.1em; } .g1 li.lead { font-weight: 800; }\n  .warn { color: #b00c0c; font-weight: 700; min-height: 1.5em; }\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n  <header><h1>👥 모둠 편성기</h1><p class=\"sub\">번호나 별명을 적고 모둠을 나눠요. 같이 두지 않을 짝도 정할 수 있어요.</p></header>\n  <section class=\"card\" aria-label=\"설정\">\n    <label for=\"list\"><strong>구성원</strong> (한 줄에 하나)</label>\n    <textarea id=\"list\">1번\n2번\n3번\n4번\n5번\n6번\n7번\n8번\n9번\n10번\n11번\n12번</textarea>\n    <label for=\"apart\"><strong>같은 모둠에 두지 않을 짝</strong> (한 줄에 둘, 쉼표로)</label>\n    <textarea id=\"apart\" class=\"s\" placeholder=\"예: 3번, 7번\"></textarea>\n    <div class=\"r\"><label><input type=\"radio\" name=\"by\" value=\"groups\" checked> 모둠 수</label><label><input type=\"radio\" name=\"by\" value=\"size\"> 모둠당 인원</label><input id=\"n\" type=\"number\" min=\"1\" max=\"30\" value=\"4\" aria-label=\"숫자\"></div>\n    <label class=\"r\"><input type=\"checkbox\" id=\"lead\" checked> 모둠마다 리더 한 명 뽑기</label>\n    <div class=\"r\"><button id=\"go\">편성하기</button><button class=\"g\" id=\"copy\">결과 복사</button></div>\n    <div class=\"warn\" id=\"warn\" role=\"status\"></div>\n  </section>\n  <section><div id=\"out\" aria-live=\"polite\"></div></section>\n</div>\n<script>\n  const $ = (id) => document.getElementById(id);\n  const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;\n  const lines = (id) => $(id).value.split('\\n').map((s) => s.trim()).filter(Boolean);\n  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };\n  let last = [];\n  function build() {\n    const people = lines('list');\n    const n = Math.max(1, +$('n').value || 1);\n    const by = document.querySelector('input[name=by]:checked').value;\n    const k = Math.max(1, Math.min(people.length, by === 'groups' ? n : Math.ceil(people.length / n)));\n    const pairs = lines('apart').map((l) => l.split(/[,，]/).map((s) => s.trim()).filter(Boolean)).filter((p) => p.length >= 2);\n    const bad = (grp, p) => pairs.some((pr) => pr.includes(p) && pr.some((q) => q !== p && grp.includes(q)));\n    for (let tries = 0; tries < 400; tries++) {\n      const groups = Array.from({ length: k }, () => []);\n      let ok = true;\n      for (const p of shuffle([...people])) {\n        const open = groups.map((g, i) => i).filter((i) => groups[i].length <= Math.min(...groups.map((g) => g.length)) && !bad(groups[i], p));\n        if (!open.length) { ok = false; break; }\n        groups[open[rand(open.length)]].push(p);\n      }\n      if (ok) return { groups, ok: true };\n    }\n    return { groups: Array.from({ length: k }, () => []), ok: false };\n  }\n  $('go').onclick = () => {\n    const r = build(); last = r.groups;\n    $('warn').textContent = r.ok ? '' : '조건을 모두 지키는 편성을 찾지 못했어요. 짝 조건을 줄이거나 모둠 수를 바꿔 보세요.';\n    const out = $('out'); out.textContent = '';\n    if (!r.ok) return;\n    r.groups.forEach((g, i) => {\n      const box = document.createElement('div'); box.className = 'g1';\n      const h = document.createElement('h2'); h.textContent = `${i + 1}모둠 (${g.length}명)`;\n      const ul = document.createElement('ul');\n      const li0 = $('lead').checked ? rand(g.length) : -1;\n      g.forEach((m, j) => { const li = document.createElement('li'); li.textContent = m + (j === li0 ? ' ★리더' : ''); if (j === li0) li.className = 'lead'; ul.appendChild(li); });\n      box.append(h, ul); out.appendChild(box);\n    });\n  };\n  $('copy').onclick = async () => {\n    const text = last.map((g, i) => `${i + 1}모둠: ${g.join(', ')}`).join('\\n');\n    try { await navigator.clipboard.writeText(text); $('warn').textContent = '복사했어요.'; }\n    catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); $('warn').textContent = '복사했어요.'; } catch { $('warn').textContent = '복사하지 못했어요. 직접 선택해서 복사해 주세요.'; } t.remove(); }\n  };\n  $('go').click();\n</script>\n</body>\n</html>\n",
       "tailprint": {
-        "contentHash": "a700cfc50d433505dbd5ed03ba8ffcea5e3598d6082b9690b54d2bcd6778a34b",
+        "contentHash": "761d334dde66bb299546f9cf0bb78c8d9a7612f2b8135d6db9d33c942bdb2f8e",
         "badge": "clear",
         "pick": false,
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "hbA05RbG0HxGzAyUjmn8nA61uOGZ07LlzLaxFn_1IJ9uQI7y_F0MSuU3Lhzcm8tTC6uK6EEOAze_olSbXWh36Q"
+        "sig": "ffJ9L4q4i6EmJ53qfdteL4a4RBx5SyCbfseXw51GOQhiplMN8VusLAzxDj7UrAmxU0b6RjoX6fZCWTXU0bLuUw"
       }
     },
     {
@@ -355,7 +355,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "YlUTBKvrKzGmXfoPjktLm_rUk0H9HMGrGZq7rePf8tqbIBq7PKHT8vXZkZfEbSy0rcGnFTuWYwTSzm0KVx6HlA"
+        "sig": "mq5ohmwQvbrDFtow_qL4uBESf2rjPDkXARv4uBIvBOwr2esV1efZJnhrVT36JW5Cpxiu2OBGKpOxOhCsjD68CA"
       }
     },
     {
@@ -390,7 +390,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "XpCQf9YcEOTq_V80oJrAx_sftSQC4luAnNab_iwpAEtaP4ybZBtMQFYWsezbOzZ5Mey_qjkItimGYO1VT0aA4Q"
+        "sig": "dZ86nK9ScSCYWeJypxRGgL62X31SlaaW9CXbfb1Cis2taenpWz-h_M2ThIPHGfsu4loc8bw4eu8En7a7DNHvJw"
       }
     },
     {
@@ -426,7 +426,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "ss1nJ0NjH99z14Bx7OtlBAJ5ex7fd_aN1pC2flD3OfXe2jF-387mKKESwfbMj8EasNP2nhv25Ta6imH9S_5lwA"
+        "sig": "sS0h6ocj1c5PcVEtiZIGmbC5VIbDK5rOEfkvl35VgkzEdJf1_GII4LeaZBdYRr7b5gvPxbWaFo4ZIFPsVl--Gg"
       }
     },
     {
@@ -461,7 +461,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "mdUXSRQhXzSRO5k7h3XGRveTcx1LFUP-qhd1aqPBc2R0BFKTPkITuR14JI4gqbKMkywYQWbVeBCYISlsrXu-UQ"
+        "sig": "WJ9lXuoyJ_j0B4NESebBb-HhQcQRzg71RHI39a2meQJ0n0oY9m2nLrOTOC79_fdIO21mgYy6wRu-lwRRn0TaDw"
       }
     },
     {
@@ -503,7 +503,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "q72JIGsRxcqVSRHtevDUyTF_n2iYxXPsP9zdRxehCgjIeSiuD-2MfqTjJmRhDl_nZkraVHTQP8HK8ObfrKFRxA"
+        "sig": "NFmvcUlb3BjTj-Eo_BWYMA0j4Sx6RbGaKYKrdUe_L2Hn6EsLV92tFKK8A8p9jp6C_MgMZzTbUFlmmP1sL-xVog"
       }
     },
     {
@@ -541,7 +541,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "NG1emnJqB4P95Mfibrkrjm3plvHDNWXBmU7fmsWNyBn8Whs6mxjRuPiVtBSQjmZ6yaqTYhY-GAI6mNmhZryDOw"
+        "sig": "k63le0fvkyOyICJkxA0KI4-4qslEQQrjnfFftGWqWWLBnLDSbekw8Z1AYKhKIzv9dveMDq2KCT_XmIIXAVejWA"
       }
     },
     {
@@ -573,7 +573,7 @@
         "songs": [],
         "reviewer": "guard-1",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "ImnL-fTVeB8kUe1GFaofsKG9J9nerqD3GHKkqQfWo6kao6KFHeZSg3XfCUbonq9pb8AuQCOMyaltRnzenugymw"
+        "sig": "5KNfBXJdCpqEncmi83uJDpWNDwlqKpGGMflMEZ0ZTNE996WcpAtMHNh1audFIZ7PD-Sc6UqEXOYg8Ga8aES3hw"
       }
     }
   ],
@@ -618,6 +618,6 @@
       "sample-fraction-pizza"
     ],
     "issuedAt": "2026-10-01T02:00:00Z",
-    "sig": "p0t0MpIUsv-boipqkRwpKit8Sl0XPC6zS3z_ThdtQaRBem8hBolfmiwnjuazvvy91_vTFw1sZZZ5zefPad_BIw"
+    "sig": "a-B6S9a87n7GTZpH92UhSZPLrZ3lj9sJchoyFeJtuHPD72Yz8xWkj6ZweRNv_cA2D7F8rEpg4MHN7-wiJdoZtQ"
   }
 }

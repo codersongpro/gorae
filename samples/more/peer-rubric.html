@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발표 동료평가 카드</title>
+<style>
+  :root { --b: #00788c; --tx: #171719; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 14px; background: #f7f7f8; color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
+  h1 { font-size: 1.25rem; margin: 0; } .sub { margin: 2px 0 0; color: #5a5c63; font-size: .9rem; }
+  .card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(23,23,23,.08); display: grid; gap: 8px; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; }
+  .stars { display: flex; gap: 2px; }
+  .stars button { min-width: 44px; min-height: 44px; font-size: 1.5rem; border: 0; background: transparent; cursor: pointer; filter: grayscale(1); opacity: .45; }
+  .stars button.on { filter: none; opacity: 1; }
+  .stars button:focus-visible, button:focus-visible, textarea:focus-visible { outline: 3px solid #5cc7da; outline-offset: 2px; }
+  textarea { width: 100%; min-height: 80px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; }
+  button.p { font: inherit; font-weight: 700; min-height: 46px; border: 0; border-radius: 12px; background: var(--b); color: #fff; cursor: pointer; }
+  #result { white-space: pre-wrap; background: #e6f6f9; border-radius: 10px; padding: 12px; display: none; }
+  .hint { color: #5a5c63; font-size: .85rem; margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>⭐ 발표 동료평가 카드</h1><p class="sub">친구 발표를 보고 별을 눌러요. 평가는 이 화면 안에서만 보이고 어디로도 보내지 않아요.</p></header>
+  <section class="card" id="items" aria-label="평가 항목"></section>
+  <section class="card">
+    <label for="good"><strong>좋았던 점 한 가지</strong></label>
+    <textarea id="good" placeholder="예: 목소리가 또렷했어요"></textarea>
+    <label for="more"><strong>더 좋아질 점 한 가지 (부드럽게!)</strong></label>
+    <textarea id="more" placeholder="예: 사진이 더 크면 좋겠어요"></textarea>
+    <button class="p" id="make" type="button">평가 카드 만들기</button>
+    <div id="result" role="status"></div>
+    <p class="hint">친구를 놀리거나 상처 주는 말은 쓰지 않아요. 만든 카드는 발표한 친구에게 직접 보여 주세요.</p>
+  </section>
+</div>
+<script>
+  const items = ['내용이 알기 쉬웠어요', '목소리가 또렷했어요', '자료(그림·글)가 보기 좋았어요', '시간을 잘 지켰어요'];
+  const score = items.map(() => 0);
+  const box = document.getElementById('items');
+  items.forEach((t, k) => {
+    const row = document.createElement('div'); row.className = 'row';
+    const lab = document.createElement('span'); lab.textContent = t;
+    const st = document.createElement('div'); st.className = 'stars'; st.setAttribute('role', 'group'); st.setAttribute('aria-label', t);
+    for (let n = 1; n <= 3; n++) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = '⭐'; b.setAttribute('aria-label', `${n}점`);
+      b.onclick = () => { score[k] = score[k] === n ? 0 : n; [...st.children].forEach((c, q) => c.classList.toggle('on', q < score[k])); };
+      st.appendChild(b);
+    }
+    row.append(lab, st); box.appendChild(row);
+  });
+  document.getElementById('make').onclick = () => {
+    const sum = score.reduce((a, b) => a + b, 0), max = items.length * 3;
+    const lines = items.map((t, k) => `${'⭐'.repeat(score[k]) || '－'}  ${t}`);
+    const r = document.getElementById('result');
+    r.textContent = `${lines.join('\n')}\n\n합계 ${sum} / ${max}\n👍 ${document.getElementById('good').value.trim() || '(쓰지 않았어요)'}\n🌱 ${document.getElementById('more').value.trim() || '(쓰지 않았어요)'}`;
+    r.style.display = 'block';
+  };
+</script>
+</body>
+</html>

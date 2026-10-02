@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>물의 순환 수업 발표</title>
+<style>
+  :root { --b: #1b6ec2; --tx: #14213d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; grid-template-rows: 1fr auto; background: #0e2a47; color: var(--tx); font: 18px/1.6 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  main { display: grid; place-items: center; padding: 16px; }
+  .slide { width: min(100%, 960px); min-height: min(62vh, 540px); background: #fff; border-radius: 20px; padding: clamp(20px, 5vw, 56px); display: none; align-content: center; gap: 12px; }
+  .slide.on { display: grid; animation: in .35s ease; }
+  @keyframes in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+  h1 { font-size: clamp(1.8rem, 6vw, 3.4rem); margin: 0; line-height: 1.25; }
+  h2 { font-size: clamp(1.4rem, 4.5vw, 2.4rem); margin: 0; color: var(--b); }
+  .big { font-size: clamp(3rem, 14vw, 7rem); text-align: center; margin: 0; }
+  ul { margin: 0; padding-left: 1.2em; font-size: clamp(1.1rem, 3vw, 1.6rem); display: grid; gap: 8px; }
+  .note { background: #eaf3ff; border-radius: 12px; padding: 10px 14px; font-size: .95rem; }
+  .q { font-size: clamp(1.3rem, 4vw, 2rem); font-weight: 800; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; font-size: clamp(1.1rem, 3.5vw, 1.8rem); font-weight: 800; }
+  .flow span.step { background: #eaf3ff; border-radius: 14px; padding: 12px 16px; text-align: center; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #0a1e34; color: #cfe3f7; }
+  .bar .prog { flex: 1; height: 8px; background: #254a73; border-radius: 999px; overflow: hidden; } .bar .prog i { display: block; height: 100%; width: 0; background: #5cc7da; transition: width .3s; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: #5cc7da; color: #06223b; cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; } button.g { background: transparent; color: #cfe3f7; border: 1px solid #3b6491; }
+  button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  #pn { display: none; position: fixed; right: 12px; bottom: 72px; width: min(320px, 90vw); background: #fff; color: var(--tx); border-radius: 14px; padding: 12px 14px; font-size: .95rem; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+  @media (prefers-reduced-motion: reduce) { .slide.on { animation: none; } }
+</style>
+</head>
+<body>
+<main id="deck">
+  <section class="slide" data-note="오늘 배울 것을 한 문장으로 말해 주세요. 비 오는 날 경험을 물어봐도 좋아요.">
+    <p class="big" aria-hidden="true">💧</p><h1>물은 어디로 갈까?</h1><p>5학년 과학 · 물의 순환</p>
+  </section>
+  <section class="slide" data-note="1분 생각 나누기. 짝에게 말하게 하세요.">
+    <h2>궁금해요</h2><p class="q">빨래가 마르면 그 물은 어디로 갔을까요?</p><div class="note">짝과 1분 동안 이야기해 보세요.</div>
+  </section>
+  <section class="slide" data-note="증발은 눈에 안 보이는 기체(수증기)가 된다는 점을 강조하세요.">
+    <h2>① 증발</h2><ul><li>햇빛을 받은 물이 눈에 보이지 않는 <b>수증기</b>가 돼요.</li><li>바다·강·빨래·식물에서도 일어나요.</li></ul><p class="big" aria-hidden="true">☀️ → ♨️</p>
+  </section>
+  <section class="slide" data-note="컵 겉면에 물방울이 맺히는 예를 떠올리게 하세요.">
+    <h2>② 응결</h2><ul><li>높은 곳은 차가워서 수증기가 작은 <b>물방울</b>이 돼요.</li><li>물방울이 모이면 <b>구름</b>이 돼요.</li></ul><p class="big" aria-hidden="true">☁️</p>
+  </section>
+  <section class="slide" data-note="비·눈·우박 모두 '강수'. 땅에 스민 물은 다시 강과 바다로 간다고 연결하세요.">
+    <h2>③ 강수</h2><ul><li>구름 속 물방울이 커져 <b>비나 눈</b>으로 내려요.</li><li>내린 물은 강과 바다로 모여요.</li></ul><p class="big" aria-hidden="true">🌧️</p>
+  </section>
+  <section class="slide" data-note="순환이라는 말이 '돌고 돈다'는 뜻임을 확인하세요.">
+    <h2>한 바퀴 돌아요</h2><div class="flow"><span class="step">바다</span>→<span class="step">증발</span>→<span class="step">구름</span>→<span class="step">비·눈</span>→<span class="step">바다</span></div>
+  </section>
+  <section class="slide" data-note="정답: 증발(수증기) → 응결 → 강수. 모둠별로 답을 말하게 하세요.">
+    <h2>확인 문제</h2><p class="q">물방울이 모여 구름이 되는 단계의 이름은?</p><ul><li>① 증발 &nbsp; ② 응결 &nbsp; ③ 강수</li></ul><div class="note">정답은 N키로 발표자 메모에서 확인하세요.</div>
+  </section>
+</main>
+<div class="bar">
+  <button class="g" id="prev" aria-label="이전 장">◀</button>
+  <button id="next" aria-label="다음 장">다음 ▶</button>
+  <div class="prog" aria-hidden="true"><i id="pg"></i></div>
+  <span id="cnt" aria-live="polite"></span>
+  <button class="g" id="nt" aria-pressed="false">발표자 메모 (N)</button>
+</div>
+<div id="pn" role="note"></div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  let i = 0;
+  const $ = (id) => document.getElementById(id);
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    $('prev').disabled = i === 0; $('next').disabled = i === slides.length - 1;
+    $('pg').style.width = `${((i + 1) / slides.length) * 100}%`; $('cnt').textContent = `${i + 1} / ${slides.length}`;
+    $('pn').textContent = '메모: ' + (slides[i].dataset.note || '없음');
+  }
+  $('prev').onclick = () => show(i - 1); $('next').onclick = () => show(i + 1);
+  $('nt').onclick = () => { const on = $('pn').style.display !== 'block'; $('pn').style.display = on ? 'block' : 'none'; $('nt').setAttribute('aria-pressed', on); };
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0); else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'n') $('nt').click();
+  });
+  show(0);
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@ import { facetValues, metaOf, topTags } from '../core/filter.js';
 import { KIND_OPTIONS } from '../shared/market.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
+import { TOUR_STEPS } from './guide-steps.js';
 
 const dateOnly = (iso) => String(iso || '').slice(0, 10);
 
@@ -36,11 +37,11 @@ export const emptyState = (title, { icon = '🐳', text = '', action = null } = 
 export function tabsBar(current, onSelect) {
   return h('div', { class: 'tabs', role: 'tablist' },
     ['catalog', 'market', 'mypod', 'class'].map((k) =>
-      h('button', { class: `tab ${k}`, role: 'tab', 'aria-selected': String(current === k), onclick: () => onSelect(k) },
+      h('button', { class: `tab ${k}`, role: 'tab', 'data-tour': `tab-${k}`, 'aria-selected': String(current === k), onclick: () => onSelect(k) },
         S.tabs[k])));
 }
 
-export function topBar(mode, onToggle, onCreate, onImport) {
+export function topBar(mode, onToggle, onCreate, onImport, onGuide) {
   const teacher = mode === 'mother';
   return h('div', { class: 'top' },
     teacher ? h('div', { class: 'mode-band', role: 'status' }, S.mode.band) : null,
@@ -50,9 +51,10 @@ export function topBar(mode, onToggle, onCreate, onImport) {
         h('h1', {}, S.appName),
         h('span', { class: `mode-label ${teacher ? 'teacher' : ''}` }, S.mode[mode])),
       h('div', { class: 'actions' },
-        h('button', { class: 'icon-btn', 'aria-label': S.actions.create, title: S.actions.create, onclick: onCreate }, '＋'),
-        h('button', { class: 'icon-btn', 'aria-label': S.actions.import, title: S.actions.import, onclick: onImport }, '↓'),
-        h('button', { class: 'icon-btn', 'aria-label': teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, title: teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, onclick: onToggle }, teacher ? '🔓' : '🔒'))));
+        h('button', { class: 'icon-btn', 'data-tour': 'create', 'aria-label': S.actions.create, title: S.actions.create, onclick: onCreate }, '＋'),
+        h('button', { class: 'icon-btn', 'data-tour': 'import', 'aria-label': S.actions.import, title: S.actions.import, onclick: onImport }, '↓'),
+        h('button', { class: 'icon-btn', 'data-tour': 'mode', 'aria-label': teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, title: teacher ? S.mode.toggleToBaby : S.mode.toggleToMother, onclick: onToggle }, teacher ? '🔓' : '🔒'),
+        onGuide ? h('button', { class: 'icon-btn', 'data-tour': 'guide', 'aria-label': S.guide.open, title: S.guide.open, onclick: onGuide }, '❔') : null)));
 }
 
 function select(label, value, options, onChange, labels = {}, allLabel = S.filter.all) {
@@ -73,7 +75,7 @@ function findBar({ entries, state, onFilter, sortSel }) {
   const q = h('input', { type: 'search', placeholder: Fd.search, 'aria-label': Fd.search, value: state.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
   const tags = topTags(entries);
-  return h('div', { class: 'filters' },
+  return h('div', { class: 'filters', 'data-tour': 'find' },
     h('div', { class: 'wide' }, q),
     select(S.form.domain, state.domain, DOMAINS, (v) => onFilter({ domain: v, category: '', subcategory: '' }), {}, Fd.domainAll),
     state.domain ? select(S.form.category, state.category, categoriesOf(state.domain), (v) => onFilter({ category: v, subcategory: '' }), {}, Fd.categoryAll) : null,
@@ -137,7 +139,7 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
   const m = metaOf(entry);
   return h('article', { class: 'card' },
     selectBox || null,
-    h('div', { class: 'row' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null),
+    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null),
     h('h3', {}, w.title),
     m.description ? h('p', { class: 'desc' }, m.description) : null,
     metaLine(entry),
@@ -152,8 +154,8 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
       onRemix ? h('button', { onclick: () => onRemix(entry) }, S.actions.remix) : null,
       onRemove ? h('button', { class: 'danger', onclick: () => onRemove(entry) }, S.actions.remove) : null,
       onAdd ? h('button', { onclick: () => onAdd(entry) }, S.actions.add) : null,
-      h('button', { onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details),
-      h('button', { class: 'primary', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
+      h('button', { 'data-tour': 'details', onclick: () => onToggleDetail(w.id) }, open ? S.actions.close : S.actions.details),
+      h('button', { class: 'primary', 'data-tour': 'run', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
       m.standard ? h('p', { class: 'muted' }, `성취기준: ${m.standard}`) : null,
@@ -170,7 +172,7 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
 function spoutRow(entry, { countsOf, mineOf, onSpout }) {
   const c = countsOf(entry);
   const mine = mineOf(entry);
-  return h('div', { class: 'spout' },
+  return h('div', { class: 'spout', 'data-tour': 'spout' },
     h('button', {
       'aria-pressed': String(!!mine), title: S.spout.hint, 'aria-label': `${mine ? S.spout.done : S.spout.button} ${S.spout.counts(c.teacher, c.student)}`,
       onclick: () => onSpout(entry),
@@ -441,4 +443,24 @@ export function examLockView() {
     h('h2', {}, S.exam.title),
     h('p', {}, S.exam.body),
     h('p', { class: 'muted' }, S.exam.hint));
+}
+
+// 사용 방법 화면: 등급(역할)·배지·표시 읽는 법을 한 곳에 모으고, 따라 해보기 버튼을 둔다
+export function guideView({ onStartTour, onBack }) {
+  const G = S.guide;
+  const sec = (title, ...kids) => h('section', { class: 'card guide-sec' }, h('h3', {}, title), ...kids.filter(Boolean));
+  return h('section', { class: 'section guide' },
+    h('div', { class: 'row' }, h('button', { onclick: onBack }, S.actions.back), h('h2', {}, G.title)),
+    h('div', { class: 'card guide-hero' }, h('p', {}, G.intro), h('button', { class: 'primary', 'data-tour': 'guide-start', onclick: onStartTour }, G.start)),
+    sec(G.rolesTitle, h('p', { class: 'muted' }, G.rolesIntro),
+      h('dl', { class: 'guide-dl' }, G.roles.map((r) => [h('dt', {}, `${r.icon} ${r.name}`), h('dd', {}, r.text)]).flat())),
+    sec(G.badgesTitle, h('p', { class: 'muted' }, G.badgesIntro),
+      h('div', { class: 'guide-rows' }, ['clear', 'shallow', 'whirlpool'].map((b) =>
+        h('div', { class: 'guide-row' }, h('span', { class: `badge ${b}` }, S.badge[b]), h('p', {}, G.badgeText[b]))))),
+    sec(G.marksTitle, h('p', { class: 'muted' }, G.marksIntro),
+      h('div', { class: 'guide-rows' }, G.marks.map((m) =>
+        h('div', { class: 'guide-row' }, h('span', { class: m.cls ? `badge ${m.cls}` : 'badge' }, m.label), h('p', {}, m.text))))),
+    sec(G.signTitle, h('p', {}, G.signText), h('ul', { class: 'guide-list' }, G.signStates.map((t) => h('li', {}, t)))),
+    sec(G.podsTitle, h('ul', { class: 'guide-list' }, G.pods.map((t) => h('li', {}, t)))),
+    h('p', { class: 'muted' }, G.stepsCount(TOUR_STEPS.length)));
 }

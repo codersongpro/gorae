@@ -5,65 +5,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>럭키드로우</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f7fb; color: #1f2328; }
-  h1 { margin: 0 0 8px; font-size: 1.4rem; }
-  textarea { width: 100%; box-sizing: border-box; min-height: 120px; font-size: 1rem; padding: 8px; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
-  button { font-size: 1.1rem; padding: 10px 18px; border-radius: 10px; border: 0; background: #3a5a78; color: #fff; cursor: pointer; }
-  button.sub { background: #dde5ee; color: #1f2328; }
-  #stage { margin: 16px 0; min-height: 30vh; display: grid; place-items: center; background: #fff; border-radius: 16px; font-size: clamp(2.5rem, 12vw, 6rem); font-weight: 800; text-align: center; }
-  #stage.spin { color: #8a94a0; }
-  #log { color: #5b636b; }
+  :root { --b: #3366ff; --bg: #f7f7f8; --tx: #171719; --mu: #5a5c63; --r: 14px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .wrap { max-width: 880px; margin: 0 auto; display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .wrap { grid-template-columns: 300px 1fr; } header { grid-column: 1 / -1; } }
+  h1 { font-size: 1.3rem; margin: 0; } .sub { color: var(--mu); margin: 2px 0 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: var(--r); padding: 16px; box-shadow: 0 1px 4px rgba(23,23,23,.08); }
+  textarea { width: 100%; min-height: 150px; font: inherit; padding: 10px; border: 1px solid #e1e2e4; border-radius: 10px; resize: vertical; }
+  label.o { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+  input[type=number] { width: 4.5em; font: inherit; padding: 6px; border: 1px solid #e1e2e4; border-radius: 8px; }
+  button { font: inherit; font-weight: 700; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; background: var(--b); color: #fff; cursor: pointer; }
+  button.g { background: #fff; color: var(--tx); border: 1px solid #e1e2e4; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid #7aa0ff; outline-offset: 2px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  #stage { min-height: 42vh; display: grid; place-items: center; text-align: center; font-size: clamp(2.4rem, 11vw, 6.5rem); font-weight: 800; background: linear-gradient(160deg, #eef2ff, #fff); border-radius: var(--r); padding: 16px; }
+  #stage.spin { color: #8a94a0; } #stage.win { animation: pop .5s ease; }
+  @keyframes pop { 0% { transform: scale(.85); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+  #hist { margin: 0; padding-left: 1.2em; color: var(--mu); } #hist li { margin: 2px 0; }
+  .chip { display: inline-block; padding: 2px 10px; background: #eef2ff; color: #0054d1; border-radius: 999px; font-size: .85rem; font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { #stage.win { animation: none; } }
 </style>
 </head>
 <body>
-<h1>🎲 럭키드로우</h1>
-<p>한 줄에 하나씩 적어요. 학생 번호나 별명을 쓰면 개인정보 걱정이 없어요.</p>
-<textarea id="list" aria-label="뽑기 목록">1번
+<div class="wrap">
+  <header><h1>🎲 럭키드로우</h1><p class="sub">한 줄에 하나씩 적고 뽑아요. 학생은 번호나 별명으로 적으면 안전해요. 입력한 내용은 이 화면 밖으로 나가지 않아요.</p></header>
+  <section class="card" aria-label="설정">
+    <label for="list"><strong>뽑을 목록</strong> <span class="chip" id="cnt"></span></label>
+    <textarea id="list">1번
 2번
 3번
 4번
 5번
-6번</textarea>
-<div class="row">
-  <label><input type="checkbox" id="remove" checked> 뽑힌 항목은 빼기</label>
-  <label>한 번에 <input type="number" id="count" min="1" max="20" value="1" style="width:4em"> 개</label>
+6번
+7번
+8번</textarea>
+    <label class="o"><input type="checkbox" id="remove" checked> 뽑힌 항목은 다음에서 빼기</label>
+    <label class="o"><input type="checkbox" id="sound" checked> 효과음</label>
+    <label class="o">한 번에 <input type="number" id="count" min="1" max="20" value="1"> 개 뽑기</label>
+    <div class="row"><button class="g" id="reset">처음부터</button><button class="g" id="shuf">목록 섞기</button></div>
+  </section>
+  <section aria-label="결과">
+    <div id="stage" aria-live="polite">?</div>
+    <div class="row" style="margin-top:10px"><button id="draw">뽑기! (Enter)</button></div>
+    <div class="card" style="margin-top:12px"><strong>뽑힌 순서</strong><ol id="hist"></ol></div>
+  </section>
 </div>
-<div class="row">
-  <button id="draw">뽑기!</button>
-  <button class="sub" id="reset">처음부터</button>
-</div>
-<div id="stage" aria-live="polite">?</div>
-<p id="log"></p>
 <script>
-  const listEl = document.getElementById('list');
-  const stage = document.getElementById('stage');
-  const log = document.getElementById('log');
-  let pool = null; const picked = [];
-  const items = () => listEl.value.split('\n').map((s) => s.trim()).filter(Boolean);
+  const $ = (id) => document.getElementById(id);
   const rand = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
-  document.getElementById('reset').onclick = () => { pool = null; picked.length = 0; stage.textContent = '?'; log.textContent = ''; };
-  document.getElementById('draw').onclick = () => {
-    if (!pool || !document.getElementById('remove').checked) pool = items().filter((x) => !(document.getElementById('remove').checked && picked.includes(x)));
-    if (!pool.length) { stage.textContent = '다 뽑았어요!'; return; }
-    const n = Math.min(pool.length, Math.max(1, +document.getElementById('count').value || 1));
-    stage.classList.add('spin');
+  const items = () => $('list').value.split('\n').map((s) => s.trim()).filter(Boolean);
+  let picked = [];
+  let ac;
+  function beep(f, d = .12) {
+    if (!$('sound').checked) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = f; g.gain.value = .06; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+    } catch { /* 소리를 낼 수 없으면 조용히 */ }
+  }
+  const pool = () => items().filter((x) => !($('remove').checked && picked.includes(x)));
+  const info = () => { $('cnt').textContent = `남은 ${pool().length}개 / 전체 ${items().length}개`; };
+  function drawHist() { $('hist').textContent = ''; picked.forEach((p) => { const li = document.createElement('li'); li.textContent = p; $('hist').appendChild(li); }); info(); }
+  let busy = false;
+  $('draw').onclick = () => {
+    if (busy) return;
+    const p = pool();
+    if (!p.length) { $('stage').textContent = '모두 뽑았어요!'; return; }
+    const n = Math.min(p.length, Math.max(1, +$('count').value || 1));
+    busy = true; $('stage').className = 'spin';
     let t = 0;
-    const iv = setInterval(() => { stage.textContent = pool[rand(pool.length)]; if (++t > 15) finish(); }, 60);
-    function finish() {
+    const iv = setInterval(() => { $('stage').textContent = p[rand(p.length)]; beep(400 + (t % 6) * 60, .04); if (++t > 16) done(); }, 70);
+    function done() {
       clearInterval(iv);
-      stage.classList.remove('spin');
-      const result = [];
-      for (let i = 0; i < n; i++) {
-        const k = rand(pool.length);
-        result.push(pool[k]);
-        if (document.getElementById('remove').checked) pool.splice(k, 1);
-      }
-      picked.push(...result);
-      stage.textContent = result.join(', ');
-      log.textContent = '지금까지: ' + picked.join(', ');
+      const rest = [...p], res = [];
+      for (let i = 0; i < n; i++) res.push(rest.splice(rand(rest.length), 1)[0]);
+      picked.push(...res);
+      $('stage').className = 'win'; $('stage').textContent = res.join(' · ');
+      beep(880, .25); drawHist(); busy = false;
     }
   };
+  $('reset').onclick = () => { picked = []; $('stage').className = ''; $('stage').textContent = '?'; drawHist(); };
+  $('shuf').onclick = () => { const a = items(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } $('list').value = a.join('\n'); };
+  $('list').addEventListener('input', info);
+  $('remove').addEventListener('change', info);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') $('draw').click(); });
+  drawHist();
 </script>
 </body>
 </html>

@@ -5,42 +5,74 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>모둠 점수판</title>
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f5f3fb; color: #1f2328; }
-  h1 { margin: 0 0 8px; font-size: 1.4rem; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
-  button { font-size: 1.1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #5b4a8a; color: #fff; cursor: pointer; }
-  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-  .t { background: #fff; border-radius: 16px; padding: 12px; text-align: center; }
-  .t input { font-size: 1.1rem; width: 100%; box-sizing: border-box; text-align: center; border: 0; border-bottom: 2px solid #ddd; }
-  .s { font-size: 3.5rem; font-weight: 800; margin: 6px 0; }
-  .t.top { outline: 4px solid #e2b33c; }
+  :root { --b: #5b37ed; --bg: #f7f7f8; --tx: #171719; --mu: #5a5c63; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--tx); font: 16px/1.5 "Pretendard JP", "Malgun Gothic", system-ui, sans-serif; word-break: keep-all; }
+  .top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  h1 { font-size: 1.3rem; margin: 0 auto 0 0; }
+  button { font: inherit; font-weight: 700; min-height: 44px; padding: 0 16px; border: 1px solid #e1e2e4; border-radius: 12px; background: #fff; color: var(--tx); cursor: pointer; }
+  button.p { background: var(--b); border-color: var(--b); color: #fff; }
+  button:focus-visible, input:focus-visible { outline: 3px solid #a99af7; outline-offset: 2px; }
+  input[type=number] { width: 4.5em; font: inherit; padding: 6px; border: 1px solid #e1e2e4; border-radius: 8px; }
+  #board { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .t { background: #fff; border-radius: 16px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(23,23,23,.08); border: 3px solid transparent; transition: transform .2s; }
+  .t.lead { border-color: #ffb300; transform: translateY(-3px); } .t.win { background: #fff8e1; }
+  .t input.nm { width: 100%; font: inherit; font-weight: 700; text-align: center; border: 0; border-bottom: 2px solid #e1e2e4; padding: 4px; background: transparent; }
+  .sc { font-size: 3.6rem; font-weight: 800; line-height: 1.2; margin: 6px 0; font-variant-numeric: tabular-nums; }
+  .btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .btns button { padding: 0; }
+  .rank { font-size: .8rem; color: var(--mu); } .msg { min-height: 1.5em; font-weight: 800; color: #b26a00; }
+  @media (prefers-reduced-motion: reduce) { .t { transition: none; } }
 </style>
 </head>
 <body>
-<h1>🏆 모둠 점수판</h1>
-<div class="row">
-  <label>모둠 수 <input type="number" id="n" min="2" max="12" value="4" style="width:4em"></label>
-  <button id="make">점수판 만들기</button>
+<div class="top">
+  <h1>🏆 모둠 점수판</h1>
+  <label>모둠 수 <input id="n" type="number" min="2" max="12" value="4"></label>
+  <label>목표 점수 <input id="goal" type="number" min="0" max="999" value="0" title="0이면 목표 없음"></label>
+  <button class="p" id="make">점수판 만들기</button>
+  <button id="undo">되돌리기</button>
+  <button id="sort" aria-pressed="false">순위로 정렬</button>
   <button id="zero">모두 0점</button>
 </div>
+<p class="msg" id="msg" aria-live="polite"></p>
 <div id="board"></div>
 <script>
-  let teams = [];
+  const $ = (id) => document.getElementById(id);
+  let teams = [], hist = [], sorted = false;
+  let ac;
+  function beep(f, d = .15) { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; g.gain.value = .06; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d); } catch { /* 소리 없이 */ } }
+  function make() {
+    const n = Math.min(12, Math.max(2, +$('n').value || 4));
+    teams = Array.from({ length: n }, (_, i) => ({ label: `${i + 1}모둠`, score: 0 })); hist = []; render();
+  }
+  function change(t, d) { hist.push([t, t.score]); t.score += d; beep(d > 0 ? 660 : 330); render(); check(t); }
+  function check(t) {
+    const g = +$('goal').value || 0;
+    $('msg').textContent = g && t.score >= g ? `🎉 ${t.label}이(가) 목표 ${g}점을 넘었어요!` : '';
+    if (g && t.score >= g) beep(988, .4);
+  }
   function render() {
     const max = Math.max(...teams.map((t) => t.score));
-    const board = document.getElementById('board'); board.textContent = '';
-    teams.forEach((t) => {
-      const box = document.createElement('div'); box.className = 't' + (t.score === max && max > 0 ? ' top' : '');
-      const title = document.createElement('input'); title.value = t.label; title.setAttribute('aria-label', '모둠 표시'); title.oninput = (e) => { t.label = e.target.value; };
-      const s = document.createElement('div'); s.className = 's'; s.textContent = t.score;
-      const row = document.createElement('div'); row.className = 'row'; row.style.justifyContent = 'center';
-      [[-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, label]) => { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { t.score += d; render(); }; row.appendChild(b); });
-      box.append(title, s, row); board.appendChild(box);
+    const order = sorted ? [...teams].sort((a, b) => b.score - a.score) : teams;
+    const g = +$('goal').value || 0;
+    const board = $('board'); board.textContent = '';
+    order.forEach((t) => {
+      const box = document.createElement('div');
+      box.className = 't' + (t.score === max && max > 0 ? ' lead' : '') + (g && t.score >= g ? ' win' : '');
+      const nm = document.createElement('input'); nm.className = 'nm'; nm.value = t.label; nm.setAttribute('aria-label', '모둠 표시'); nm.oninput = () => { t.label = nm.value; };
+      const sc = document.createElement('div'); sc.className = 'sc'; sc.textContent = t.score; sc.setAttribute('aria-live', 'polite');
+      const rk = document.createElement('div'); rk.className = 'rank';
+      rk.textContent = sorted ? `${[...teams].sort((a, b) => b.score - a.score).findIndex((x) => x === t) + 1}위` : '';
+      const btns = document.createElement('div'); btns.className = 'btns';
+      [[-1, '−1'], [1, '+1'], [5, '+5']].forEach(([d, label]) => { const b = document.createElement('button'); b.textContent = label; b.setAttribute('aria-label', `${t.label} ${label}점`); b.onclick = () => change(t, d); btns.appendChild(b); });
+      box.append(nm, sc, rk, btns); board.appendChild(box);
     });
   }
-  document.getElementById('make').onclick = () => { const n = Math.min(12, Math.max(2, +document.getElementById('n').value || 4)); teams = Array.from({ length: n }, (_, i) => ({ label: (i + 1) + '모둠', score: 0 })); render(); };
-  document.getElementById('zero').onclick = () => { teams.forEach((t) => (t.score = 0)); render(); };
-  document.getElementById('make').click();
+  $('make').onclick = make;
+  $('zero').onclick = () => { if (teams.some((t) => t.score) && !confirm('모든 점수를 0으로 되돌릴까요?')) return; hist = []; teams.forEach((t) => (t.score = 0)); $('msg').textContent = ''; render(); };
+  $('undo').onclick = () => { const h = hist.pop(); if (h) { h[0].score = h[1]; render(); } };
+  $('sort').onclick = (e) => { sorted = !sorted; e.target.setAttribute('aria-pressed', sorted); render(); };
+  make();
 </script>
 </body>
 </html>

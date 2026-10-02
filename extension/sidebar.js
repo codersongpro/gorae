@@ -28,7 +28,9 @@ import { remixInput, editInput, saveEdit } from './core/remix.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
-import { pinView, marketView, marketRunConfirm, examLockView } from './ui/views.js';
+import { pinView, marketView, marketRunConfirm, examLockView, guideView } from './ui/views.js';
+import { startTour } from './ui/tour.js';
+import { TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
@@ -72,6 +74,21 @@ async function loadAll() {
 const verifyWorks = (works) => buildEntries({ works, list: state.list, storage, rootJwk: ROOT_PUBLIC_JWK });
 
 function go(patch) { Object.assign(state, patch); render(); }
+
+// 따라 해보기: 단계마다 필요한 곳간 탭으로 옮겨 가며 실제 버튼을 비춘다
+function beginTour() {
+  go({ screen: 'main', tab: 'catalog', openId: null });
+  startTour({
+    steps: TOUR_STEPS, t: S.tour,
+    prepare: async (st) => {
+      const patch = {};
+      if (state.screen !== 'main') patch.screen = 'main';
+      if (st.tab && state.tab !== st.tab) { patch.tab = st.tab; patch.openId = null; }
+      if (Object.keys(patch).length) { Object.assign(state, patch); await render(); }
+    },
+    onEnd: (done) => { go({ screen: 'main', tab: 'catalog', openId: null, notice: done ? S.tour.finished : '' }); },
+  });
+}
 const toggleDetail = (id) => go({ openId: state.openId === id ? null : id });
 
 // 실행 창이 열리며 초점이 옮겨 가도 사이드바가 닫히지 않게 한다.
@@ -411,6 +428,9 @@ async function render() {
       hint: k === 'remix' ? S.edit.remixHint : null,
     }));
   }
+  if (state.screen === 'guide') {
+    return app.replaceChildren(guideView({ onStartTour: beginTour, onBack: () => go({ screen: 'main' }) }));
+  }
   if (state.screen === 'pin') {
     const P = S.pin;
     const toMother = async () => { await storage.set('mode', 'mother'); go({ screen: 'main', mode: 'mother', notice: S.mode.on }); };
@@ -488,7 +508,7 @@ async function render() {
         return go({ mode: 'baby', notice: '', classOut: null });
       }
       go({ screen: 'pin', pin: { has: await hasPin(storage), error: '', askReset: false } });
-    }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' })),
+    }, () => go({ screen: 'create', create: freshCreate() }), () => go({ screen: 'import' }), () => go({ screen: 'guide' })),
     tabsBar(state.tab, (tab) => go({ tab, notice: '', openId: null, confirmUrl: null })),
     // replaceChildren는 null을 글자 "null"로 넣으므로 없는 요소는 빼고 넘긴다
     ...[

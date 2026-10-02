@@ -6,6 +6,7 @@ import { facetValues, metaOf, topTags } from '../core/filter.js';
 import { KIND_OPTIONS } from '../shared/market.js';
 import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
 import { canRun } from '../core/runner.js';
+import { isRestricted } from '../core/reference.js';
 import { TOUR_STEPS } from './guide-steps.js';
 
 const dateOnly = (iso) => String(iso || '').slice(0, 10);
@@ -130,16 +131,23 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     h('p', { class: 'muted' }, S.tagline),
     h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')),
     findBar({ entries, state, onFilter, sortSel }),
-    visible.length ? visible.map((e) => workCard(e, { onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })) : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
+    visible.length ? visible.map((e) => workCard(e, { mode: state.mode, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })) : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
 }
 
-function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRemix, selectBox, open, report, extra, share, submit, spout }) {
+function workCard(entry, opts) {
   const w = entry.work;
+  // 참고 전용 작품은 학생고래 모드에서 보고 실행만 된다: 담기·리믹스·수정·꾸러미·레시피·공유를 숨긴다
+  const locked = isRestricted(w, opts.mode);
+  const { onRun, onToggleDetail, onRemove, open, report, extra, spout } = opts;
+  const onAdd = locked ? null : opts.onAdd, onEdit = locked ? null : opts.onEdit, onRemix = locked ? null : opts.onRemix;
+  const selectBox = locked ? null : opts.selectBox, share = locked ? null : opts.share, submit = locked ? null : opts.submit;
   const run = canRun(entry);
   const m = metaOf(entry);
   return h('article', { class: 'card' },
     selectBox || null,
-    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null),
+    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
+      w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null),
+    locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
     h('h3', {}, w.title),
     m.description ? h('p', { class: 'desc' }, m.description) : null,
     metaLine(entry),
@@ -160,7 +168,7 @@ function workCard(entry, { onAdd, onRun, onToggleDetail, onRemove, onEdit, onRem
     open ? h('div', { class: 'detail' },
       m.standard ? h('p', { class: 'muted' }, `성취기준: ${m.standard}`) : null,
       h('div', {}, h('p', { class: 'muted' }, S.detail.howTo), h('p', {}, w.howToUse)),
-      w.promptRecipe ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
+      w.promptRecipe && !locked ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
       entry.status.ok && entry.status.songs.length ? entry.status.songs.map((s) => h('p', {}, `🎤 ${s.text} — ${s.author}`)) : null,
       checkList(report),
       share ? sharePanel(entry, share) : null,
@@ -303,7 +311,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
       if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
       if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
       return workCard(entriesById.get(r.id), {
-        onRun, onRemove, onToggleDetail, onEdit, onRemix, share, submit, open: state.openId === r.id, report: r.checkReport,
+        mode: state.mode, onRun, onRemove, onToggleDetail, onEdit, onRemix, share, submit, open: state.openId === r.id, report: r.checkReport,
         selectBox: h('label', { class: 'check' },
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),

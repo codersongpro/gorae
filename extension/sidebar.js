@@ -29,6 +29,7 @@ import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
 import { pinView, marketView, marketRunConfirm, examLockView, guideView } from './ui/views.js';
+import { isRestricted } from './core/reference.js';
 import { startTour } from './ui/tour.js';
 import { TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
@@ -321,6 +322,7 @@ async function confirmSpoutsSent() {
 
 async function addToMypod(entry) {
   const w = entry.work;
+  if (isRestricted(w, state.mode)) return go({ notice: S.reference.blocked });
   const report = checkWork(w);
   const r = await store.add(w, { source: 'catalog', checkReport: report });
   const msg = !r.ok ? S.add.dup : report && !report.ok ? `${S.add.done} ${S.add.warn(report.warnings.length)}` : S.add.done;
@@ -352,12 +354,13 @@ async function submitCreate(input) {
 }
 
 const startEdit = (entry) => go({ screen: 'create', create: { kind: 'edit', targetId: entry.work.id, errors: [], warnings: [], input: editInput(entry.work) } });
-const startRemix = (entry) => go({ screen: 'create', create: { kind: 'remix', errors: [], warnings: [], input: remixInput(entry.work) } });
+const startRemix = (entry) => isRestricted(entry.work, state.mode) ? go({ notice: S.reference.blocked }) : go({ screen: 'create', create: { kind: 'remix', errors: [], warnings: [], input: remixInput(entry.work) } });
 
 // 꾸러미 내보내기: 고른 작품을 파일/클립보드용 텍스트로 만든다
 async function doExport(name) {
   if (!state.selected.length) return go({ notice: S.bundle.pickFirst, packName: name });
   if (state.selected.length > 10) return go({ notice: S.bundle.tooMany, packName: name });
+  if ((await store.list()).some((r) => state.selected.includes(r.id) && isRestricted(r.work, state.mode))) return go({ notice: S.reference.blocked, packName: name });
   const out = exportBundle(await store.list(), state.selected, { name });
   go({ exportOut: out, packName: name, notice: '' });
 }

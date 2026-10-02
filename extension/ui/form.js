@@ -87,7 +87,9 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
     h('label', { class: 'field' }, h('span', {}, F().tags), tagInput),
     v.domain ? h('div', { class: 'row' }, (RECOMMENDED_TAGS[v.domain] || []).map((t) => h('button', { type: 'button', class: 'chip', onclick: () => addTag(t) }, '#' + t))) : null,
     textEl(S.create.author, v, 'author'),
-    textEl(S.create.recipe, v, 'promptRecipe', { multiline: true }));
+    textEl(S.create.recipe, v, 'promptRecipe', { multiline: true }),
+    mode === 'mother' ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: v.referenceOnly === true, onchange: (e) => { v.referenceOnly = e.target.checked; } }), S.reference.formLabel) : null,
+    mode === 'mother' ? h('p', { class: 'muted' }, S.reference.formHint) : null);
 
   // 형태별 입력
   let contentBlock = null;

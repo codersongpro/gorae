@@ -21,6 +21,15 @@ export const catalogExtras = [
     addedAt: '2026-09-28T00:00:00Z',
   }),
   lesson({
+    file: 'slides-water.html', id: 'sample-ref-slides', title: '[참고용] 물의 순환 수업 발표 예시', category: 'teaching_material', subcategory: 'slides', badge: 'clear',
+    schoolLevel: 'elementary', grade: '5', subject: '과학', topic: '물의 순환', estimatedMinutes: 10, groupType: 'whole_class', audience: ['teacher', 'student'],
+    tags: ['발표', '참고자료', '수업예시'], author: '송프로 · 초등', referenceOnly: true,
+    description: '발표 구성(질문→설명→정리→확인 문제)을 보여 주는 참고용 예시예요. 보고 따라 구성만 배우고, 내 모둠의 내용으로 새로 만들어요.',
+    howToUse: '← → 키로 넘겨 보며 발표가 어떤 순서로 짜였는지 살펴보세요. 그대로 쓰지 말고 내 주제로 새로 만들어요.',
+    promptRecipe: '5학년 과학 물의 순환 발표를 슬라이드로 만들어 줘. 질문으로 시작하고 증발·응결·강수를 설명한 뒤 확인 문제로 끝내.',
+    addedAt: '2026-10-02T02:00:00Z',
+  }),
+  lesson({
     file: 'lesson-intro.html', id: 'sample-lesson-intro', title: '오늘의 학습 문제 도입 화면', category: 'teaching_material', subcategory: 'intro', badge: 'clear',
     schoolLevel: 'elementary', grade: '4', subject: '수학', topic: '수업 열기', estimatedMinutes: 5, groupType: 'whole_class', audience: ['teacher'],
     tags: ['도입', '전자칠판', '수업열기'], author: '송프로 · 초등',

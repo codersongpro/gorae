@@ -12,3 +12,21 @@ test('따라 해보기의 모든 단계는 화면에 실제로 달린 data-tour 
     assert.ok(st.title && st.body);
   }
 });
+
+import { isReferenceOnly, isRestricted } from '../extension/core/reference.js';
+import { createWork } from '../extension/core/work.js';
+import { toolInput } from './fixtures.mjs';
+
+test('참고 전용: 학생고래만 막히고 교사고래는 그대로 쓴다', () => {
+  const w = { referenceOnly: true };
+  assert.equal(isReferenceOnly(w), true);
+  assert.equal(isRestricted(w, 'baby'), true);
+  assert.equal(isRestricted(w, 'mother'), false);
+  assert.equal(isRestricted({}, 'baby'), false);
+});
+
+test('참고 전용 설정은 만든 작품에 기록되고, 끄면 기록하지 않는다', () => {
+  const base = toolInput({ artifactType: 'html', html: '<p>x</p>', title: 't', howToUse: 'h', author: '별', audience: ['teacher'] });
+  assert.equal(createWork({ ...base, referenceOnly: true }).referenceOnly, true);
+  assert.equal('referenceOnly' in createWork(base), false);
+});

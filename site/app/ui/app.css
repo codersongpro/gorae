@@ -182,3 +182,7 @@ a.btn { display: inline-flex; align-items: center; min-height: var(--h-btn); pad
 .tour-actions { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; padding-top: var(--space-2); }
 .tour-actions .quit { margin-right: auto; border: 0; background: transparent; color: var(--color-text-muted); }
 @media (prefers-reduced-motion: reduce) { .tour-hole { transition: none; } }
+
+/* 참고 전용 작품 */
+.badge.reference { background: var(--color-caution, var(--color-fill)); color: var(--color-text); }
+.ref-band { flex-basis: 100%; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--color-caution, var(--color-fill)); color: var(--color-text); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); }

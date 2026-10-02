@@ -14,6 +14,7 @@ function formInput(w) {
     topic: m.topic, standard: m.standard, groupType: m.groupType, estimatedMinutes: m.estimatedMinutes || '',
     html: w.html, url: w.url,
   };
+  if (w.referenceOnly === true) input.referenceOnly = true;
   for (const k of ['sourceUrl', 'loginRequired', 'usesExternalApi', 'mobileSupported', 'collectsPersonalInfo', 'needsInternet', 'sourceRepo', 'sha256', 'scanResult', 'environment']) {
     if (w[k] !== undefined) input[k] = w[k];
   }

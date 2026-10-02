@@ -22,11 +22,12 @@ if (!ticket) {
     stateEl.textContent = S.run[ok.reason] || S.run.UNSUPPORTED;
   } else {
     const b = displayBadge(entry);
-    bar.replaceChildren(
+    bar.replaceChildren(...[
       h('h1', {}, '🐳 ' + ticket.work.title),
       h('span', { class: `badge ${b}` }, S.badge[b]),
       h('span', { class: 'muted' }, S.run.running),
-    );
+      ticket.work.referenceOnly === true ? h('span', { class: 'ref-band', role: 'note' }, S.reference.runBand) : null,
+    ].filter(Boolean));
     // sandbox 페이지가 준비됐다고 알리면 작품을 보낸다 (그 iframe이 보낸 메시지만 받는다)
     window.addEventListener('message', (e) => {
       if (e.source === frame.contentWindow && e.data && e.data.type === 'gorae-sandbox-ready') frame.contentWindow.postMessage(buildRunMessage(ticket.work), '*');

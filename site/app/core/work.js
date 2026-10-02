@@ -66,6 +66,7 @@ export function createWork(input, { now = new Date(), idGen = () => Math.random(
   }
   const min = Math.round(Number(input.estimatedMinutes));
   if (min > 0 && min <= 600) w.estimatedMinutes = min;
+  if (input.referenceOnly === true) w.referenceOnly = true; // 교사 전용 설정: 학생고래는 열람만
   if (input.remixOf) {
     w.remixOf = input.remixOf; // 리믹스 원본 id
     w.remixOfTitle = input.remixOfTitle || ''; // 계보 표시용 원본 제목

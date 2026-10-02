@@ -30,3 +30,17 @@ test('참고 전용 설정은 만든 작품에 기록되고, 끄면 기록하지
   assert.equal(createWork({ ...base, referenceOnly: true }).referenceOnly, true);
   assert.equal('referenceOnly' in createWork(base), false);
 });
+
+import { ensureDefaultPin, checkPin, setPin } from '../extension/core/pin.js';
+import { createMemoryStorage } from '../extension/core/storage.js';
+
+test('임시 기본 암호 1234는 처음 한 번만 들어가고, 직접 정한 암호를 덮지 않는다', async () => {
+  const st = createMemoryStorage();
+  assert.equal(await ensureDefaultPin(st), true);
+  assert.equal((await checkPin(st, '1234')).ok, true);
+  assert.equal(await ensureDefaultPin(st), false);
+  const st2 = createMemoryStorage();
+  await setPin(st2, '5678', '5678');
+  assert.equal(await ensureDefaultPin(st2), false);
+  assert.equal((await checkPin(st2, '1234')).ok, false);
+});

@@ -35,7 +35,7 @@ import { TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
-import { hasPin, setPin, checkPin, resetPin } from './core/pin.js';
+import { hasPin, setPin, checkPin, resetPin, ensureDefaultPin } from './core/pin.js';
 
 const app = document.getElementById('app');
 const storage = createChromeStorage();
@@ -263,7 +263,8 @@ async function previewFromMarket(entry) {
   }
   render();
 }
-async function importFromMarket(entry) {
+async function importFromMarket(entry, { review = false } = {}) {
+  if (state.mode !== 'mother') return go({ market: { ...state.market, notice: S.market.blocked } });
   state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: true }, notice: '' };
   render();
   const M = S.market;
@@ -271,7 +272,7 @@ async function importFromMarket(entry) {
     const r = await importEntry(entry, { fetchFn: fetch, config: MARKET, store });
     const msgs = [r.added.length ? M.added(r.added) : '', r.skipped.length ? M.dup(r.skipped) : '', ...r.warnings].filter(Boolean);
     state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, done: r.added.length ? { ...state.market.done, [entry.id]: true } : state.market.done };
-    if (r.added.length) return go({ tab: 'mypod', notice: msgs.join(' ') }); // 성공하면 내 곳간으로
+    if (r.added.length || (review && r.skipped.length)) return go({ tab: 'mypod', notice: review ? S.market.reviewGuide : msgs.join(' ') }); // 성공하면 내 곳간으로
     state.market.notice = msgs.join(' ');
   } catch (e) {
     state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, notice: (M.error[e.code] || M.error.NETWORK) + (e.detail ? ` (${e.detail})` : '') };
@@ -475,7 +476,7 @@ async function render() {
   } else if (state.tab === 'market') {
     if (state.market.status === 'idle') setTimeout(refreshMarket, 0); // 탭에 들어오면 자동으로 불러온다
     body = marketView({
-      m: state.market, onRefresh: refreshMarket, onImport: importFromMarket, onPreview: previewFromMarket,
+      m: state.market, onRefresh: refreshMarket, onImport: importFromMarket, onReview: (e) => importFromMarket(e, { review: true }), mode: state.mode, onPreview: previewFromMarket,
       spout: spoutProps(), web: globalThis.GORAE_WEB === true,
       sendBar: spoutSendBar({ pending: Object.values(state.mySpouts).filter((v) => !v.sent).length, waiting: state.spoutWaiting, onSend: sendSpouts, onSent: confirmSpoutsSent }),
       onFilter: (p) => { state.market = { ...state.market, ...p }; render(); },
@@ -523,6 +524,7 @@ async function render() {
   showToast();
 }
 
+await ensureDefaultPin(storage); // 임시 기본 암호 1234 (처음 쓰는 기기에 한 번)
 state.mode = (await storage.get('mode')) || 'baby';
 state.shareProfile = (await storage.get('shareProfile')) || {};
 // 암호가 없는 기기(예전 임시 전환을 쓴 기기 포함)는 학생고래 모드로 시작한다

@@ -197,3 +197,11 @@ a.btn { display: inline-flex; align-items: center; min-height: var(--h-btn); pad
 .maker { display: flex; align-items: baseline; gap: var(--space-1); margin: 0; }
 .maker .nick { font-size: var(--font-size-md, 1rem); font-weight: var(--font-weight-bold); color: var(--color-catalog); }
 .maker .maker-sub { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+
+/* 곳간 구분: 큰 곳간(검수 완료)과 나눔 곳간(검수 전) */
+.zone { display: grid; gap: var(--space-1); padding: var(--space-3); border-radius: var(--radius-md); font-size: var(--font-size-sm); }
+.zone.catalog { background: var(--color-catalog-soft); color: var(--color-catalog); }
+.zone.market { background: var(--color-badge-shallow); color: var(--color-badge-shallow-text); }
+.verified-card { border-left: var(--space-1) solid var(--color-catalog); }
+.market-card { border-left: var(--space-1) dashed var(--color-market); }
+.badge.precheck { background: var(--color-market); color: var(--color-primary-text); }

@@ -97,6 +97,10 @@ function findBar({ entries, state, onFilter, sortSel }) {
         h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) }, Fd.reset))));
 }
 
+// 곳간 구역 안내 띠: 큰 곳간(검수됨)과 나눔 곳간(검수 전)을 한눈에 구분한다
+export const zoneBand = (kind) => h('div', { class: `zone ${kind}`, role: 'note' },
+  h('strong', {}, S.zone[kind].title), h('span', {}, S.zone[kind].text));
+
 // 카드 분류 뱃지: 카테고리(파랑) · 학년·교과·단원(청록) · 시간·모둠·대상(회색)
 const pill = (kind, text) => h('span', { class: `pill ${kind}` }, text);
 function metaLine(entry) {
@@ -138,6 +142,7 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
       ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
+    zoneBand('catalog'),
     featuredBand(entries, state, onRun),
     sendBar || null,
     h('p', { class: 'muted' }, S.tagline),
@@ -155,7 +160,7 @@ function workCard(entry, opts) {
   const selectBox = locked ? null : opts.selectBox, share = locked ? null : opts.share, submit = locked ? null : opts.submit;
   const run = canRun(entry);
   const m = metaOf(entry);
-  return h('article', { class: 'card' },
+  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}` },
     selectBox || null,
     h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok ? h('span', { class: 'badge verified' }, S.verified) : null,
       entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
@@ -235,7 +240,7 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
 }
 
 // 나눔 곳간: 시트 목록 → 검색·분류 거르기 → 가져오기
-export function marketView({ m, onRefresh, onFilter, onImport, onPreview, spout, sendBar, web = false }) {
+export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onReview, mode = 'baby', spout, sendBar, web = false }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
   q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
@@ -249,8 +254,9 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, spout,
   if (m.status === 'loading') state = h('p', { class: 'notice' }, M.loading);
   else if (m.status === 'error') state = h('p', { class: 'notice error', role: 'alert' }, M.error[m.error] || m.error);
   else if (m.missing && m.missing.length) state = h('p', { class: 'notice error' }, M.columns(m.missing, m.header || []));
+  const teacher = mode === 'mother';
   return h('section', { class: 'section' },
-    h('p', { class: 'muted' }, M.hint),
+    zoneBand('market'),
     sendBar || null,
     h('div', { class: 'filters' },
       h('label', { class: 'wide' }, S.find.search, q),
@@ -262,10 +268,10 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, spout,
     m.status === 'ok' && !(m.entries || []).length ? h('p', { class: 'muted' }, M.empty) : null,
     m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
-    shown.map((e) => h('article', { class: 'card' },
+    shown.map((e) => h('article', { class: 'card market-card' },
       h('h3', {}, e.title),
       makerLine(e.nickname, e.whale),
-      h('div', { class: 'row' }, h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
+      h('div', { class: 'row' }, h('span', { class: 'badge precheck' }, S.zone.market.badge), h('span', { class: 'badge shallow' }, S.badge.shallow), e.sample ? h('span', { class: 'badge' }, M.sampleTag) : null),
       e.kinds.length || e.categoryText ? h('div', { class: 'pills' }, e.kinds.map((k) => pill('cat', k)), e.categoryText ? pill('info', e.categoryText) : null) : null,
       e.timestamp ? h('p', { class: 'muted' }, e.timestamp) : null,
       e.description ? h('p', {}, e.description) : null,
@@ -279,8 +285,10 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, spout,
         : h('div', { class: 'row' },
           // 미리 보기: 내 곳간에 담지 않고 바로 새 창에서 연다
           h('button', { disabled: !!(m.busy && m.busy[e.id]), onclick: () => onPreview(e) }, M.preview),
-          h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
-            m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import)))));
+          teacher ? h('button', { class: 'primary', disabled: !!(m.busy && m.busy[e.id]) || !!(m.done && m.done[e.id]), onclick: () => onImport(e) },
+            m.done && m.done[e.id] ? M.imported : m.busy && m.busy[e.id] ? M.importing : M.import) : null,
+          teacher ? h('button', { disabled: !!(m.busy && m.busy[e.id]), title: M.reviewHint, onclick: () => onReview(e) }, M.review) : null,
+          !teacher ? h('p', { class: 'muted' }, M.studentNote) : null))));
 }
 
 // 나눔 곳간 작품을 실행하기 전 출처 확인

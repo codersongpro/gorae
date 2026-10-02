@@ -49,3 +49,12 @@ export async function resetPin(storage) {
   await storage.set(KEY, null);
   await storage.set('mode', 'baby');
 }
+
+// 임시 기본 암호: 처음 쓰는 기기에 한 번만 넣어 준다. 운영 전에는 이 값을 지우고 각 교사가 직접 정하게 한다.
+export const TEMP_DEFAULT_PIN = '1234';
+export async function ensureDefaultPin(storage) {
+  if ((await hasPin(storage)) || (await storage.get('pinDefaultSeeded'))) return false;
+  await setPin(storage, TEMP_DEFAULT_PIN, TEMP_DEFAULT_PIN);
+  await storage.set('pinDefaultSeeded', true);
+  return true;
+}

@@ -214,6 +214,9 @@ export function cardGroup(domain, category) {
   if (domain === 'lesson') return category === 'classroom_tool' ? 'class' : 'material';
   return ['class_management', 'student_life'].includes(category) ? 'class' : 'admin';
 }
+// 시트에 적힌 주소가 구글 드라이브·문서 주소일 때만 링크로 만든다 (아무 사이트로나 보내지 않는다)
+const DRIVE_HOSTS = ['drive.google.com', 'docs.google.com', 'drive.usercontent.google.com'];
+const driveHref = (u) => { try { const x = new URL(u); return x.protocol === 'https:' && DRIVE_HOSTS.includes(x.hostname) ? x.href : ''; } catch { return ''; } };
 const KIND_LABEL = { html: 'HTML', webapp: '웹앱', exe: 'EXE' };
 
 // 목록 도구: 모두 펼치기/접기, 더 보기 (작품이 늘어도 길게 스크롤하지 않도록 기본은 접힌 카드 + 12개씩)
@@ -371,7 +374,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
       // 웹 버전: 구글 드라이브 파일은 브라우저가 직접 받을 수 없어 드라이브에서 열어 보게 한다 (가져오기는 웨일 사이드바에서)
       web && e.files.length
         ? h('div', {}, h('p', { class: 'muted' }, M.webFileNote),
-          h('a', { class: 'btn', href: e.files[0], target: '_blank', rel: 'noopener noreferrer' }, M.openInDrive))
+          !driveHref(e.files[0]) ? h('p', { class: 'notice error' }, M.badLink) : h('a', { class: 'btn', href: driveHref(e.files[0]), target: '_blank', rel: 'noopener noreferrer' }, M.openInDrive))
         : h('div', { class: 'row' },
           // 미리 보기: 내 곳간에 담지 않고 바로 새 창에서 연다
           h('button', { disabled: !!(m.busy && m.busy[e.id]), onclick: () => onPreview(e) }, M.preview),

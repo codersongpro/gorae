@@ -431,6 +431,16 @@ async function copyTeamboardCards() {
   await navigator.clipboard.writeText(cards.join('\n\n──────────\n\n'));
   go({ notice: S.svc.teamboard.cardsCopied(cards.length) });
 }
+// 팀보드에 첨부할 꾸러미 파일: 같은 작품들을 .gorae.json 한 파일로 저장한다 (팀보드의 업로드(↑) 도구로 올린다)
+async function saveTeamboardPack() {
+  const all = await store.list();
+  let recs = all.filter((r) => state.selected.includes(r.id));
+  if (!recs.length) recs = all.filter((r) => r.favorite);
+  if (!recs.length) return go({ notice: S.svc.teamboard.cardsNone });
+  const out = exportBundle(all, recs.map((r) => r.id), { name: S.svc.teamboard.packName });
+  saveTextFile(out.text, out.fileName);
+  go({ notice: S.svc.teamboard.packSaved(recs.length) });
+}
 
 // 지금 화면의 웨일 서비스에 맞춘 안내 띠
 function serviceTop() {
@@ -562,7 +572,7 @@ async function render() {
       onExport: doExport, exportOut: state.exportOut, onSaveFile: saveFile, onCopy: copyPack,
       share: shareProps(), submit: submitProps(true),
       onSearch: (q) => go({ mypodQuery: q, limit: PAGE_SIZE }), total: all.length,
-      top: serviceTop(), onTeamboard: copyTeamboardCards, ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
+      top: serviceTop(), onTeamboard: copyTeamboardCards, onTeamboardFile: saveTeamboardPack, ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
     });
   } else {
     body = classView({

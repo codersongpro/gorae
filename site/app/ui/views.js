@@ -385,7 +385,7 @@ function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
     h('p', { class: 'muted' }, S.share.hint));
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly, top, onTeamboard }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, onExport, exportOut, onSaveFile, onCopy, share, submit, onSearch, total, ui, onFav, onFavOnly, top, onTeamboard, onTeamboardFile }) {
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
   q.addEventListener('change', () => onSearch(q.value.trim()));
   const nameInput = h('input', { 'aria-label': S.bundle.packName, placeholder: S.bundle.packName, value: state.packName || '' });
@@ -400,6 +400,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
       nameInput,
       h('button', { onclick: () => onExport(nameInput.value) }, S.bundle.exportBtn),
       h('button', { 'data-tour': 'teamboard-cards', title: S.svc.teamboard.cardsHint, onclick: onTeamboard }, S.svc.teamboard.cards),
+      h('button', { 'data-tour': 'teamboard-file', title: S.svc.teamboard.fileHint, onclick: onTeamboardFile }, S.svc.teamboard.file),
       exportOut ? h('div', { class: 'detail' }, h('p', {}, S.bundle.madeN(exportOut.count, exportOut.fileName)),
         h('div', { class: 'row' }, h('button', { onclick: onSaveFile }, S.bundle.saveFile), h('button', { onclick: onCopy }, S.bundle.copy))) : null) : null,
     records.length ? [...sliceOf(records, ui).map((r) => {

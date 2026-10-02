@@ -11,7 +11,11 @@ const remixLine = (w) => (w.remixOf ? `🔄 ‘${w.remixOfTitle || w.remixOf}’
 const classLabel = (w) => [w.grade, w.subject].filter(Boolean).join('·');
 // 예상 시간 안내 (예: 약 5분 동안 활동합니다.)
 const minutesLine = (m) => (!m ? null : m === 45 ? '한 차시 동안 활동합니다.' : m >= 90 ? '여러 차시에 걸쳐 활동합니다.' : `약 ${m}분 동안 활동합니다.`);
-const linkLines = (link) => (link ? ['▶ 바로 실행', link] : [FALLBACK_LINE]);
+// 링크가 너무 길면(작품이 클수록 길어진다) 글이 지저분해지므로 넣지 않고, 파일 첨부를 안내한다
+export const MAX_INLINE_LINK = 300;
+const ATTACH_LINE = '📎 작품 파일을 첨부했어요. 고래곳간 [가져오기]에서 파일을 열어 주세요.';
+const shortLink = (link) => (link && link.length <= MAX_INLINE_LINK ? link : null);
+const linkLines = (link) => (link ? (shortLink(link) ? ['▶ 바로 실행', link] : [ATTACH_LINE]) : [FALLBACK_LINE]);
 const clean = (lines) => lines.filter((l) => l !== null && l !== undefined && l !== false).join('\n');
 
 // 검수 상태 한 줄 (status는 core/trust.js의 검증 결과)
@@ -42,7 +46,7 @@ const BUILDERS = {
       `작품명: ${w.title}`,
       `만든이: ${w.author || '이름 없음'}`,
       `설명: ${w.description || w.howToUse}`,
-      ...(link ? ['▶ 작품 실행', link] : [FALLBACK_LINE]),
+      ...linkLines(link),
       remixLine(w),
       '🔄 이 작품을 리믹스해 보세요. (고래곳간에서 [가져오기] 후 [리믹스])',
       '💬 칭찬과 제안은 팀보드 댓글로 남겨 주세요.',

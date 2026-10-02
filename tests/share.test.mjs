@@ -26,7 +26,8 @@ test('팀보드 전시 카드: 만든이는 별명·학교급만, 리믹스 안�
   const { text } = buildShare('teamboard', work, { link: LINK });
   assert.ok(text.includes('작품명: 분수 피자 게임'));
   assert.ok(text.includes('만든이: 파란고래 · 초등'));
-  assert.ok(text.includes('▶ 작품 실행\n' + LINK));
+  assert.ok(text.includes('▶ 바로 실행
+' + LINK));
   assert.ok(text.includes('이 작품을 리믹스해 보세요'));
 });
 
@@ -89,4 +90,13 @@ test('AC-023 시험 잠금: 학생고래 모드에서 메인 탭이 UBT면 잠�
   assert.equal(isExamLocked(detectService('https://ubt.whalespace.io/exam/123'), 'mother'), false); // 교사는 출제·평가 자료 복사
   assert.equal(isExamLocked(detectService('https://class.whalespace.io/'), 'baby'), false); // 시험 화면을 벗어나면 해제
   assert.equal(isExamLocked(null, 'baby'), false);
+});
+
+test('링크가 너무 길면 글에 넣지 않고 파일 첨부를 안내한다 (클래스·팀보드·스페이스)', () => {
+  const long = 'https://example.com/v#' + 'a'.repeat(400);
+  for (const kind of ['class', 'teamboard', 'space']) {
+    const { text } = buildShare(kind, work, { link: long });
+    assert.ok(!text.includes('aaaa'), kind);
+    assert.ok(text.includes('파일을 첨부했어요'), kind);
+  }
 });

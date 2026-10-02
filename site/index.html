@@ -22,6 +22,12 @@
   details.fold dt { font-weight: var(--font-weight-bold); } details.fold dd { margin: 0; color: var(--color-text-muted); }
   .fold-tools { display: flex; gap: var(--space-2); justify-content: flex-end; }
   .fold-tools button { min-height: var(--touch-min); }
+  .install { border: calc(var(--border-width) * 2) solid var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-raised)); }
+  .install h2 { margin: 0; font-size: var(--font-size-lg); }
+  .install .lead { margin: var(--space-1) 0 var(--space-2); font-weight: var(--font-weight-bold); }
+  .install .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-3); padding: 0; list-style: none; }
+  .install .chips li { padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); background: var(--color-surface-raised); border: var(--border-width) solid var(--color-border); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
+  .install ol { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
   ul.points { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
 </style>
 </head>
@@ -34,8 +40,28 @@
     <p class="muted">만들고 끝나는 바이브코딩을, 이어 쓰는 수업으로.</p>
   </header>
 
+  <section class="card install" aria-labelledby="inst-h">
+    <h2 id="inst-h">🐳 웨일 사이드바로도 쓸 수 있어요</h2>
+    <p class="lead">웨일 스페이스 도구와 바로 이어서 쓰세요.</p>
+    <ul class="chips" aria-label="연계 도구">
+      <li>웨일 클래스 · 과제·공지로 배포</li>
+      <li>팀보드 · 작품 카드 붙이기</li>
+      <li>웨일온 · 수업 중 도구 추천</li>
+      <li>UBT · 시험 중 자동 잠금</li>
+    </ul>
+    <p><strong>설치 방법</strong> (웨일 PC 브라우저)</p>
+    <ol>
+      <li>고래곳간 저장소(<a href="https://github.com/codersongpro/gorae" target="_blank" rel="noopener noreferrer">github.com/codersongpro/gorae</a>)에서 <strong>Code → Download ZIP</strong>으로 받아 압축을 풀어요.</li>
+      <li>웨일 주소창에 <strong>whale://extensions</strong> 를 입력해 확장 프로그램 관리 화면을 열어요.</li>
+      <li>오른쪽 위의 <strong>개발자 모드</strong>를 켜요.</li>
+      <li><strong>압축해제된 확장 프로그램을 로드합니다</strong>를 눌러 압축 푼 폴더 안의 <strong>extension</strong> 폴더를 골라요.</li>
+      <li>웨일 오른쪽 사이드바의 <strong>🐳 아이콘</strong>을 누르면 고래곳간이 열려요. 클래스·팀보드·웨일온 화면 옆에서 바로 쓸 수 있어요.</li>
+    </ol>
+    <p class="muted">웨일 스토어에 올라가기 전의 임시 설치 방법이에요. 메뉴 이름은 웨일 버전에 따라 조금 다를 수 있어요.</p>
+  </section>
+
   <nav class="go" aria-label="바로가기">
-    <a class="btn" href="app/">고래곳간 열기 (웹)</a>
+    <a class="btn" href="app/">설치 없이 웹으로 열기</a>
     <a class="btn secondary" href="review.html">검수 도구 (파수꾼고래)</a>
   </nav>
 
@@ -75,18 +101,6 @@
         <dt>나눔 곳간에 올리기</dt><dd>구글 설문으로 작품 파일과 소개를 올리면 모두의 나눔 곳간 목록에 보여요. 이름·학교 대신 별명만 써요.</dd>
         <dt>큰 곳간에 보내기</dt><dd>교사고래 모드에서 검수를 요청해요. 파수꾼고래가 확인하고 서명하면 맑은 바다로 올라와요.</dd>
         <dt>물뿜기</dt><dd>마음에 드는 작품에 🐳를 눌러 응원해요. 교사고래·학생고래 숫자가 따로 보여요.</dd>
-      </dl>
-    </details>
-
-    <details class="fold">
-      <summary>웨일 사이드바 설치 방법</summary>
-      <dl>
-        <dt>1. 내려받기</dt><dd>고래곳간 저장소(github.com/codersongpro/gorae)에서 [Code → Download ZIP]으로 받아 압축을 풀어요.</dd>
-        <dt>2. 확장 프로그램 관리 열기</dt><dd>웨일 주소창에 whale://extensions 를 입력해요.</dd>
-        <dt>3. 개발자 모드 켜기</dt><dd>오른쪽 위의 [개발자 모드]를 켜요.</dd>
-        <dt>4. 폴더 불러오기</dt><dd>[압축해제된 확장 프로그램을 로드합니다]를 눌러 압축 푼 폴더 안의 extension 폴더를 골라요.</dd>
-        <dt>5. 사이드바에서 열기</dt><dd>웨일 오른쪽 사이드바의 🐳 아이콘을 누르면 고래곳간이 열려요.</dd>
-        <dt>알아 두세요</dt><dd>웨일 스토어에 올라가기 전의 임시 설치 방법이에요. 메뉴 이름은 웨일 버전에 따라 조금 다를 수 있고, 웨일 PC 브라우저에서만 설치돼요.</dd>
       </dl>
     </details>
 

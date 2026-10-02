@@ -95,6 +95,7 @@ export const S = {
     startShare: '▶ 웨일 스페이스에 올리는 법 따라 해보기', shareCount: (n) => `공유 따라 해보기는 ${n}단계예요.`,
     web: {
       url: 'https://codersongpro.github.io/gorae/app/',
+      promo: '🐳 웨일 사이드바로도 쓸 수 있어요 · 클래스·팀보드·웨일온과 이어 쓰기 → 설치 방법 보기',
       goTitle: '웹으로도 쓸 수 있어요', goIntro: '설치 없이 인터넷 주소로 열 수 있어요. 폰·태블릿·집 컴퓨터에서 쓸 때 편해요.', goBtn: '웹 버전 열기',
       goNote: '웹과 사이드바는 작품 저장 공간이 따로예요. 옮기려면 꾸러미 내보내기·가져오기를 쓰세요. 웹에서는 웨일 서비스 화면을 알아보는 기능과 시험 잠금이 없어요.',
       installTitle: '웨일 사이드바로 설치하기', installIntro: '웨일 PC 브라우저에 확장앱으로 설치하면 클래스·팀보드·UBT 화면 옆에서 바로 쓸 수 있어요.',

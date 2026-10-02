@@ -45,6 +45,7 @@ export function tabsBar(current, onSelect) {
 export function topBar(mode, onToggle, onCreate, onImport, onGuide, onHome) {
   const teacher = mode === 'mother';
   return h('div', { class: 'top' },
+    globalThis.GORAE_WEB === true ? h('button', { class: 'web-promo', type: 'button', onclick: onGuide }, S.guide.web.promo) : null,
     teacher ? h('div', { class: 'mode-band', role: 'status' }, S.mode.band) : null,
     h('header', { class: 'topbar' },
       h('div', { class: 'brand' },

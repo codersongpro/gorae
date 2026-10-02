@@ -21,7 +21,8 @@ jobs.push(['design/tokens.css', 'site/tokens.css']);
 for (const f of ['catalog.json', 'reviewers.json']) jobs.push([`site/${f}`, `extension/sample/${f}`]);
 jobs.push(['extension/core/rootkey.js', 'site/rootkey.js']);
 jobs.push(['extension/ui/strings.js', 'site/strings.js']);
-jobs.push(['extension/ui/dom.js', 'site/dom.js']); // 뷰어·검수 도구가 쓰는 작은 DOM 도우미
+jobs.push(['extension/ui/dom.js', 'site/dom.js']);
+for (const f of ['market.js', 'market-config.js', 'checker.js']) jobs.push([`extension/core/${f}`, `site/core/${f}`]); // 검수 도구의 검수 목록 // 뷰어·검수 도구가 쓰는 작은 DOM 도우미
 
 const check = process.argv.includes('--check');
 let stale = 0;

@@ -304,3 +304,9 @@ details[open] > summary::before { content: '▼'; }
 /* 학교급 뱃지 초·중·고 */
 .badge.lvl { min-width: calc(var(--space-5) + var(--space-1)); justify-content: center; color: var(--color-surface-raised); }
 .badge.lvl-e { background: var(--color-cat-2); } .badge.lvl-m { background: var(--color-cat-1); } .badge.lvl-h { background: var(--color-cat-4); }
+
+/* 카드 구분을 또렷하게: 굵은 테두리 + 그룹 색 막대 + 카드 사이 간격 */
+.section { gap: var(--space-4); }
+article.card { border: calc(var(--border-width) * 2) solid color-mix(in srgb, var(--accent, var(--color-text-muted)) 40%, var(--color-border)); border-left: var(--space-2) solid var(--accent, var(--color-border)); box-shadow: 0 var(--space-1) var(--space-4) color-mix(in srgb, var(--color-text) 14%, transparent); }
+article.card.market-card { border-left-style: dashed; border-left-color: var(--color-market); }
+article.card .card-head { padding-bottom: var(--space-1); border-bottom: var(--border-width) solid color-mix(in srgb, var(--accent, var(--color-border)) 25%, transparent); }

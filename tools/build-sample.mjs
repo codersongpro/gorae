@@ -7,6 +7,7 @@ import { catalogExtras, marketSamples, mypodSamples, CLASS_SAMPLE_NAME } from '.
 import { toSubmissionHtml } from '../shared/submission.js';
 import * as tp from '../shared/tailprint.js';
 import { signFeatured } from '../shared/featured.js';
+import { encryptJwk } from '../shared/keybackup.js';
 
 const KEYS = new URL('../tests/keys/', import.meta.url);
 const exists = (u) => access(u).then(() => true, () => false);
@@ -90,4 +91,9 @@ await writeFile(
   new URL('../extension/core/rootkey.js', import.meta.url),
   `// 관리 공개키 (현재 값은 테스트용 — 운영 전에 실제 뿌리 공개키로 교체)\nexport const ROOT_PUBLIC_JWK = ${JSON.stringify(root.publicJwk)};\n`,
 );
+// 검수 도구 로그인(임시 테스트용): 테스트 검수 열쇠를 '검수 도구 비밀번호'로 잠가 둔다. 운영 전에는 이 파일과 비밀번호를 없앤다.
+const REVIEW_TOOL_PASSWORD = '12345678';
+const guardJwk = JSON.parse(await readFile(new URL('reviewer-guard.private.jwk', KEYS), 'utf8'));
+const backup = { ...(await encryptJwk(guardJwk, REVIEW_TOOL_PASSWORD, { kind: 'reviewer' })), meta: { id: 'guard-1', nickname: '푸른물결(테스트)' } };
+await writeFile(new URL('../site/reviewer.keybackup.json', import.meta.url), JSON.stringify(backup));
 console.log('샘플 생성 완료: site/catalog.json, site/reviewers.json, extension/core/rootkey.js');

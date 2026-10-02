@@ -10,6 +10,8 @@ import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
 import { normalizeWork } from './shared/taxonomy.js';
 import { signFeatured, MAX_FEATURED } from './shared/featured.js';
+import { loadMarket, fetchEntryWorks } from './core/market.js';
+import { MARKET } from './core/market-config.js';
 import { parseSpoutReports, applySpoutReports, POPULAR_MIN, isPopular } from './shared/spout.js';
 
 // 작품 미리보기 실행용 정책 (뷰어와 같은 뜻: 바깥 통신 차단)
@@ -36,7 +38,7 @@ const saveKey = (rec) => idb('readwrite', (s) => s.put(rec));
 const loadKey = (slot) => idb('readonly', (s) => s.get(slot));
 
 // ---------- 공용 도우미 ----------
-const state = { tab: 'make', reviewer: null, root: null, catalog: null, list: null, drafts: [], msg: '', err: '' };
+const state = { tab: 'queue', session: false, queue: { status: 'idle', entries: [], drafts: {}, done: {}, open: '', note: '' }, reviewer: null, root: null, catalog: null, list: null, drafts: [], msg: '', err: '' };
 const panel = document.getElementById('panel');
 const tabsEl = document.getElementById('tabs');
 
@@ -171,8 +173,8 @@ function draftCard(d) {
     field('배지', badge),
     h('label', { class: 'check' }, pick, '🐋 고래 픽 (카드에 "파수꾼 고래 검수 완료" 표시)'),
     songs,
-    h('button', { onclick: () => sign(d) }, '검수 서명 찍기'),
-    d.signed ? h('div', {},
+    d.quick ? h('button', { class: 'finish', onclick: () => finish(d) }, '✔ 검수 완료') : h('button', { onclick: () => sign(d) }, '검수 서명 찍기'),
+    d.signed && !d.quick ? h('div', {},
       h('p', { class: d.check && d.check.ok ? 'ok' : 'notice error' }, d.check ? (d.check.ok ? '✔ 지금 불러온 고래 족보로 서명이 확인돼요.' : `⚠ 지금 불러온 족보로는 확인되지 않아요 (파수꾼고래에게 족보 등록을 요청하세요): ${REASON_TEXT[d.check.reason] || d.check.reason}`) : ''),
       h('textarea', { readonly: true, 'aria-label': '서명된 catalog 항목' }, JSON.stringify(d.signed, null, 2)),
       h('div', { class: 'row' },
@@ -213,7 +215,8 @@ function catalogOut() {
     h('textarea', { readonly: true, 'aria-label': 'catalog.json' }, text),
     h('div', { class: 'row' },
       h('button', { class: 'secondary', onclick: () => copy(text) }, '복사'),
-      h('button', { class: 'secondary', onclick: () => download('catalog.json', text) }, '내려받기')));
+      h('button', { class: 'secondary', onclick: () => download('catalog.json', text) }, '내려받기'),
+      h('a', { class: 'btn', href: 'https://github.com/codersongpro/gorae/edit/main/site/catalog.json', target: '_blank', rel: 'noopener noreferrer' }, '게시하기 (GitHub에서 catalog.json 편집 열기)')));
 }
 
 // ---------- C. 고래 족보 관리 (파수꾼고래) ----------
@@ -343,11 +346,117 @@ function viewSpout() {
     state.spoutDone ? catalogOut() : null);
 }
 
+// ---------- 검수 도구 로그인 (임시: 검수 도구 비밀번호) ----------
+const REVIEW_BACKUP_URL = 'reviewer.keybackup.json';
+const SESSION_FLAG = 'gorae-review-session';
+async function login(password) {
+  try {
+    const text = await (await fetch(REVIEW_BACKUP_URL, { cache: 'no-store' })).text();
+    await restoreReviewer(text, password);
+    if (!state.reviewer) return;
+    state.session = true;
+    try { sessionStorage.setItem(SESSION_FLAG, '1'); } catch { /* 저장 못 해도 이 탭에서는 계속 로그인 */ }
+    state.tab = 'queue';
+    say(`파수꾼고래 ${state.reviewer.nickname}(으)로 로그인했어요.`);
+  } catch {
+    say('로그인에 실패했어요. 비밀번호를 확인해 주세요.', true);
+  }
+}
+function logout() {
+  state.session = false;
+  try { sessionStorage.removeItem(SESSION_FLAG); } catch { /* 무시 */ }
+  render();
+}
+function viewLogin() {
+  const pw = h('input', { type: 'password', 'aria-label': '검수 도구 비밀번호', placeholder: '검수 도구 비밀번호', autocomplete: 'current-password' });
+  const go = () => login(pw.value);
+  pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  return h('div', { class: 'card login' },
+    h('h2', {}, '🛡️ 파수꾼고래 로그인'),
+    h('p', { class: 'muted' }, '검수 도구 비밀번호를 넣으면 파수꾼고래로 로그인돼요. 작품을 살펴보고 [검수 완료]를 누르면 검수 서명이 찍혀요.'),
+    pw, h('button', { onclick: go }, '로그인'));
+}
+
+// ---------- 0. 검수 목록 (나눔 곳간에 올라온 작품을 살펴보고 [검수 완료]) ----------
+async function loadQueue() {
+  const q = state.queue;
+  q.status = 'loading'; q.note = ''; render();
+  const entries = [];
+  try {
+    const samples = await (await fetch('app/sample/market-samples.json')).json();
+    for (const e of samples) entries.push({ ...e, sourceLabel: '샘플' });
+  } catch { /* 샘플이 없어도 된다 */ }
+  try {
+    const store = { get: async () => null, set: async () => {} };
+    const r = await loadMarket({ fetchFn: (u, o) => fetch(u, o), config: MARKET, storage: store });
+    for (const e of r.entries) if (!entries.some((x) => x.id === e.id)) entries.push({ ...e, sourceLabel: '나눔 곳간' });
+  } catch (e) {
+    q.note = '나눔 곳간 시트를 불러오지 못했어요 (' + (e.code || '오류') + '). 샘플만 보여요.';
+  }
+  q.entries = entries; q.status = 'ok'; render();
+}
+async function openEntry(entry) {
+  const q = state.queue;
+  q.open = entry.id;
+  if (q.drafts[entry.id]) return render();
+  try {
+    const r = await fetchEntryWorks(entry, { fetchFn: (u, o) => fetch(u, o), config: MARKET });
+    q.drafts[entry.id] = r.works.map((work) => {
+      const report = checkWork(work);
+      return { work, report, badge: report && !report.ok ? 'shallow' : 'clear', pick: false, songs: '', signed: null, check: null, quick: entry.id };
+    });
+    render();
+  } catch (e) {
+    q.drafts[entry.id] = [];
+    say(e.code === 'NETWORK' || e.code === 'HTTP' ? '이 작품 파일은 브라우저에서 바로 받을 수 없어요. 구글 드라이브에서 내려받아 [2. 검수대]에 올려 주세요.' : `작품을 읽지 못했어요 (${e.code || e.message}).`, true);
+  }
+}
+function viewQueue() {
+  const q = state.queue;
+  if (q.status === 'idle') setTimeout(loadQueue, 0);
+  const pending = q.entries.filter((e) => !q.done[e.id]);
+  const done = q.entries.filter((e) => q.done[e.id]);
+  const row = (e) => h('div', { class: 'qrow' + (q.done[e.id] ? ' done' : '') },
+    h('div', {}, h('strong', {}, e.title), h('div', { class: 'muted' }, [`🐋 ${e.nickname || ''}`, e.whale, (e.kinds || []).join('·'), e.sourceLabel].filter(Boolean).join(' · '))),
+    q.done[e.id] ? h('span', { class: 'ok' }, '✔ 검수 완료') : h('button', { onclick: () => openEntry(e) }, q.open === e.id ? '살펴보는 중' : '살펴보기'));
+  const open = q.entries.find((e) => e.id === q.open);
+  return h('div', { class: 'section' },
+    h('div', { class: 'card' },
+      h('h2', {}, '검수 목록'),
+      h('p', { class: 'muted' }, '나눔 곳간에 올라온 작품이에요. [살펴보기]로 자동 점검·실행·코드를 확인한 뒤 [검수 완료]를 누르면 검수 서명이 찍혀 인증 곳간 목록(catalog.json)에 들어가요.'),
+      h('div', { class: 'row' }, h('button', { class: 'secondary', onclick: loadQueue }, '목록 새로고침')),
+      q.note ? h('p', { class: 'notice' }, q.note) : null,
+      q.status === 'loading' ? h('p', { class: 'muted' }, '목록을 불러오는 중이에요…') : null,
+      q.status === 'ok' && !q.entries.length ? h('p', { class: 'muted' }, '검수할 작품이 아직 없어요.') : null,
+      pending.length ? h('h3', {}, `검수 대기 ${pending.length}개`) : null, ...pending.map(row),
+      done.length ? h('h3', {}, `검수 완료 ${done.length}개`) : null, ...done.map(row)),
+    ...(open && !q.done[open.id] ? (q.drafts[open.id] || []).map(draftCard) : []),
+    state.catalogChanged ? catalogOut() : null);
+}
+async function finish(d) {
+  await ensureSiteData();
+  const res = await signForCatalog({ work: d.work, privateKey: state.reviewer.privateKey, reviewerId: state.reviewer.reviewerId, badge: d.badge, pick: d.pick, songs: parseSongs(d.songs) });
+  if (!res.ok) return say(res.errors.join(' '), true);
+  d.signed = res.item;
+  const v = await tp.createVerifier({ rootPublicJwk: ROOT_PUBLIC_JWK, list: state.list });
+  d.check = await v.verify(res.item);
+  state.catalog = upsertCatalogItem(state.catalog, res.item);
+  state.catalogChanged = true;
+  if (d.quick) state.queue.done[d.quick] = true;
+  say(`✔ '${d.work.title}' 검수 완료! 아래 [게시하기]에서 catalog.json을 올리면 모두의 인증 곳간에 보여요.` + (d.check.ok ? '' : ' (주의: 지금 불러온 고래 족보로는 서명이 확인되지 않아요.)'));
+}
+
 // ---------- 화면 ----------
-const TABS = [['make', '1. 검수 서명 만들기'], ['desk', '2. 검수대'], ['root', '3. 고래 족보 관리'], ['spout', '4. 물뿜기 집계']];
+const TABS = [['queue', '검수 목록'], ['make', '1. 검수 서명 만들기'], ['desk', '2. 검수대'], ['root', '3. 고래 족보 관리'], ['spout', '4. 물뿜기 집계']];
 function render() {
-  tabsEl.replaceChildren(...TABS.map(([k, t]) => h('button', { role: 'tab', 'aria-selected': String(state.tab === k), onclick: () => { state.tab = k; state.msg = ''; state.err = ''; render(); } }, t)));
-  const body = state.tab === 'make' ? viewMake() : state.tab === 'desk' ? viewDesk() : state.tab === 'spout' ? viewSpout() : viewRoot();
+  if (!state.session) {
+    tabsEl.replaceChildren();
+    panel.replaceChildren(...[state.msg ? h('p', { class: 'notice', role: 'status' }, state.msg) : null, state.err ? h('p', { class: 'notice error', role: 'alert' }, state.err) : null, viewLogin()].filter(Boolean));
+    return;
+  }
+  tabsEl.replaceChildren(...TABS.map(([k, t]) => h('button', { role: 'tab', 'aria-selected': String(state.tab === k), onclick: () => { state.tab = k; state.msg = ''; state.err = ''; render(); } }, t)),
+    h('button', { class: 'secondary', style: 'margin-left:auto', onclick: logout }, `로그아웃 (${state.reviewer ? state.reviewer.nickname : ''})`));
+  const body = state.tab === 'queue' ? viewQueue() : state.tab === 'make' ? viewMake() : state.tab === 'desk' ? viewDesk() : state.tab === 'spout' ? viewSpout() : viewRoot();
   const root = state.newRootJwk && state.tab === 'root'
     ? h('div', { class: 'card' }, h('h3', {}, '새 관리 공개키 (extension/core/rootkey.js의 ROOT_PUBLIC_JWK에 넣기)'), h('textarea', { readonly: true, 'aria-label': '관리 공개키' }, JSON.stringify(state.newRootJwk)))
     : null;
@@ -360,6 +469,7 @@ function render() {
 
 (async () => {
   try { state.reviewer = (await loadKey('reviewer')) || null; } catch { state.reviewer = null; }
+  try { state.session = !!state.reviewer && sessionStorage.getItem(SESSION_FLAG) === '1'; } catch { state.session = false; }
   await ensureSiteData();
   render();
 })();

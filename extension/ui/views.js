@@ -397,10 +397,12 @@ export function marketRunConfirm({ title, onRun, onCancel }) {
 }
 
 // 웨일 스페이스 공유 버튼 묶음: 지금 화면의 서비스에 맞는 버튼이 맨 앞에 온다
-function sharePanel(entry, { kinds, serviceLabel, onShare, onLink }) {
+function sharePanel(entry, { kinds, serviceLabel, onShare, onLink, onClassNow }) {
   return h('div', { class: 'detail' },
     h('p', { class: 'muted' }, S.share.title),
     serviceLabel ? h('p', { class: 'notice' }, S.share.nowOn(serviceLabel)) : null,
+    onClassNow ? h('div', { class: 'row' }, h('button', { class: 'primary', 'data-tour': 'class-now', title: S.share.classNowHint, onclick: () => onClassNow(entry) }, S.share.classNow)) : null,
+    onClassNow ? h('p', { class: 'muted' }, S.share.classNowHint) : null,
     h('div', { class: 'row', 'data-tour': 'share-kinds' },
       kinds.map((k, i) => h('button', { class: i === 0 && serviceLabel ? 'primary' : '', onclick: () => onShare(entry, k) }, S.share.kinds[k])),
       h('button', { 'data-tour': 'share-link', onclick: () => onLink(entry) }, S.share.link)),

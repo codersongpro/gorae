@@ -5,7 +5,7 @@ import { loadCatalog } from './core/catalog.js';
 import { resolveTrustedList, buildEntries } from './core/trust.js';
 import { filterEntries, sortEntries } from './core/filter.js';
 import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
-import { buildShare } from './core/share.js';
+import { buildShare, MAX_INLINE_LINK } from './core/share.js';
 import { buildSharePackage, buildSongSubmission, validFormUrl } from './core/submit.js';
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
 import { buildViewerLink } from './shared/link.js';
@@ -25,6 +25,7 @@ import { h } from './ui/dom.js';
 import { S } from './ui/strings.js';
 import { exportBundle, previewImport, importSelected } from './core/bundle.js';
 import { remixInput, editInput, saveEdit } from './core/remix.js';
+import { createPack, serializePack } from './shared/pack.js';
 import { buildClassBundle, CLASS_URL } from './core/classpack.js';
 import { topBar, tabsBar, catalogView, mypodView, classView, runView, importView, urlConfirmView } from './ui/views.js';
 import { createView } from './ui/form.js';
@@ -186,6 +187,18 @@ async function shareWork(entry, kind) {
   await navigator.clipboard.writeText(text);
   go({ notice: link ? S.share.copied(S.share.kinds[kind]) : `${S.share.tooBig} ${S.share.tooBigCopied}` });
 }
+// 웨일 클래스에 도구 하나만 바로 공유: 꾸러미를 만들지 않고, 클래스용 안내문을 복사하고 작품 파일(.gorae.json)을 저장한다
+async function shareToClassNow(entry) {
+  const w = entry.work;
+  const link = await viewerLinkOf(w);
+  let text = buildShare('class', w, { link, status: entry.status }).text;
+  if (!link || link.length > MAX_INLINE_LINK) text += '\n📎 첨부한 파일(.gorae.json)은 고래곳간 ↓ [가져오기]에서 열어요.';
+  else text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ↓ [가져오기]에서 열어요.';
+  await navigator.clipboard.writeText(text);
+  const pack = createPack({ name: w.title, items: [w] });
+  saveTextFile(serializePack(pack), `${String(w.title).replace(/[\/:*?"<>|\s]+/g, '_')}.gorae.json`);
+  go({ notice: S.share.classNowDone });
+}
 async function copyViewerLink(entry) {
   const link = await viewerLinkOf(entry.work);
   if (!link) return go({ notice: S.share.tooBig });
@@ -207,6 +220,7 @@ const shareProps = () => ({
   serviceLabel: ['class', 'teamboard'].includes(state.service) ? SERVICE_LABEL[state.service] : null,
   onShare: shareWork,
   onLink: copyViewerLink,
+  onClassNow: shareToClassNow,
 });
 
 // ----- 인증 곳간에 공유하기: 설문 문항(1~6)에 맞춘 답과 업로드 파일을 만든다. 학생고래·교사고래 모두 쓸 수 있다

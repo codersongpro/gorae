@@ -8,7 +8,7 @@ export function createStore(backend, { now = () => new Date() } = {}) {
     clear: async () => {
       for (const r of await backend.getAll()) await backend.delete(r.id);
     },
-    // source: 'maker'(직접 만듦) | 'catalog'(큰 곳간) | 'bundle'(꾸러미) | 'link'(바로 실행 링크) | 'market'(나눔 곳간)
+    // source: 'maker'(직접 만듦) | 'catalog'(인증 곳간) | 'bundle'(꾸러미) | 'link'(바로 실행 링크) | 'market'(나눔 곳간)
     // extra: 출처 정보 등 기록에 덧붙일 값 (예: 나눔 곳간에서 가져온 표시)
     async add(work, { source, checkReport, extra = {} }) {
       if (await backend.get(work.id)) return { ok: false, duplicate: true };

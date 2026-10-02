@@ -70,3 +70,11 @@ test('과제 안내문에는 제목·단계·내는 방법이 들어간다', () 
   assert.match(t, /약 15분/);
   assert.match(t, /내는 방법/);
 });
+
+import { sortEntries } from '../extension/core/filter.js';
+test('정렬 기본값은 새로 제작된 순, 물뿜기 많은 순은 숫자 순', () => {
+  const mk = (id, addedAt) => ({ work: { id, addedAt }, status: { ok: true } });
+  const list = [mk('old', '2026-01-01T00:00:00Z'), mk('new', '2026-09-01T00:00:00Z'), mk('mid', '2026-05-01T00:00:00Z')];
+  assert.deepEqual(sortEntries(list).map((e) => e.work.id), ['new', 'mid', 'old']);
+  assert.deepEqual(sortEntries(list, 'spout', { old: 5, mid: 2 }).map((e) => e.work.id), ['old', 'mid', 'new']);
+});

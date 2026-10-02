@@ -1,4 +1,4 @@
-// 큰 곳간 목록·고래 족보 받기. 성공하면 사본을 보관하고, 실패하면 사본 → 번들 샘플 순으로 대신한다.
+// 인증 곳간 목록·고래 족보 받기. 성공하면 사본을 보관하고, 실패하면 사본 → 번들 샘플 순으로 대신한다.
 async function getJson(fetchFn, url, timeoutMs) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);

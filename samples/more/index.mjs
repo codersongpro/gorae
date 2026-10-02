@@ -1,8 +1,8 @@
-// 시연용 샘플 작품 배치 — 큰 곳간(검수됨) · 나눔 곳간(모두가 올린, 미검수) · 내 곳간(처음 실행 때 담김) · 학급 꾸러미(내 곳간 샘플을 미리 선택)
+// 시연용 샘플 작품 배치 — 인증 곳간(검수됨) · 나눔 곳간(모두가 올린, 미검수) · 내 곳간(처음 실행 때 담김) · 학급 꾸러미(내 곳간 샘플을 미리 선택)
 // tools/build-sample.mjs가 같은 폴더의 .html을 읽어 site/catalog.json, extension/sample/*.json을 만든다.
 const lesson = (o) => ({ type: 'html', artifactType: 'html', domain: 'lesson', version: 1, ...o });
 
-// 큰 곳간에 더할 작품 (검수 서명: badge)
+// 인증 곳간에 더할 작품 (검수 서명: badge)
 export const catalogExtras = [
   lesson({
     file: 'clock.html', id: 'sample-clock', title: '시계 읽기 연습', category: 'subject_activity', subcategory: 'practice', badge: 'clear',

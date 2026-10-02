@@ -1,5 +1,5 @@
 // 고래곳간 기본 수업도구 — 개인정보·외부 통신·저장소 없이 격리 실행에서 바로 동작하도록 만든 HTML 작품들
-// tools/build-sample.mjs가 이 목록과 같은 폴더의 .html 파일을 읽어 큰 곳간 목록에 넣고 검수 서명을 찍는다.
+// tools/build-sample.mjs가 이 목록과 같은 폴더의 .html 파일을 읽어 인증 곳간 목록에 넣고 검수 서명을 찍는다.
 const base = {
   type: 'html',
   artifactType: 'html',
@@ -61,10 +61,10 @@ export const tools = [
   },
 ].map((t, i, all) => ({
   ...base,
-  // 시연 배치: 목록 순서대로 최근 등록이 되도록 (큰 곳간 '새로 들어옴'·'고래 픽 먼저' 순서가 이 순서를 따른다)
+  // 시연 배치: 목록 순서대로 최근 등록이 되도록 (인증 곳간 '새로 들어옴'·'고래 픽 먼저' 순서가 이 순서를 따른다)
   addedAt: new Date(Date.parse('2026-10-01T03:00:00Z') + (all.length - i) * 60000).toISOString(),
   ...t,
 }));
 
-// 시연용 고래 픽 (검수 서명에 포함): 큰 곳간 맨 위에 오는 대표 도구
+// 시연용 고래 픽 (검수 서명에 포함): 인증 곳간 맨 위에 오는 대표 도구
 export const DEMO_PICKS = ['tool-lucky-draw', 'tool-scoreboard'];

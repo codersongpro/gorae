@@ -47,7 +47,7 @@ export function filterEntries(entries, c = {}) {
 const byDateDesc = (a, b) => (Date.parse(b.work.addedAt) || 0) - (Date.parse(a.work.addedAt) || 0);
 
 // key: 'pick'(고래 픽 먼저) | 'new'(새로 들어옴) | 'spout'(물뿜기 많은 순, counts: {id: n})
-export function sortEntries(entries, key = 'pick', counts = {}) {
+export function sortEntries(entries, key = 'new', counts = {}) {
   const arr = [...entries];
   if (key === 'new') return arr.sort(byDateDesc);
   if (key === 'spout') return arr.sort((a, b) => (counts[b.work.id] || 0) - (counts[a.work.id] || 0) || byDateDesc(a, b));

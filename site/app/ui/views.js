@@ -19,8 +19,9 @@ function badgeEl(entry) {
 
 // 검증 결과 한 줄: 통과하면 검수 서명 확인, 아니면 이유 (서명이 아예 없으면 이유 생략 가능)
 function verifyLine(entry) {
+  // 서명이 맞는 경우는 따로 표시하지 않는다(바다 배지와 고래 아이콘으로 충분). 서명이 있는데 문제가 있을 때만 이유를 보여 준다.
   const st = entry.status;
-  if (st.ok) return h('p', { class: 'muted' }, S.tailprintOk(st.reviewer.nickname, dateOnly(st.signedAt)));
+  if (st.ok || st.reason === 'NO_TAILPRINT') return null;
   return h('p', { class: 'muted' }, S.reason[st.reason] || st.reason);
 }
 
@@ -141,7 +142,7 @@ export function flowView({ steps, entries, i, onPrev, onNext, onRun, onBack, onJ
         h('button', { onclick: onNext, disabled: i === steps.length - 1 }, F.next))));
 }
 
-// 곳간 구역 안내 띠: 큰 곳간(검수됨)과 나눔 곳간(검수 전)을 한눈에 구분한다
+// 곳간 구역 안내 띠: 인증 곳간(검수됨)과 나눔 곳간(검수 전)을 한눈에 구분한다
 export const zoneBand = (kind) => h('div', { class: `zone ${kind}`, role: 'note' },
   h('strong', {}, S.zone[kind].title), h('span', {}, S.zone[kind].text));
 
@@ -185,7 +186,7 @@ function featuredBand(entries, state, onRun) {
 export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, onToggleDetail, onRemix, share, submit, spout, sendBar, ui, top }) {
   const sortSel = h('label', {}, S.filter.sort.label,
     h('select', { onchange: (e) => onFilter({ sort: e.target.value }) },
-      ['pick', 'new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
+      ['new', 'spout'].map((k) => h('option', { value: k, selected: state.sort === k }, S.filter.sort[k]))));
   return h('section', { class: 'section' },
     zoneBand('catalog'),
     top || null,
@@ -231,8 +232,7 @@ function workCard(entry, opts) {
       h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(more), title: more ? S.list.fold : S.list.unfold, onclick: () => ui && ui.onExpand && ui.onExpand(w.id) },
         h('h3', {}, w.title), h('span', { class: 'chev', 'aria-hidden': 'true' }, more ? '▾' : '▸')),
       onFav ? h('button', { class: `star${fav ? ' on' : ''}`, type: 'button', 'aria-pressed': String(!!fav), 'aria-label': fav ? S.fav.off : S.fav.on, title: fav ? S.fav.off : S.fav.on, onclick: () => onFav(entry) }, fav ? '★' : '☆') : null),
-    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok ? h('span', { class: 'badge verified' }, S.verified) : null,
-      entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
+    h('div', { class: 'row', 'data-tour': 'badge' }, badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
       w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null,
       KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null),
     makerLine(w.author, '', !!entry.status.ok),
@@ -285,7 +285,7 @@ export function spoutSendBar({ pending, waiting, onSend, onSent }) {
       waiting ? h('button', { class: 'primary', onclick: onSent }, S.spout.sent) : null));
 }
 
-// 큰 곳간에 보내기 (교사고래 모드에서만 만들어진다): 개인정보 확인 → 설문 문항별 답·업로드 파일 → 구글 설문 열기
+// 인증 곳간에 보내기 (교사고래 모드에서만 만들어진다): 개인정보 확인 → 설문 문항별 답·업로드 파일 → 구글 설문 열기
 function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, onCopy, onSaveFile, onOpenForm, showSong, onSong }) {
   const Sb = S.submit;
   const nick = h('input', { 'aria-label': Sb.nickname, placeholder: Sb.nickname, value: (draft && draft.nickname) || (profile && profile.nickname) || '' });

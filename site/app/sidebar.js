@@ -50,7 +50,7 @@ const state = {
   service: null, confirmUrl: null, catalog: null, mySpouts: {}, spoutWaiting: null, spoutLive: null, pendingCancels: {},
   expanded: {}, limit: 12, favOnly: false,
   tab: 'catalog', mode: 'baby', screen: 'main', // screen: main | create | import | run
-  grade: '', subject: '', badge: '', pickOnly: false, sort: 'pick',
+  grade: '', subject: '', badge: '', pickOnly: false, sort: 'new',
   source: 'network', listRejected: false, notice: '', openId: null,
   entries: [], list: null,
   create: { kind: 'create', errors: [], warnings: [], input: { artifactType: 'html', domain: '', category: '', subcategory: '', audience: [], tags: [] } }, // kind: create | edit | remix
@@ -209,7 +209,7 @@ const shareProps = () => ({
   onLink: copyViewerLink,
 });
 
-// ----- 큰 곳간에 공유하기: 설문 문항(1~6)에 맞춘 답과 업로드 파일을 만든다. 학생고래·교사고래 모두 쓸 수 있다
+// ----- 인증 곳간에 공유하기: 설문 문항(1~6)에 맞춘 답과 업로드 파일을 만든다. 학생고래·교사고래 모두 쓸 수 있다
 const openForm = (u) => {
   const url = validFormUrl(u);
   if (url) chrome.tabs.create({ url });
@@ -564,7 +564,7 @@ async function render() {
   } else if (state.tab === 'mypod') {
     const all = await store.list();
     const entries = await verifyWorks(all.map((r) => r.work));
-    // 내 곳간 찾기: 큰 곳간과 같은 검색 규칙(제목·주제·성취기준·태그·분류)
+    // 내 곳간 찾기: 인증 곳간과 같은 검색 규칙(제목·주제·성취기준·태그·분류)
     const hit = state.mypodQuery ? new Set(filterEntries(entries, { query: state.mypodQuery }).map((e) => e.work.id)) : null;
     // 즐겨찾기(★)는 맨 위로, '즐겨찾기만 보기'를 켜면 그것만
     const found = (hit ? all.filter((r) => hit.has(r.id)) : all).filter((r) => !state.favOnly || r.favorite);

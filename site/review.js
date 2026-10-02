@@ -209,7 +209,7 @@ function catalogOut() {
   const text = JSON.stringify(state.catalog, null, 2);
   return h('div', { class: 'card' },
     h('h3', {}, 'catalog.json (작품 ' + (state.catalog.items || []).length + '개)'),
-    h('p', { class: 'muted' }, '내려받은 파일을 저장소의 site/catalog.json에 덮어쓰고 올리면 모두의 큰 곳간에 반영돼요.'),
+    h('p', { class: 'muted' }, '내려받은 파일을 저장소의 site/catalog.json에 덮어쓰고 올리면 모두의 인증 곳간에 반영돼요.'),
     h('textarea', { readonly: true, 'aria-label': 'catalog.json' }, text),
     h('div', { class: 'row' },
       h('button', { class: 'secondary', onclick: () => copy(text) }, '복사'),
@@ -256,7 +256,7 @@ function viewRoot() {
         h('button', { class: 'secondary', onclick: () => download('reviewers.json', listText) }, '내려받기'))) : null);
 }
 
-// 이달의 고래자리 선정: 큰 곳간 작품 중 골라 관리 열쇠로 서명 → catalog.json의 featured
+// 이달의 고래자리 선정: 인증 곳간 작품 중 골라 관리 열쇠로 서명 → catalog.json의 featured
 function featuredCard() {
   const items = (state.catalog && state.catalog.items) || [];
   const now = new Date();
@@ -267,7 +267,7 @@ function featuredCard() {
   const boxes = items.map((w) => h('label', { class: 'check' }, h('input', { type: 'checkbox', value: w.id, checked: current.has(w.id) }), w.title));
   return h('div', { class: 'card' },
     h('h3', {}, `이달의 고래자리 선정 (최대 ${MAX_FEATURED}개)`),
-    h('p', { class: 'muted' }, '큰 곳간 맨 위 띠에 보일 작품을 고르고 관리 열쇠로 서명해요. 서명이 틀리면 띠가 숨겨져요.'),
+    h('p', { class: 'muted' }, '인증 곳간 맨 위 띠에 보일 작품을 고르고 관리 열쇠로 서명해요. 서명이 틀리면 띠가 숨겨져요.'),
     month, title, note, ...boxes,
     h('button', { onclick: async () => {
       if (!state.root) return say('먼저 관리 열쇠를 불러와 주세요.', true);

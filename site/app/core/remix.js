@@ -36,7 +36,7 @@ export const editInput = (work) => formInput(work);
 
 // 수정 저장.
 // - 내가 직접 만들었고 검수 서명이 없는 작품: 같은 기록에서 버전만 올린다.
-// - 큰 곳간·꾸러미 작품이거나 검수 서명이 있는 작품: 원본은 그대로 두고 '내 수정본(미검수)'을 따로 저장한다.
+// - 인증 곳간·꾸러미 작품이거나 검수 서명이 있는 작품: 원본은 그대로 두고 '내 수정본(미검수)'을 따로 저장한다.
 // 반환: { ok, errors?, warnings?, record?, separate? }
 export async function saveEdit(store, record, input, opts = {}) {
   const v = validateNewWork(input);

@@ -230,7 +230,7 @@ function workCard(entry, opts) {
   const m = metaOf(entry);
   // 제목 줄에는 간단한 정보(검수 여부·종류)만. 설명·분류는 펼쳤을 때 보인다
   const more = !!(open || (ui && ui.expanded && ui.expanded[w.id]));
-  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}${more ? ' open' : ' compact'}` },
+  return h('article', { class: `card${entry.status.ok ? ' verified-card' : ''}${more ? ' open' : ' compact'}`, 'data-cat': m.category || null },
     h('div', { class: 'card-head' },
       h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(more), title: more ? S.list.fold : S.list.unfold, onclick: () => ui && ui.onExpand && ui.onExpand(w.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, more ? '▼' : '▶'), h('h3', {}, w.title)),
@@ -344,7 +344,7 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
     m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
     listTools(shown.map((e) => e.id), ui),
-    sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}` },
+    sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}`, 'data-cat': (e.category && e.category.category) || null },
       h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▼' : '▶'), h('h3', {}, e.title))),
       makerLine(e.nickname, e.whale, false),

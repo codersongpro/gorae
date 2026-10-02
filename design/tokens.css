@@ -38,6 +38,16 @@
   --color-positive: #00bf40;           /* 점검 통과·서명 확인 */
   --color-caution: #ff9200;            /* 점검 경고 */
 
+  /* 카테고리별 카드 색 (글자로도 쓰이므로 흰 바탕에서 읽히는 진한 색) */
+  --color-cat-1: #0054d1;
+  --color-cat-2: #1a7a42;
+  --color-cat-3: #9c5800;
+  --color-cat-4: #5b37ed;
+  --color-cat-5: #b4256b;
+  --color-cat-6: #00788c;
+  --color-cat-7: #3a4fb5;
+  --color-cat-8: #8a6d00;
+
   --color-danger: #e52222;             /* red-40 (글자·아이콘) */
   --color-focus: #3366ff;
 
@@ -101,6 +111,14 @@
     --color-class: #9a82f7;
     --color-fill: rgba(174, 176, 182, 0.12);
     --color-positive: #1ed45a;
+    --color-cat-1: #7aa0ff;
+    --color-cat-2: #1ed45a;
+    --color-cat-3: #ffa938;
+    --color-cat-4: #a99af7;
+    --color-cat-5: #ff7eb6;
+    --color-cat-6: #28d0ed;
+    --color-cat-7: #9fb0ff;
+    --color-cat-8: #e6c04a;
     --color-caution: #ffa938;
   }
 }
@@ -129,5 +147,13 @@
   --color-class: #9a82f7;
   --color-fill: rgba(174, 176, 182, 0.12);
   --color-positive: #1ed45a;
+  --color-cat-1: #7aa0ff;
+  --color-cat-2: #1ed45a;
+  --color-cat-3: #ffa938;
+  --color-cat-4: #a99af7;
+  --color-cat-5: #ff7eb6;
+  --color-cat-6: #28d0ed;
+  --color-cat-7: #9fb0ff;
+  --color-cat-8: #e6c04a;
   --color-caution: #ffa938;
 }

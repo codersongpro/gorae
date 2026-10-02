@@ -291,3 +291,24 @@ details[open] > summary::before { content: '▼'; }
 @media (prefers-reduced-motion: reduce) { details > summary::before { transition: none; } }
 
 .badge.popular { background: var(--color-badge-whirlpool); color: var(--color-badge-whirlpool-text); }
+
+/* 앱 종류(카테고리)별 카드 색: 바탕을 은은하게 물들이고 분류 뱃지·제목 막대에 같은 색을 쓴다 */
+.card[data-cat="classroom_tool"] { --accent: var(--color-cat-1); }
+.card[data-cat="subject_activity"] { --accent: var(--color-cat-2); }
+.card[data-cat="assessment"] { --accent: var(--color-cat-3); }
+.card[data-cat="project"] { --accent: var(--color-cat-4); }
+.card[data-cat="creative"] { --accent: var(--color-cat-5); }
+.card[data-cat="teaching_material"] { --accent: var(--color-cat-6); }
+.card[data-cat="class_management"] { --accent: var(--color-cat-1); }
+.card[data-cat="admin"] { --accent: var(--color-cat-7); }
+.card[data-cat="records"] { --accent: var(--color-cat-3); }
+.card[data-cat="communication"] { --accent: var(--color-cat-8); }
+.card[data-cat="student_life"] { --accent: var(--color-cat-5); }
+.card[data-cat="events"] { --accent: var(--color-cat-4); }
+.card[data-cat="resources"] { --accent: var(--color-cat-6); }
+.card[data-cat="research"] { --accent: var(--color-cat-2); }
+.card[data-cat="automation"] { --accent: var(--color-cat-1); }
+.card[data-cat] { background: color-mix(in srgb, var(--accent) 9%, color-mix(in srgb, var(--color-surface-raised) 58%, transparent)); }
+.card[data-cat] .pill.cat { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.card[data-cat] .card-head::before { content: ''; align-self: stretch; width: var(--space-1); border-radius: var(--radius-sm); background: var(--accent); }
+.card[data-cat] .card-toggle .chev { color: var(--accent); }

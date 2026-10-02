@@ -31,7 +31,7 @@ function checkList(report) {
 }
 
 // 빈 상태: 가운데 정렬 아이콘 + 제목 + (선택) 보조 버튼
-export const emptyState = (title, { icon = '🐳', text = '', action = null } = {}) =>
+export const emptyState = (title, { icon = '🐋', text = '', action = null } = {}) =>
   h('div', { class: 'empty' }, h('span', { class: 'icon', 'aria-hidden': 'true' }, icon), h('h3', {}, title),
     text ? h('p', {}, text) : null, action ? h('button', { onclick: action.onClick }, action.label) : null);
 
@@ -159,12 +159,12 @@ function metaLine(entry) {
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
 
-// 제작자 닉네임 강조: "별빛 고래 · 초등" → 🐳 **별빛 고래** · 초등
+// 제작자 닉네임 강조: "별빛 고래 · 초등" → 🐋 **별빛 고래** · 초등
 export function makerLine(author, role) {
   const [nick, ...rest] = String(author || '').split('·').map((t) => t.trim());
   if (!nick) return null;
   const sub = [rest.join(' · '), role].filter(Boolean).join(' · ');
-  return h('p', { class: 'maker' }, h('span', { 'aria-hidden': 'true' }, '🐳'), h('strong', { class: 'nick' }, nick), sub ? h('span', { class: 'maker-sub' }, sub) : null);
+  return h('p', { class: 'maker' }, h('span', { 'aria-hidden': 'true' }, '🐋'), h('strong', { class: 'nick' }, nick), sub ? h('span', { class: 'maker-sub' }, sub) : null);
 }
 
 // 이달의 고래자리 띠: 서명이 맞을 때만, 학생고래 모드에서는 맑은 바다 작품만
@@ -415,7 +415,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
           h('input', { type: 'checkbox', checked: (state.selected || []).includes(r.id), onchange: (e) => onSelect(r.id, e.target.checked) }), '꾸러미에 담기'),
         extra: h('p', { class: 'muted' }, tags.join(' · ')),
       });
-    }), moreButton(records.length, sliceOf(records, ui).length, ui)] : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐳', text: S.empty.mypod }));
+    }), moreButton(records.length, sliceOf(records, ui).length, ui)] : state.mypodQuery ? null : emptyState(S.empty.mypodTitle, { icon: '🐋', text: S.empty.mypod }));
 }
 
 export function classView({ mode, records, state, onSelect, onBuild, out, onCopy, onSaveFile, onOpenClass, onFlow }) {
@@ -552,7 +552,7 @@ export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onF
 // 시험 잠금 화면 (학생고래 모드 + 메인 탭이 UBT)
 export function examLockView() {
   return h('section', { class: 'section exam-lock', role: 'alert' },
-    h('p', { class: 'lock-whale', 'aria-hidden': 'true' }, '🐳'),
+    h('p', { class: 'lock-whale', 'aria-hidden': 'true' }, '🐋'),
     h('h2', {}, S.exam.title),
     h('p', {}, S.exam.body),
     h('p', { class: 'muted' }, S.exam.hint));

@@ -53,7 +53,7 @@
     cards.forEach((c, i) => {
       const b = document.createElement('button'); b.className = 'c' + (c.done ? ' done' : open.includes(i) ? ' up' : '');
       const up = c.done || open.includes(i);
-      if (up) { const s = document.createElement('span'); s.textContent = c.t; b.appendChild(s); b.setAttribute('aria-label', c.t); } else { b.textContent = '🐳'; b.setAttribute('aria-label', `${i + 1}번 카드, 뒤집기`); }
+      if (up) { const s = document.createElement('span'); s.textContent = c.t; b.appendChild(s); b.setAttribute('aria-label', c.t); } else { b.textContent = '🐋'; b.setAttribute('aria-label', `${i + 1}번 카드, 뒤집기`); }
       b.disabled = c.done; b.onclick = () => flip(i); g.appendChild(b);
     });
     $('try').textContent = `시도 ${tries}번`; $('pairs').textContent = `찾은 짝 ${found}/${cards.length / 2}`;

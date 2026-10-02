@@ -15,7 +15,7 @@
 <body>
 <h1>🪪 나를 소개하는 카드</h1>
 <div class="card">
-  <div id="face" title="눌러서 바꾸기">🐳</div>
+  <div id="face" title="눌러서 바꾸기">🐋</div>
   <h2 id="nick">파도타는 고래</h2>
   <input id="like" aria-label="좋아하는 것" value="좋아하는 것: 축구, 그림 그리기">
   <input id="dream" aria-label="꿈" value="꿈: 게임을 만드는 사람">
@@ -23,7 +23,7 @@
 </div>
 <p>카드를 눌러 얼굴을 바꾸고, 글을 고쳐 나만의 카드를 만들어요. (진짜 이름 대신 별명을 써요)</p>
 <script>
-  const faces = ['🐳', '🐬', '🦈', '🐙', '🐠', '🦭'];
+  const faces = ['🐋', '🐬', '🦈', '🐙', '🐠', '🦭'];
   let i = 0;
   document.getElementById('face').onclick = (e) => { i = (i + 1) % faces.length; e.target.textContent = faces[i]; };
   document.getElementById('nick').onclick = (e) => { e.target.textContent = ['파도타는 고래', '노래하는 고래', '점프하는 고래'][i % 3]; };

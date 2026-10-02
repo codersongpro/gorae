@@ -25,19 +25,39 @@ jobs.push(['extension/ui/dom.js', 'site/dom.js']); // 뷰어·검수 도구가 �
 
 const check = process.argv.includes('--check');
 let stale = 0;
-for (const [from, to] of jobs) {
-  const src = new URL(from, root);
-  const dst = new URL(to, root);
-  if (check) {
-    const [a, b] = await Promise.all([readFile(src), readFile(dst).catch(() => null)]);
-    if (!b || !a.equals(b)) {
-      console.log('어긋남:', to);
-      stale++;
+
+// 웹 버전(site/app/): 확장앱 코드를 그대로 복사한다. 웨일 전용 파일(manifest·sidebar.html·run.html)은 제외 —
+// 웹용 index.html·run.html·web-shim.js·web.css는 site/app/ 에 직접 둔다.
+const SKIP = new Set(['manifest.json', 'sidebar.html', 'run.html', 'README.md']);
+async function listFiles(dir, base = '') {
+  const out = [];
+  for (const e of await readdir(new URL(dir, root), { withFileTypes: true })) {
+    const rel = base + e.name;
+    if (e.isDirectory()) out.push(...(await listFiles(`${dir}${e.name}/`, `${rel}/`)));
+    else if (!SKIP.has(rel)) out.push(rel);
+  }
+  return out;
+}
+// 확장앱 폴더의 생성물(shared·sample·tokens)이 먼저 만들어진 뒤 복사해야 하므로 1차 복사를 먼저 한다
+async function copyJobs(list) {
+  for (const [from, to] of list) {
+    const src = new URL(from, root);
+    const dst = new URL(to, root);
+    if (check) {
+      const [a, b] = await Promise.all([readFile(src), readFile(dst).catch(() => null)]);
+      if (!b || !a.equals(b)) {
+        console.log('어긋남:', to);
+        stale++;
+      }
+    } else {
+      await mkdir(new URL('./', dst), { recursive: true });
+      await copyFile(src, dst);
     }
-  } else {
-    await mkdir(new URL('./', dst), { recursive: true });
-    await copyFile(src, dst);
   }
 }
+await copyJobs(jobs);
+const appJobs = (await listFiles('extension/')).map((f) => [`extension/${f}`, `site/app/${f}`]);
+await copyJobs(appJobs);
+jobs.push(...appJobs);
 if (check) process.exit(stale ? 1 : 0);
 console.log(`동기화 ${jobs.length}개 파일`);

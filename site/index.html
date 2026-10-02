@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon32.png">
+<title>고래곳간</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="viewer.css">
+<style>
+  .hero { text-align: center; padding: var(--space-6) 0 var(--space-4); }
+  .hero .whale { font-size: calc(var(--font-size-xl) * 3); line-height: 1; margin: 0; }
+  .hero h1 { margin: var(--space-2) 0 var(--space-1); font-size: calc(var(--font-size-xl) * 1.3); }
+  .go { display: grid; gap: var(--space-3); }
+  .go a.btn { justify-content: center; min-height: var(--touch-min); font-weight: var(--font-weight-bold); }
+  .go a.btn.secondary { background: var(--color-surface-raised); color: var(--color-text); border-color: var(--color-border); }
+  ul.points { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+</style>
+</head>
+<body>
+<main class="viewer">
+  <header class="hero">
+    <p class="whale" aria-hidden="true">🐳</p>
+    <h1>고래곳간</h1>
+    <p class="muted">교실에서 만든 바이브코딩 작품을 안전하게 이어 쓰는 곳</p>
+    <p class="muted">만들고 끝나는 바이브코딩을, 이어 쓰는 수업으로.</p>
+  </header>
+
+  <nav class="go" aria-label="바로가기">
+    <a class="btn" href="app/">고래곳간 열기 (웹)</a>
+    <a class="btn secondary" href="review.html">검수 도구 (파수꾼·대왕고래)</a>
+  </nav>
+
+  <section class="card">
+    <h2>어떻게 쓰나요?</h2>
+    <ul class="points">
+      <li><strong>웹</strong>: 위 버튼을 누르면 설치 없이 큰 곳간·나눔 곳간·내 곳간을 쓸 수 있어요. 폰과 태블릿에서도 열려요.</li>
+      <li><strong>웨일 사이드바</strong>: 확장앱을 설치하면 웨일 클래스·팀보드·UBT 화면 옆에서 바로 쓸 수 있어요. 웨일 PC 브라우저에서만 설치돼요.</li>
+      <li><strong>작품 링크</strong>: 선생님이 보낸 링크를 누르면 바로 실행돼요. 작품은 격리된 공간에서 외부 통신 없이 돌아가요.</li>
+    </ul>
+  </section>
+
+  <p class="muted">로그인도 개인정보 저장도 없어요. 작품과 설정은 내 기기에만 저장돼요.</p>
+</main>
+</body>
+</html>

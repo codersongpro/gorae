@@ -5,7 +5,7 @@ name: 사이트 배포
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'shared/**', 'design/tokens.css', 'extension/core/rootkey.js', 'extension/ui/strings.js', 'tools/sync.mjs', '.github/workflows/pages.yml']
+    paths: ['site/**', 'shared/**', 'extension/**', 'design/tokens.css', 'tools/sync.mjs', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:

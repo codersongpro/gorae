@@ -1,0 +1,133 @@
+/* =========================================================
+   고래곳간 디자인 토큰 계약 (design/tokens.css) — 원티드 디자인 시스템 기반 (2026-10-02 적용)
+   - 출처: design/import/tokens.import.css. 변수 '이름'은 계약이라 바꾸지 않는다. 값만 교체한다.
+   - ui/ 코드는 이 변수만 쓴다 (색·px 하드코딩 금지).
+   - 배지 글자·보조 글자는 대비 4.5:1을 맞추려고 원티드 램프에서
+     한 단계 진한 값을 골랐다 (화면 시안의 -40 단계보다 진함).
+   ========================================================= */
+:root {
+  /* 기본 면·글자 */
+  --color-bg: #ffffff;                 /* background-normal-normal */
+  --color-surface: #f7f7f8;            /* background-normal-alternative (cool-neutral-99) */
+  --color-surface-raised: #ffffff;     /* background-elevated-normal */
+  --color-border: #e1e2e4;             /* line-normal-normal 불투명 환산 (cool-neutral-96) */
+  --color-text: #171719;               /* label-normal (cool-neutral-10) */
+  --color-text-muted: #5a5c63;         /* cool-neutral-40 · 흰 바탕 6.6:1 */
+  --color-primary: #3366ff;            /* primary-normal */
+  --color-primary-text: #ffffff;
+
+  /* 공간 구분 */
+  --color-catalog: #0054d1;            /* 큰 곳간 · primary-heavy (blue-40) */
+  --color-catalog-soft: #eef2ff;       /* primary 7% on white */
+  --color-mypod: #00788c;              /* 내 곳간 · cyan-35 근사 (탭 글자 4.5:1) */
+  --color-mypod-soft: #e6f8fc;         /* cyan 10% on white */
+  --color-teacher-band: #5b37ed;       /* 교사고래 모드 띠 · violet-45, 흰 글자 */
+
+  /* 배지 (배경 + 글자) */
+  --color-badge-clear: #e5f8ec;        /* green-50 12% */
+  --color-badge-clear-text: #006e25;   /* green-30 */
+  --color-badge-shallow: #fff2e0;      /* orange-50 14% */
+  --color-badge-shallow-text: #9c5800; /* orange-30 */
+  --color-badge-whirlpool: #ffeded;    /* red-50 12% */
+  --color-badge-whirlpool-text: #b00c0c; /* red-30 */
+
+  /* 채택한 추가 변수 (디자인 제안) */
+  --color-market: #9c5800;             /* 나눔 곳간 탭 글자 (orange-30) */
+  --color-class: #5b37ed;              /* 학급 꾸러미 탭 글자 (violet-45) */
+  --color-fill: rgba(112, 115, 124, 0.08); /* 검색창·보조 버튼 바탕 */
+  --color-positive: #00bf40;           /* 점검 통과·서명 확인 */
+  --color-caution: #ff9200;            /* 점검 경고 */
+
+  --color-danger: #e52222;             /* red-40 (글자·아이콘) */
+  --color-focus: #3366ff;
+
+  /* 글꼴 — Pretendard JP 우선 */
+  --font-sans: "Pretendard JP Variable", "Pretendard JP", "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "D2Coding", "SF Mono", "Consolas", ui-monospace, monospace;
+  --font-size-xs: 0.75rem;    /* 12 · Caption 1 — 배지·띠 전용 */
+  --font-size-sm: 0.875rem;   /* 14 · Label 1 — 본문 최소 */
+  --font-size-md: 0.9375rem;  /* 15 · Body 1 */
+  --font-size-lg: 1.0625rem;  /* 17 · Headline 2 — 카드 제목 */
+  --font-size-xl: 1.375rem;   /* 22 · Title 3 — 상세 제목 */
+  --font-weight-regular: 500; /* 원티드는 Medium이 기본 */
+  --font-weight-bold: 600;    /* SemiBold. 화면 제목만 700 */
+  --line-height: 1.5;
+
+  /* 간격·모양 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius-sm: 6px;    /* 배지 */
+  --radius-md: 10px;   /* 칩·입력 보조·아이콘 버튼 */
+  --radius-lg: 14px;   /* 카드 */
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 4px rgba(23, 23, 23, 0.07), 0 0 1px rgba(23, 23, 23, 0.10);
+  --shadow-md: 0 2px 10px rgba(23, 23, 23, 0.10), 0 0 1px rgba(23, 23, 23, 0.12);
+
+  /* 기타 */
+  --border-width: 1px;
+  --touch-min: 44px;
+  --panel-width: 360px;
+  --motion-fast: 120ms;
+  --motion-normal: 200ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #1b1c1e;
+    --color-surface: #171719;
+    --color-surface-raised: #212225;
+    --color-border: #37383c;
+    --color-text: #f7f7f8;
+    --color-text-muted: #aeb0b6;
+    --color-primary: #4f7dff;
+    --color-catalog: #7aa0ff;
+    --color-catalog-soft: #1e2740;
+    --color-mypod: #28d0ed;
+    --color-mypod-soft: #12303a;
+    --color-teacher-band: #6541f2;
+    --color-badge-clear: #12331f;
+    --color-badge-clear-text: #1ed45a;
+    --color-badge-shallow: #3a2a10;
+    --color-badge-shallow-text: #ffa938;
+    --color-badge-whirlpool: #3d1a1a;
+    --color-badge-whirlpool-text: #ff6363;
+    --color-danger: #ff6363;
+    --color-focus: #7aa0ff;
+    --color-market: #ffa938;
+    --color-class: #9a82f7;
+    --color-fill: rgba(174, 176, 182, 0.12);
+    --color-positive: #1ed45a;
+    --color-caution: #ffa938;
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #1b1c1e;
+  --color-surface: #171719;
+  --color-surface-raised: #212225;
+  --color-border: #37383c;
+  --color-text: #f7f7f8;
+  --color-text-muted: #aeb0b6;
+  --color-primary: #4f7dff;
+  --color-catalog: #7aa0ff;
+  --color-catalog-soft: #1e2740;
+  --color-mypod: #28d0ed;
+  --color-mypod-soft: #12303a;
+  --color-teacher-band: #6541f2;
+  --color-badge-clear: #12331f;
+  --color-badge-clear-text: #1ed45a;
+  --color-badge-shallow: #3a2a10;
+  --color-badge-shallow-text: #ffa938;
+  --color-badge-whirlpool: #3d1a1a;
+  --color-badge-whirlpool-text: #ff6363;
+  --color-danger: #ff6363;
+  --color-focus: #7aa0ff;
+  --color-market: #ffa938;
+  --color-class: #9a82f7;
+  --color-fill: rgba(174, 176, 182, 0.12);
+  --color-positive: #1ed45a;
+  --color-caution: #ffa938;
+}

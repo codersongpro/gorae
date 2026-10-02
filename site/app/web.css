@@ -1,0 +1,6 @@
+/* 웹 버전: 사이드바(좁은 폭) 화면을 넓은 화면에서도 보기 좋게 */
+body { display: flex; justify-content: center; background: var(--color-surface); }
+#app { width: 100%; max-width: calc(var(--panel-width) * 2); box-shadow: var(--shadow-sm); }
+@media (min-width: 720px) {
+  .tabs { position: sticky; top: 0; z-index: 2; }
+}

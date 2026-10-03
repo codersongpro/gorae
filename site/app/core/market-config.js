@@ -6,7 +6,9 @@ export const MARKET = {
   // 고정된 나눔 곳간 파일 ID. 운영에서는 이 ID로 원응답을 직접 요청하지 않는다.
   sheetId: '1sHBcqZcP4cSFyzTUqC1Gj_QK7feCrYKz09EyACaNjj8',
   // 같은 고정 파일의 공개목록 탭만 웹에 게시한 CSV 주소 (원응답 CSV 금지)
-  publishedCsvUrl: '',
+  // 지금은 '설문지 응답 시트1' 탭(gid 1451815224)을 탭 지정으로 연결한다. 이 탭에는 이메일 열이 없다.
+  // 운영자 확인 절차가 필요해지면 같은 파일에 '공개목록' 탭을 만들어 그 gid로 바꾼다.
+  publishedCsvUrl: 'https://docs.google.com/spreadsheets/d/1sHBcqZcP4cSFyzTUqC1Gj_QK7feCrYKz09EyACaNjj8/export?format=csv&gid=1451815224',
   // 구글 폼 응답 주소 (https://docs.google.com/forms/d/e/.../viewform)
   formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdJG1NXqySDXBPpKIkSrOxFLH9gR9WyA8ZR7ONVuncGrR5uVg/viewform',
   // 폼 ⋮ → '미리 채워진 링크 받기'에서 확인한 질문별 entry 번호

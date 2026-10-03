@@ -427,7 +427,6 @@ export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onRevi
     m.status === 'ok' && !(m.entries || []).length ? h('p', { class: 'muted' }, M.empty) : null,
     m.status === 'ok' && (m.entries || []).length ? h('p', { class: 'muted' }, M.count(shown.length)) : null,
     m.status === 'ok' && (m.entries || []).length && !shown.length ? h('p', { class: 'muted' }, M.none) : null,
-    listTools(shown.map((e) => e.id)),
     sliceOf(shown, ui).map((e) => h('article', { class: `card market-card${ui && ui.expanded && ui.expanded[e.id] ? ' open' : ' compact'}`, 'data-group': cardGroup(e.category && e.category.domain, e.category && e.category.category) },
       h('div', { class: 'card-head' }, h('button', { class: 'card-toggle', type: 'button', 'aria-expanded': String(!!(ui && ui.expanded && ui.expanded[e.id])), onclick: () => ui && ui.onExpand && ui.onExpand(e.id) },
         h('span', { class: 'chev', 'aria-hidden': 'true' }, ui && ui.expanded && ui.expanded[e.id] ? '▼' : '▶'), h('h3', {}, e.title))),

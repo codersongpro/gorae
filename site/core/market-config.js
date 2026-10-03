@@ -3,8 +3,9 @@ export const MARKET = {
   // 원응답은 비공개. 운영자 확인을 거친 별도 공개목록 CSV만 연결한다.
   environment: 'production',
   allowRawSheetFallback: false,
-  sheetId: '', // 개발용 가상 시트 테스트에만 사용
-  // 공개목록: 파일 → 공유 → 웹에 게시 → CSV 주소 (원응답 CSV 금지)
+  // 고정된 나눔 곳간 파일 ID. 운영에서는 이 ID로 원응답을 직접 요청하지 않는다.
+  sheetId: '1sHBcqZcP4cSFyzTUqC1Gj_QK7feCrYKz09EyACaNjj8',
+  // 같은 고정 파일의 공개목록 탭만 웹에 게시한 CSV 주소 (원응답 CSV 금지)
   publishedCsvUrl: '',
   // 구글 폼 응답 주소 (https://docs.google.com/forms/d/e/.../viewform)
   formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdJG1NXqySDXBPpKIkSrOxFLH9gR9WyA8ZR7ONVuncGrR5uVg/viewform',

@@ -59,7 +59,7 @@ function teamboardShare(w, link, status, template) {
     feedback: '좋았던 점 · 구체적으로 보완하면 좋을 점',
     improvement: '바꾸면 좋을 부분 · 바꾼 이유 · 함께 시도할 방법',
   };
-  return paragraphs([`🐋 ${label}`, `작품명: ${w.title}`, `만든이: ${w.author || '별명 없음'}`, `설명: ${w.description || w.howToUse}`],
+  return paragraphs([`🐋 ${label}`, `작품명: ${w.title}`, `만든이: ${w.author || '닉네임 없음'}`, `설명: ${w.description || w.howToUse}`],
     reviewLines(status), linkLines(link), [remixLine(w), `💬 ${prompts[selected]}을 팀보드 댓글로 남겨 주세요.`,
       !template && w.contentType === 'interactive_activity' ? '선택 활동: 필요하면 이 작품을 리믹스해 보세요. (고래곳간 [가져오기] → [리믹스])' : null]);
 }

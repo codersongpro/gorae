@@ -12,13 +12,13 @@ const isHttps = (u) => {
   }
 };
 
-// 고래 노래(한 줄 후기) 검사: 80자 이하, 작성자는 별명·학교급 표시
+// 고래 노래(한 줄 후기) 검사: 80자 이하, 작성자는 닉네임·학교급 표시
 export function validateSongs(songs = []) {
   const errors = [];
   songs.forEach((s, i) => {
     if (!s || typeof s.text !== 'string' || !s.text.trim()) errors.push(`${i + 1}번째 고래 노래가 비어 있어요.`);
     else if ([...s.text].length > MAX_SONG_CHARS) errors.push(`${i + 1}번째 고래 노래가 ${MAX_SONG_CHARS}자를 넘어요.`);
-    if (!s || !s.author) errors.push(`${i + 1}번째 고래 노래의 작성자(별명·학교급)가 없어요.`);
+    if (!s || !s.author) errors.push(`${i + 1}번째 고래 노래의 작성자(닉네임·학교급)가 없어요.`);
   });
   return errors;
 }
@@ -60,7 +60,7 @@ export const emptyList = (now = new Date()) => ({ version: 0, issuedAt: now.toIS
 
 // entry: { id, nickname, publicKey } — 파수꾼고래가 만든 공개키 묶음
 export function addReviewer(list, entry, now = new Date()) {
-  if (!entry || !entry.id || !entry.nickname || !entry.publicKey || entry.publicKey.kty !== 'EC') throw new Error('파수꾼고래 정보(id·별명·공개키)가 올바르지 않아요.');
+  if (!entry || !entry.id || !entry.nickname || !entry.publicKey || entry.publicKey.kty !== 'EC') throw new Error('파수꾼고래 정보(id·닉네임·공개키)가 올바르지 않아요.');
   if (entry.publicKey.d) throw new Error('개인 열쇠가 섞여 있어요. 공개키만 넣어야 해요.');
   if (list.reviewers.some((r) => r.id === entry.id)) throw new Error('이미 등록된 파수꾼고래 id예요.');
   return nextBody(list, now, { reviewers: [...list.reviewers, { id: entry.id, nickname: entry.nickname, publicKey: entry.publicKey, addedAt: now.toISOString() }] });

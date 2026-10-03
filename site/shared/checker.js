@@ -55,7 +55,7 @@ export const looksLikeRealName = (author) => /^[가-힣]{2,4}$/.test(String(auth
 
 // 웹앱(URL) 점검: 코드를 볼 수 없으므로 등록자가 밝힌 정보로 경고한다. 외부 웹앱은 늘 격리 밖이다.
 export function checkWebapp(w) {
-  const warnings = [{ code: 'EXTERNAL_WEBAPP', label: '외부 웹앱', reason: '외부 웹앱입니다. 고래곳간 밖에서 실행되어 격리 실행·외부 통신 차단이 적용되지 않아요.' }];
+  const warnings = [{ code: 'EXTERNAL_WEBAPP', label: '외부 웹앱', reason: '외부 웹앱이에요. 고래곳간 밖에서 실행되어 격리 실행·외부 통신 차단이 적용되지 않아요.' }];
   if (w.loginRequired === true) warnings.push({ code: 'LOGIN', label: '로그인 필요', reason: '로그인해야 쓸 수 있어요. 학생 계정·개인정보가 필요한지 확인하세요.' });
   if (w.usesExternalApi === true) warnings.push({ code: 'EXT_API', label: '외부 API 사용', reason: '입력한 내용이 다른 서비스로 전송될 수 있어요.' });
   if (w.collectsPersonalInfo === true) warnings.push({ code: 'PII_INPUT', label: '개인정보 입력', reason: '이름·연락처 등 개인정보를 입력받아요.' });

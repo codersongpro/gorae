@@ -120,7 +120,7 @@ async function main() {
       st.ok && st.pick ? el('span', { class: 'badge shallow' }, S.pick) : null),
     el('p', { class: 'muted' }, meta.path.join(' › ')),
     el('p', { class: 'muted' }, [meta.gradeLabel, meta.subject, meta.topic, work.author].filter(Boolean).join(' · ')),
-    meta.artifactType === 'webapp' ? el('p', { class: 'notice' }, '🌐 외부 웹앱입니다') : null,
+    meta.artifactType === 'webapp' ? el('p', { class: 'notice' }, '🌐 외부 자료') : null,
     meta.tags.length ? el('p', { class: 'muted' }, meta.tags.map((t) => '#' + t).join(' ')) : null,
     el('p', { class: st.ok ? 'muted' : 'notice' }, st.ok ? S.tailprintOk(st.reviewer.nickname, String(st.signedAt).slice(0, 10)) : (S.reason[st.reason] || st.reason)),
     st.ok ? null : el('p', { class: 'muted' }, '🟡 아직 검수되지 않은 작품으로 표시해요. 교사가 먼저 확인한 뒤 사용해 주세요.'),

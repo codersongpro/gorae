@@ -36,7 +36,7 @@ export function validateNewWork(input) {
     if (!input.scanResult || !String(input.scanResult).trim()) err('EXE_SCAN', '바이러스 검사 결과를 적어 주세요.');
     if (!input.environment || !String(input.environment).trim()) err('EXE_ENV', '실행 환경을 적어 주세요.');
   }
-  if (looksLikeRealName(input.author)) warnings.push({ code: 'REAL_NAME', message: '실명처럼 보여요. 별명과 학교급만 써 주세요.' });
+  if (looksLikeRealName(input.author)) warnings.push({ code: 'REAL_NAME', message: '실명처럼 보여요. 닉네임과 학교급만 써 주세요.' });
   return { ok: errors.length === 0, errors, warnings };
 }
 

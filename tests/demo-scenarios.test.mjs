@@ -80,7 +80,7 @@ test('D 리믹스: 원작 → 리믹스 → 수정 → 새 작품 저장 → 계
   assert.ok(buildShare('class', remix, { link: null, status: e.status }).text.includes('리믹스한 작품'));
 });
 
-test('E 안전성: 검수된 HTML 작품 코드를 바꾸면 서명 검증 실패 → 맑은 바다 제거 → 얕은 바다 + "서명 뒤 내용이 바뀌었습니다."', async () => {
+test('E 안전성: 검수된 HTML 작품 코드를 바꾸면 서명 검증 실패 → 맑은 바다 제거 → 얕은 바다 + "서명 뒤 내용이 바뀌었어요."', async () => {
   const pizza = catalog.items.find((w) => w.id === 'sample-fraction-pizza');
   const [before] = await verifyWorks([pizza]);
   assert.equal(displayBadge(before), 'clear');
@@ -89,7 +89,7 @@ test('E 안전성: 검수된 HTML 작품 코드를 바꾸면 서명 검증 실�
   const [item] = pv.items;
   assert.deepEqual([item.status.ok, item.status.reason], [false, 'CONTENT_CHANGED']);
   assert.equal(displayBadge(item), 'shallow');
-  assert.equal(S.reason.CONTENT_CHANGED, '서명 뒤 내용이 바뀌었습니다.');
+  assert.equal(S.reason.CONTENT_CHANGED, '서명 뒤 내용이 바뀌었어요.');
   // 학생고래 목록에서는 사라지고(맑은 바다만), 공유 글에도 검수 표시가 없다
   assert.equal(filterEntries([item], { mode: 'baby' }).length, 0);
   assert.ok(!buildShare('class', tampered, { status: item.status }).text.includes('맑은 바다'));

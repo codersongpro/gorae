@@ -65,7 +65,7 @@ async function ensureSiteData() {
 
 // ---------- A. 검수 서명 만들기 ----------
 function viewMake() {
-  const nick = h('input', { placeholder: '예: 푸른물결 (별명만, 실명 금지)' });
+  const nick = h('input', { placeholder: '예: 푸른물결 (닉네임만, 실명 금지)' });
   const pw = h('input', { type: 'password', placeholder: '백업 파일 암호 (8자 이상)', autocomplete: 'new-password' });
   const bfile = h('input', { type: 'file', accept: '.keybackup,.json' });
   const bpw = h('input', { type: 'password', placeholder: '백업 암호', autocomplete: 'current-password' });
@@ -76,7 +76,7 @@ function viewMake() {
       h('h2', {}, '1. 검수 서명 만들기 (파수꾼고래)'),
       h('p', { class: 'muted' }, '열쇠 한 쌍을 만들어요. 개인 열쇠는 이 브라우저에 꺼낼 수 없게 저장되고, 기기를 바꿀 때 쓸 암호 건 백업 파일을 내려받아요. 공개키 묶음은 관리자 파수꾼고래에게 보내 고래 족보에 올려 달라고 하세요.'),
       me ? h('p', { class: 'ok' }, `✔ 이 브라우저에 열쇠가 있어요: ${me.nickname} (${me.reviewerId})`) : h('p', { class: 'notice' }, '아직 이 브라우저에 열쇠가 없어요.'),
-      field('별명', nick), field('백업 암호', pw),
+      field('닉네임', nick), field('백업 암호', pw),
       h('button', { onclick: () => makeReviewer(nick.value, pw.value) }, me ? '새 열쇠로 바꾸기' : '검수 서명 만들기')),
     me ? h('div', { class: 'card' },
       h('h3', {}, '공개키 묶음 (관리자 파수꾼고래에게 전달)'),
@@ -89,7 +89,7 @@ function viewMake() {
 }
 
 async function makeReviewer(nickname, password) {
-  if (!nickname.trim()) return say('별명을 적어 주세요.', true);
+  if (!nickname.trim()) return say('닉네임을 적어 주세요.', true);
   const ok = checkPassword(password);
   if (!ok.ok) return say(ok.message, true);
   const kp = await tp.generateKeyPair({ extractable: true });
@@ -147,7 +147,7 @@ function loadDrafts(text, fileName = '') {
 }
 
 function parseSongs(text) {
-  // 한 줄에 하나: "작성자 별명·학교급 | 후기 내용"
+  // 한 줄에 하나: "작성자 닉네임·학교급 | 후기 내용"
   return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
     const [author, ...rest] = l.split('|');
     return { author: author.trim(), text: rest.join('|').trim(), date: new Date().toISOString().slice(0, 10) };
@@ -160,7 +160,7 @@ function draftCard(d) {
   const badge = h('select', { 'aria-label': '배지', onchange: (e) => { d.badge = e.target.value; } },
     ['clear', 'shallow', 'whirlpool'].map((b) => h('option', { value: b, selected: d.badge === b }, S.badge[b])));
   const pick = h('input', { type: 'checkbox', checked: d.pick, onchange: (e) => { d.pick = e.target.checked; } });
-  const songs = h('textarea', { placeholder: '고래 노래: 한 줄에 하나 — 작성자 별명·학교급 | 후기 (80자 이하)', 'aria-label': '고래 노래', oninput: (e) => { d.songs = e.target.value; } }, d.songs);
+  const songs = h('textarea', { placeholder: '고래 노래: 한 줄에 하나 — 작성자 닉네임·학교급 | 후기 (80자 이하)', 'aria-label': '고래 노래', oninput: (e) => { d.songs = e.target.value; } }, d.songs);
   return h('div', { class: 'card' },
     h('h3', {}, w.title),
     h('p', { class: 'muted' }, (() => { const m = normalizeWork(w); return [m.path.join(' › '), m.gradeLabel, m.subject, m.topic, w.author, `버전 ${w.version || 1}`].filter(Boolean).join(' · '); })()),
@@ -171,7 +171,7 @@ function draftCard(d) {
       h('details', {}, h('summary', {}, '코드 보기'), h('pre', {}, w.html))) : null,
     preview,
     field('배지', badge),
-    h('label', { class: 'check' }, pick, '🐋 고래 픽 (카드에 "파수꾼 고래 검수 완료" 표시)'),
+    h('label', { class: 'check' }, pick, '🐋 고래 픽 (카드에 "★ 고래 픽" 표시)'),
     songs,
     d.quick ? h('button', { class: 'finish', onclick: () => finish(d) }, '✔ 검수 완료') : h('button', { onclick: () => sign(d) }, '검수 서명 찍기'),
     d.signed && !d.quick ? h('div', {},
@@ -241,7 +241,7 @@ function viewRoot() {
     h('div', { class: 'card' },
       h('h3', {}, `현재 고래 족보 (버전 ${L ? L.version : '-'})`),
       h('button', { class: 'secondary', onclick: async () => { state.list = null; await ensureSiteData(); say('공개된 족보를 다시 불러왔어요.'); } }, '공개된 족보 불러오기'),
-      L ? h('table', {}, h('tr', {}, h('th', {}, '별명'), h('th', {}, 'id'), h('th', {}, '상태')),
+      L ? h('table', {}, h('tr', {}, h('th', {}, '닉네임'), h('th', {}, 'id'), h('th', {}, '상태')),
         L.reviewers.map((r) => { const rv = L.revoked.find((x) => x.id === r.id); return h('tr', {}, h('td', {}, r.nickname), h('td', {}, r.id), h('td', {}, rv ? `말소(${rv.reason})` : '등록')); })) : null,
       h('h3', {}, '파수꾼고래 추가'), bundle,
       h('button', { onclick: () => editList(() => addReviewer(state.list, JSON.parse(bundle.value))) }, '추가하고 서명'),

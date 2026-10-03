@@ -1,5 +1,5 @@
 // 시연 E(안전성): 검수된 작품의 코드를 한 줄 바꾼 꾸러미를 만든다. 고래곳간 ＋ → 가져오기로 열면
-// 맑은 바다 배지가 사라지고 '얕은 바다' + "서명 뒤 내용이 바뀌었습니다."가 보여야 한다.
+// 맑은 바다 배지가 사라지고 '얕은 바다' + "서명 뒤 내용이 바뀌었어요."가 보여야 한다.
 // 사용: node tools/make-tamper-demo.mjs [작품 id]  →  output/demo/ 에 원본·변조본 꾸러미 2개
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createPack, serializePack } from '../shared/pack.js';

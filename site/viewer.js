@@ -82,7 +82,7 @@ async function fromCatalog(id) {
   }
   const r = readCatalogWork(catalog, id);
   if (r.ok) return r;
-  return { ok: false, message: r.reason === 'NOT_FOUND' ? '인증 곳간에서 이 작품을 찾을 수 없어요. 목록에서 내려갔거나 주소가 잘못됐어요.' : '인증 곳간의 작품 정보가 올바르지 않아 열 수 없어요.' };
+  return { ok: false, message: r.reason === 'NOT_FOUND' ? '인증 곳간에서 이 작품을 찾을 수 없어요.' : '인증 곳간의 작품 정보가 올바르지 않아 열 수 없어요.' };
 }
 
 async function main() {
@@ -91,7 +91,7 @@ async function main() {
   if (id) parsed = await fromCatalog(id);
   else {
     parsed = await readViewerFragment(location.hash);
-    if (!parsed.ok) parsed.message = parsed.reason === 'NO_DATA' ? '이 주소에는 작품이 들어 있지 않아요.' : '링크가 깨졌거나 올바르지 않아요. 보내 준 사람에게 다시 요청해 주세요.';
+    if (!parsed.ok) parsed.message = parsed.reason === 'NO_DATA' ? '이 주소에는 작품이 들어 있지 않아요.' : '링크가 깨졌어요. 다시 받아 주세요.';
   }
   if (!parsed.ok) {
     status.className = 'notice error';
@@ -123,7 +123,7 @@ async function main() {
     meta.artifactType === 'webapp' ? el('p', { class: 'notice' }, '🌐 외부 자료') : null,
     meta.tags.length ? el('p', { class: 'muted' }, meta.tags.map((t) => '#' + t).join(' ')) : null,
     el('p', { class: st.ok ? 'muted' : 'notice' }, st.ok ? S.tailprintOk(st.reviewer.nickname, String(st.signedAt).slice(0, 10)) : (S.reason[st.reason] || st.reason)),
-    st.ok ? null : el('p', { class: 'muted' }, '🟡 아직 검수되지 않은 작품으로 표시해요. 교사가 먼저 확인한 뒤 사용해 주세요.'),
+    st.ok ? null : el('p', { class: 'muted' }, '🟡 검수 전 작품이에요. 교사가 먼저 확인하세요.'),
     work.remixOf ? el('p', { class: 'muted' }, '🔄 ' + S.lineage(work.remixOfTitle || work.remixOf)) : null,
     meta.description ? el('p', {}, meta.description) : null,
     meta.standard ? el('p', {}, `성취기준: ${meta.standard}`) : null,

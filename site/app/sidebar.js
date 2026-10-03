@@ -5,10 +5,10 @@ import { loadCatalog } from './core/catalog.js';
 import { resolveTrustedList, buildEntries } from './core/trust.js';
 import { filterEntries, sortEntries } from './core/filter.js';
 import { buildRunMessage, canRun, describeExternalOpen } from './core/runner.js';
-import { buildShare, MAX_INLINE_LINK } from './core/share.js';
+import { buildShare, buildAssessmentText, shareBlocked, MAX_INLINE_LINK } from './core/share.js';
 import { buildSharePackage, buildSongSubmission, validFormUrl } from './core/submit.js';
 import { detectService, orderShareKinds, SERVICE_LABEL } from './core/services.js';
-import { buildViewerLink } from './shared/link.js';
+import { buildViewerLink, buildCatalogLink, isPublishedInCatalog } from './shared/link.js';
 import { putRunTicket } from './core/runtab.js';
 import { seedMypod, samplesInMypod } from './core/seed.js';
 import { verifyFeatured } from './shared/featured.js';
@@ -39,7 +39,7 @@ import { TOUR_STEPS, INSTALL_TOUR_STEPS } from './ui/guide-steps.js';
 import { MARKET, shareReady } from './core/market-config.js';
 import { loadMarket, importEntry, fetchEntryWorks } from './core/market.js';
 import { buildPrefillUrl } from './shared/market.js';
-import { hasPin, setPin, checkPin, resetPin, ensureDefaultPin } from './core/pin.js';
+import { hasPin, setPin, checkPin, resetPin, migrateLegacyDefaultPin } from './core/pin.js';
 
 const app = document.getElementById('app');
 const storage = createChromeStorage();
@@ -175,13 +175,23 @@ const openConfirmed = () => {
 };
 
 // ----- 웨일 스페이스 공유: 붙여넣기용 글을 만들어 클립보드에 복사한다 (다른 화면을 조작하지 않음)
-const viewerLinkOf = async (work) => {
-  const r = await buildViewerLink(work, CONFIG.viewerUrl);
+// 모든 공유 글에 검수 상태(맑은 바다·미검수 등)가 함께 들어간다. 보류(소용돌이) 작품은 공유하지 않는다.
+// 링크: 인증 곳간에 게시된 검수 작품은 짧은 id 링크(viewer.html?id=…), 그 밖의 작품은 작품을 압축해 # 뒤에 담은 링크.
+const viewerLinkOf = async (entry) => {
+  const w = entry.work;
+  const listed = state.catalog && ['network', 'cache'].includes(state.source); // 배포된 목록에서 받은 작품만 (내장 샘플 목록은 뷰어와 다를 수 있음)
+  if (listed && entry.status && entry.status.ok && isPublishedInCatalog(state.catalog, w)) {
+    const short = buildCatalogLink(w.id, CONFIG.viewerUrl);
+    if (short) return short;
+  }
+  const r = await buildViewerLink(w, CONFIG.viewerUrl);
   return r.ok ? r.url : null;
 };
+const blockedNotice = () => go({ notice: S.share.blocked });
 async function shareWork(entry, kind) {
-  const link = await viewerLinkOf(entry.work);
-  const { text } = buildShare(kind, entry.work, { link, status: entry.status });
+  const link = await viewerLinkOf(entry);
+  const { text, blocked } = buildShare(kind, entry.work, { link, status: entry.status });
+  if (blocked) return blockedNotice();
   await navigator.clipboard.writeText(text);
   go({ notice: link ? S.share.copied(S.share.kinds[kind]) : `${S.share.tooBig} ${S.share.tooBigCopied}` });
 }
@@ -194,47 +204,45 @@ function openServicePage(service, url) {
 const openClassPage = () => openServicePage('class', CLASS_URL);
 const openTeamboardPage = () => openServicePage('teamboard', TEAMBOARD_URL);
 const openWhaleonPage = () => openServicePage('remote', WHALEON_URL);
+const packFileName = (title) => `${String(title).replace(/[\/:*?"<>|\s]+/g, '_')}.gorae.json`;
 
-// 웨일온에 도구 하나 바로 공유: 안내 글 복사 + 작품 파일 저장 + 웨일온 열기
-async function shareToWhaleonNow(entry) {
+// 도구 하나 바로 공유 (클래스·팀보드·웨일온): 안내 글 복사 + 작품 파일 저장 + 그 서비스 열기
+const NOW = {
+  class: { kind: 'class', done: () => S.share.classNowDone, open: openClassPage },
+  teamboard: { kind: 'teamboard', done: () => S.share.teamboardNowDone, open: openTeamboardPage },
+  remote: { kind: 'space', done: () => S.share.whaleonNowDone, open: openWhaleonPage },
+};
+async function shareNow(entry, where) {
+  const how = NOW[where];
   const w = entry.work;
-  const link = await viewerLinkOf(w);
-  let text = buildShare('space', w, { link, status: entry.status }).text;
-  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.';
-  await navigator.clipboard.writeText(text);
-  saveTextFile(serializePack(createPack({ name: w.title, items: [w] })), `${String(w.title).replace(/[\\/:*?"<>|\s]+/g, '_')}.gorae.json`);
-  go({ notice: S.share.whaleonNowDone });
-  openWhaleonPage();
-}
-
-// 팀보드에 도구 하나 바로 공유: 전시 카드 글 복사 + 작품 파일 저장 + 팀보드 열기
-async function shareToTeamboardNow(entry) {
-  const w = entry.work;
-  const link = await viewerLinkOf(w);
-  let text = buildShare('teamboard', w, { link, status: entry.status }).text;
-  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.';
-  await navigator.clipboard.writeText(text);
-  saveTextFile(serializePack(createPack({ name: w.title, items: [w] })), `${String(w.title).replace(/[\\/:*?"<>|\s]+/g, '_')}.gorae.json`);
-  go({ notice: S.share.teamboardNowDone });
-  openTeamboardPage();
-}
-async function shareToClassNow(entry) {
-  const w = entry.work;
-  const link = await viewerLinkOf(w);
-  let text = buildShare('class', w, { link, status: entry.status }).text;
+  const link = await viewerLinkOf(entry);
+  const out = buildShare(how.kind, w, { link, status: entry.status });
+  if (out.blocked) return blockedNotice();
+  let text = out.text;
   // 링크가 길면 안내문에 이미 '파일을 첨부했어요' 줄이 있으므로, 링크가 짧을 때만 파일 안내 줄을 더한다
-  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ↓ [가져오기]에서 열어요.';
+  if (link && link.length <= MAX_INLINE_LINK) text += '\n📎 링크가 안 열리면 첨부한 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.';
   await navigator.clipboard.writeText(text);
-  const pack = createPack({ name: w.title, items: [w] });
-  saveTextFile(serializePack(pack), `${String(w.title).replace(/[\/:*?"<>|\s]+/g, '_')}.gorae.json`);
-  go({ notice: S.share.classNowDone });
-  openClassPage();
+  saveTextFile(serializePack(createPack({ name: w.title, items: [w] })), packFileName(w.title));
+  go({ notice: how.done() });
+  how.open();
 }
+const shareToClassNow = (entry) => shareNow(entry, 'class');
+const shareToTeamboardNow = (entry) => shareNow(entry, 'teamboard');
+const shareToWhaleonNow = (entry) => shareNow(entry, 'remote');
 async function copyViewerLink(entry) {
-  const link = await viewerLinkOf(entry.work);
+  if (shareBlocked(entry.status)) return blockedNotice();
+  const link = await viewerLinkOf(entry);
   if (!link) return go({ notice: S.share.tooBig });
   await navigator.clipboard.writeText(link);
   go({ notice: S.share.linkCopied });
+}
+// UBT 수행평가 등에 붙여 넣을 평가용 정보 복사 (자동 제출·채점·시험 잠금은 하지 않는다)
+async function copyAssessmentInfo(entry) {
+  const link = await viewerLinkOf(entry);
+  const { text, blocked } = buildAssessmentText(entry.work, { link, status: entry.status });
+  if (blocked) return blockedNotice();
+  await navigator.clipboard.writeText(text);
+  go({ notice: S.share.ubtCopied });
 }
 
 // 메인 탭 도메인만 보고 서비스를 알아본다 (주소는 저장하지 않음)
@@ -254,6 +262,7 @@ const shareProps = () => ({
   onClassNow: shareToClassNow,
   onTeamboardNow: shareToTeamboardNow,
   onWhaleonNow: shareToWhaleonNow,
+  onAssessment: copyAssessmentInfo,
 });
 
 // ----- 인증 곳간에 공유하기: 설문 문항(1~6)에 맞춘 답과 업로드 파일을 만든다. 학생고래·교사고래 모두 쓸 수 있다
@@ -316,9 +325,12 @@ async function previewFromMarket(entry) {
   state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: true }, notice: '' };
   render();
   try {
-    const { works } = await fetchEntryWorks(entry, { fetchFn: fetch, config: MARKET });
+    const { works, reports } = await fetchEntryWorks(entry, { fetchFn: fetch, config: MARKET });
     const [e] = await verifyWorks([works[0]]);
     state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false } };
+    // 검수 전 작품: 자동 점검에 걸리면 학생고래는 열지 못하고 교사 확인을 기다린다
+    const report = reports && reports[0];
+    if (report && !report.ok && state.mode !== 'mother') return go({ market: { ...state.market, notice: S.market.needTeacher(report.warnings.length) } });
     // 미리 보기는 확인창 없이 바로 새 창에서 연다. HTML은 격리된 실행 창, 웹앱은 주소창이 보이는 일반 창.
     const c = canRun(e);
     if (!c.ok) return go({ notice: S.run[c.reason] });
@@ -327,7 +339,7 @@ async function previewFromMarket(entry) {
       state.marketRunOk[e.work.id] = true;
       await run({ ...e, source: 'market' });
     }
-    state.market = { ...state.market, notice: S.market.previewed(e.work.title) }; // 나눔 곳간 화면에 안내
+    state.market = { ...state.market, notice: S.market.previewed(e.work.title) + (report && !report.ok ? ` ${S.add.warn(report.warnings.length)}` : '') }; // 나눔 곳간 화면에 안내
     return render();
   } catch (err) {
     state.market = { ...state.market, busy: { ...state.market.busy, [entry.id]: false }, notice: (S.market.error[err.code] || S.market.error.NETWORK) + (err.detail ? ` (${err.detail})` : '') };
@@ -455,8 +467,10 @@ async function savePack() {
 async function shareSelectionToClass() {
   const p = await pickedRecords();
   if (p.error) return go({ notice: p.error });
-  const out = buildClassBundle(p.all, p.recs.map((r) => r.id), { name: S.classPack.defaultName, teacherNote: '' });
-  if (!out.ok) return go({ notice: out.error === 'NONE' ? S.classPack.none : S.classPack.tooMany });
+  // 과제 글에 작품마다 검수 상태를 붙이고, 보류(소용돌이) 작품이 섞이면 공유하지 않는다
+  const statuses = new Map((await verifyWorks(p.recs.map((r) => r.work))).map((e) => [e.work.id, e.status]));
+  const out = buildClassBundle(p.all, p.recs.map((r) => r.id), { name: S.classPack.defaultName, teacherNote: '', statuses });
+  if (!out.ok) return go({ notice: out.error === 'NONE' ? S.classPack.none : out.error === 'WHIRLPOOL' ? S.share.blocked : S.classPack.tooMany });
   await navigator.clipboard.writeText(out.assignment + '\n\n받는 방법: 첨부한 꾸러미 파일(.gorae.json)을 고래곳간 ＋ → 가져오기에서 열어요.');
   saveTextFile(out.packText, out.fileName);
   go({ notice: S.sel.classDone(out.count) });
@@ -485,8 +499,9 @@ async function shareSelectionToTeamboard() {
   if (recs.length > 10) return go({ notice: S.bundle.tooMany });
   if (recs.some((r) => isRestricted(r.work, state.mode))) return go({ notice: S.reference.blocked });
   const entries = await verifyWorks(recs.map((r) => r.work));
+  if (entries.some((e) => shareBlocked(e.status))) return blockedNotice();
   const cards = [];
-  for (const e of entries) cards.push(buildShare('teamboard', e.work, { link: await viewerLinkOf(e.work), status: e.status }).text);
+  for (const e of entries) cards.push(buildShare('teamboard', e.work, { link: await viewerLinkOf(e), status: e.status }).text);
   await navigator.clipboard.writeText(cards.join('\n\n──────────\n\n'));
   const out = exportBundle(all, recs.map((r) => r.id), { name: S.svc.teamboard.packName });
   saveTextFile(out.text, out.fileName);
@@ -499,8 +514,9 @@ async function shareSelectionToWhaleon() {
   const p = await pickedRecords();
   if (p.error) return go({ notice: p.error });
   const entries = await verifyWorks(p.recs.map((r) => r.work));
+  if (entries.some((e) => shareBlocked(e.status))) return blockedNotice();
   const texts = [];
-  for (const e of entries) texts.push(buildShare('space', e.work, { link: await viewerLinkOf(e.work), status: e.status }).text);
+  for (const e of entries) texts.push(buildShare('space', e.work, { link: await viewerLinkOf(e), status: e.status }).text);
   await navigator.clipboard.writeText(texts.join('\n\n──────────\n\n'));
   const out = exportBundle(p.all, p.recs.map((r) => r.id), { name: S.sel.packName });
   saveTextFile(out.text, out.fileName);
@@ -641,7 +657,8 @@ async function render() {
     // 내 곳간 찾기: 인증 곳간과 같은 검색 규칙(제목·주제·성취기준·태그·분류)
     const hit = state.mypodQuery ? new Set(filterEntries(entries, { query: state.mypodQuery }).map((e) => e.work.id)) : null;
     // 즐겨찾기(★)는 맨 위로, '즐겨찾기만 보기'를 켜면 그것만
-    const found = (hit ? all.filter((r) => hit.has(r.id)) : all).filter((r) => !state.favOnly || r.favorite);
+    // EXE(실행형 프로그램)는 학생고래 모드에서 보이지 않는다
+    const found = (hit ? all.filter((r) => hit.has(r.id)) : all).filter((r) => !state.favOnly || r.favorite).filter((r) => state.mode === 'mother' || r.work.type !== 'exe-link');
     const records = [...found.filter((r) => r.favorite), ...found.filter((r) => !r.favorite)];
     body = mypodView({
       records, entriesById: new Map(entries.map((e) => [e.work.id, { ...e, source: (records.find((r) => r.id === e.work.id) || {}).source }])), state,
@@ -677,7 +694,8 @@ async function render() {
   watchMore();
 }
 
-await ensureDefaultPin(storage); // 임시 기본 암호 1234 (처음 쓰는 기기에 한 번)
+// 기본 암호는 없다: 처음 교사고래로 바꿀 때 직접 정한다. 예전 시험판의 임시 암호 1234는 여기서 지운다.
+const pinMigration = await migrateLegacyDefaultPin(storage);
 state.mode = (await storage.get('mode')) || 'baby';
 state.flow = (await storage.get('flow')) || null;
 state.shareProfile = (await storage.get('shareProfile')) || {};
@@ -690,6 +708,7 @@ try {
 } catch { /* 샘플이 없어도 된다 */ }
 try {
   await loadAll();
+  if (pinMigration === 'RESET') state.notice = S.pin.legacyReset;
   render();
   // 소개 페이지의 '설치 따라 해보기' 링크(app/#install)로 들어오면 바로 설치 안내를 시작한다
   if (globalThis.GORAE_WEB === true && location.hash === '#install') setTimeout(() => beginTour('install'), 300);

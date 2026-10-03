@@ -1,46 +1,40 @@
-// 테스트 열쇠를 만들고 샘플 작품 2개에 서명해 site/ 샘플 파일과 확장앱 내장 공개키를 생성한다.
-// 개인 열쇠는 tests/keys/ 에만 저장한다 (.gitignore 대상).
-import { mkdir, readFile, writeFile, access } from 'node:fs/promises';
+// 운영 열쇠로 샘플 작품에 검수 서명을 찍고 site/ 목록·족보와 확장앱 샘플을 만든다.
+// 열쇠는 저장소 밖 폴더(GORAE_KEY_DIR, 기본 ~/gorae-keys)의 암호 건 백업에서만 읽는다. 열쇠를 새로 만들지 않는다.
+// 열쇠 만들기·공개키 반영은 tools/keys.mjs (docs/root-key-setup.md).
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { works, exeItems } from '../tests/sample-works.mjs';
 import { tools, DEMO_PICKS } from '../samples/tools/index.mjs';
 import { catalogExtras, marketSamples, mypodSamples, CLASS_SAMPLE_NAME } from '../samples/more/index.mjs';
 import { toSubmissionHtml } from '../shared/submission.js';
 import * as tp from '../shared/tailprint.js';
 import { signFeatured } from '../shared/featured.js';
-import { encryptJwk } from '../shared/keybackup.js';
+import { loadKeys, assertOutsideRepo, fingerprintOf } from './keys.mjs';
+import { ROOT_PUBLIC_JWK } from '../extension/core/rootkey.js';
 
-const KEYS = new URL('../tests/keys/', import.meta.url);
-const exists = (u) => access(u).then(() => true, () => false);
-
-async function loadOrCreate(name) {
-  const priv = new URL(`${name}.private.jwk`, KEYS);
-  const pub = new URL(`${name}.public.jwk`, KEYS);
-  if (!(await exists(priv))) {
-    const kp = await tp.generateKeyPair({ extractable: true });
-    await writeFile(priv, JSON.stringify(await crypto.subtle.exportKey('jwk', kp.privateKey)));
-    await writeFile(pub, JSON.stringify(await tp.exportPublicJwk(kp.publicKey)));
-  }
-  return {
-    privateKey: await tp.importPrivateJwk(JSON.parse(await readFile(priv, 'utf8'))),
-    publicJwk: JSON.parse(await readFile(pub, 'utf8')),
-  };
+const KEY_DIR = process.env.GORAE_KEY_DIR || join(homedir(), 'gorae-keys');
+assertOutsideRepo(KEY_DIR);
+const { root, reviewer } = await loadKeys(KEY_DIR);
+// 코드에 든 관리 공개키와 열쇠 폴더의 관리 열쇠가 같아야 한다 (다르면 tools/keys.mjs apply 먼저)
+if ((await fingerprintOf(root.publicJwk)) !== (await fingerprintOf(ROOT_PUBLIC_JWK))) {
+  throw new Error('extension/core/rootkey.js 의 관리 공개키가 열쇠 폴더와 달라요. 먼저 node tools/keys.mjs apply --dir ' + KEY_DIR);
 }
+const guard = reviewer;
 
-await mkdir(KEYS, { recursive: true });
-const root = await loadOrCreate('root');
-const guard = await loadOrCreate('reviewer-guard');
-
+// 족보 버전은 내려가면 안 된다 (이미 본 버전보다 낮은 족보는 거부됨)
+const prevVersion = await readFile(new URL('../site/reviewers.json', import.meta.url), 'utf8').then((t) => JSON.parse(t).version || 0, () => 0);
 const list = await tp.signReviewerList(
   {
-    version: 1,
+    version: Math.max(2, prevVersion),
     issuedAt: '2026-10-01T00:00:00Z',
-    reviewers: [{ id: 'guard-1', nickname: '푸른물결(테스트)', publicKey: guard.publicJwk, addedAt: '2026-10-01T00:00:00Z' }],
+    reviewers: [{ id: guard.id, nickname: guard.nickname, publicKey: guard.publicJwk, addedAt: '2026-10-01T00:00:00Z' }],
     revoked: [],
   },
   root.privateKey,
 );
 
-const signOpts = { reviewer: 'guard-1', signedAt: '2026-10-01T01:00:00Z' };
+const signOpts = { reviewer: guard.id, signedAt: '2026-10-01T01:00:00Z' };
 const signed = [
   await tp.signWork(works[0], guard.privateKey, { ...signOpts, badge: 'clear', pick: true, songs: [{ text: '4학년 분수 도입에 10분, 반응 최고', author: '푸른 혹등고래 · 초등', date: '2026-10-01' }] }),
   works[1], // 구구단 번개 퀴즈: 미검수 (얕은 바다 시연)
@@ -50,7 +44,7 @@ const signed = [
   await tp.signWork(works[5], guard.privateKey, { ...signOpts, badge: 'shallow', pick: false }), // 설문 CSV 집계기: 교사용(얕은 바다, 검수됨)
 ];
 
-// 기본 수업도구: HTML 파일을 읽어 작품 카드로 만들고 맑은 바다로 서명한다 (지금은 테스트 열쇠)
+// 기본 수업도구: HTML 파일을 읽어 작품 카드로 만들고 맑은 바다로 서명한다
 for (const { file, ...card } of tools) {
   const html = await readFile(new URL(`../samples/tools/${file}`, import.meta.url), 'utf8');
   signed.push(await tp.signWork({ ...card, html }, guard.privateKey, { ...signOpts, badge: 'clear', pick: DEMO_PICKS.includes(card.id) }));
@@ -91,13 +85,4 @@ await writeFile(new URL('../site/reviewers.json', import.meta.url), JSON.stringi
 await mkdir(new URL('../tests/data/', import.meta.url), { recursive: true });
 await writeFile(new URL('../tests/data/catalog.json', import.meta.url), JSON.stringify(catalog, null, 2));
 await writeFile(new URL('../tests/data/reviewers.json', import.meta.url), JSON.stringify(list, null, 2));
-await writeFile(
-  new URL('../extension/core/rootkey.js', import.meta.url),
-  `// 관리 공개키 (현재 값은 테스트용 — 운영 전에 실제 뿌리 공개키로 교체)\nexport const ROOT_PUBLIC_JWK = ${JSON.stringify(root.publicJwk)};\n`,
-);
-// 검수 도구 로그인(임시 테스트용): 테스트 검수 열쇠를 '검수 도구 비밀번호'로 잠가 둔다. 운영 전에는 이 파일과 비밀번호를 없앤다.
-const REVIEW_TOOL_PASSWORD = '12345678';
-const guardJwk = JSON.parse(await readFile(new URL('reviewer-guard.private.jwk', KEYS), 'utf8'));
-const backup = { ...(await encryptJwk(guardJwk, REVIEW_TOOL_PASSWORD, { kind: 'reviewer' })), meta: { id: 'guard-1', nickname: '푸른물결(테스트)' } };
-await writeFile(new URL('../site/reviewer.keybackup.json', import.meta.url), JSON.stringify(backup));
-console.log('샘플 생성 완료: site/catalog.json, site/reviewers.json, extension/core/rootkey.js');
+console.log('샘플 생성 완료: site/catalog.json, site/reviewers.json (족보 버전 ' + list.version + ')');

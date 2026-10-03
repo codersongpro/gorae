@@ -1,19 +1,19 @@
 {
-  "version": 1,
+  "version": 2,
   "issuedAt": "2026-10-01T00:00:00Z",
   "reviewers": [
     {
-      "id": "guard-1",
-      "nickname": "푸른물결(테스트)",
+      "id": "guard-2",
+      "nickname": "푸른물결",
       "publicKey": {
         "kty": "EC",
         "crv": "P-256",
-        "x": "_Io62EyD-agWf3Xf84nAfzek9PWXhSqUISembeaDnvU",
-        "y": "suiH5Ctqdk7FW_tg64Kl4TwPwve_U2Vej9lRJJfgZR4"
+        "x": "e4K1m5N9tsN-_u0sTS2kfHn6wK-BzA_VKpdAFaBQl2I",
+        "y": "C810SgfQ_0iIzJ8wyB_a_wSEOf-4x1maczZ4uvr1EV4"
       },
       "addedAt": "2026-10-01T00:00:00Z"
     }
   ],
   "revoked": [],
-  "rootSig": "K2Dt01iQIZvErRA2XW5scN5XeIEL6yk1EM5H_lnFL8u4kUtEMhnnzB2-FYEZXAkFXgx2yaGOfELud5yMHfUMrw"
+  "rootSig": "DZ4MgWlitumuP3MtXSUCPEj5X46l-Tbp_pW41fNtEpqn9b7QpUjb4j9hnS7oVtVNKtmb-CHnXkotBIoRUoJ75g"
 }

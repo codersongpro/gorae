@@ -1,6 +1,8 @@
 // 나눔 곳간(공유 마켓) — 서버 없이 구글 폼(등록) + 구글 시트(목록) + 구글 드라이브(파일)로 운영 (DOM 없음)
 // 에듀노트 스킬마켓 구조를 옮긴 것. 화면과 분리된 순수 함수만 둔다(단위 시험 대상).
 //   CSV 파싱(셀 안 줄바꿈·"" 이스케이프 처리) · 열 이름 찾기 · 드라이브 공유 주소 → 직접 받기 주소 · 폼 미리 채우기 주소
+//   분류 정보 글(수업/업무 → 카테고리 → 하위 → 교과 정보·태그): 폼 → 시트를 거쳐도 원래 분류를 되살린다
+import { normalizeWork, findCategory, findSub, levelOf, GROUP_TYPES, AUDIENCES, ARTIFACT_TYPES, normalizeTags, gradeLabel } from './taxonomy.js';
 
 // ---------- CSV (RFC 4180) ----------
 export function parseCsv(text) {
@@ -86,6 +88,75 @@ export function parseCategoryCode(text) {
 }
 export const categoryText = (path, code) => `${path.join(' › ')} [${code.domain}/${code.category}/${code.subcategory}]`;
 
+// ---------- 분류 정보 글 ----------
+// 웹앱은 HTML 안에 작품 정보를 숨길 수 없으므로, 폼의 '설명' 칸 끝에 사람도 읽을 수 있는 분류 정보 글을 붙인다.
+// 시트에서 읽을 때 이 글을 다시 작품 필드로 되살린다. 폼 문항을 늘리지 않는다.
+//   [고래곳간 분류 정보]
+//   수업 › 교과활동 › 게임·퀴즈
+//   [lesson/subject_activity/game]
+//   형태: webapp
+//   학교급: elementary
+//   학년: 4 ...
+export const CLASSIFICATION_MARK = '[고래곳간 분류 정보]';
+const CLS_FIELDS = [
+  ['artifactType', '형태'], ['schoolLevel', '학교급'], ['grade', '학년'], ['subject', '교과'], ['area', '영역'], ['unit', '단원'],
+  ['lessonNo', '차시'], ['topic', '주제'], ['standard', '성취기준'], ['estimatedMinutes', '시간'], ['groupType', '활동형태'],
+  ['audience', '대상'], ['tags', '태그'],
+];
+const oneLine = (v) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 200);
+
+export function buildClassificationText(work) {
+  const m = normalizeWork(work);
+  const lines = [CLASSIFICATION_MARK, m.path.join(' › '), `[${m.domain}/${m.category || ''}/${m.subcategory || ''}]`];
+  for (const [key, label] of CLS_FIELDS) {
+    const v = m[key];
+    const text = Array.isArray(v) ? v.map(oneLine).filter(Boolean).join(', ') : key === 'estimatedMinutes' ? (v ? String(v) : '') : oneLine(v);
+    if (text) lines.push(`${label}: ${text}`);
+  }
+  return lines.join('\n');
+}
+
+// 글에서 분류 정보를 찾아 되살린다. 알 수 없는 값은 버린다(시트는 누구나 고칠 수 있다고 본다).
+// 반환: { meta: { domain?, category?, subcategory?, artifactType?, schoolLevel?, ... }, rest: 표시 글, path } | null
+export function parseClassificationText(text) {
+  const t = String(text || '');
+  const at = t.indexOf(CLASSIFICATION_MARK);
+  if (at < 0) return null;
+  const rest = t.slice(0, at).trim();
+  const meta = {};
+  const byLabel = Object.fromEntries(CLS_FIELDS.map(([k, l]) => [l, k]));
+  for (const raw of t.slice(at + CLASSIFICATION_MARK.length).split(/\r?\n/)) {
+    const line = raw.trim();
+    const code = /^\[([a-z_]+)\/([a-z_]*)\/([a-z_]*)\]$/.exec(line);
+    if (code) {
+      const [, domain, category, subcategory] = code;
+      if (findCategory(domain, category)) {
+        Object.assign(meta, { domain, category });
+        if (findSub(domain, category, subcategory)) meta.subcategory = subcategory;
+      } else if (domain === 'lesson' || domain === 'work') meta.domain = domain;
+      continue;
+    }
+    const kv = /^([^:：]{1,10})[:：]\s*(.*)$/.exec(line);
+    if (!kv || !byLabel[kv[1].trim()]) continue;
+    const key = byLabel[kv[1].trim()];
+    const v = oneLine(kv[2]);
+    if (!v) continue;
+    if (key === 'audience') {
+      const ids = v.split(/\s*,\s*/).filter((a) => AUDIENCES.some((x) => x.id === a));
+      if (ids.length) meta.audience = ids;
+    } else if (key === 'tags') meta.tags = normalizeTags(v);
+    else if (key === 'estimatedMinutes') { const n = Math.round(Number(v)); if (n > 0 && n <= 600) meta.estimatedMinutes = n; }
+    else if (key === 'schoolLevel') { if (levelOf(v)) meta.schoolLevel = v; }
+    else if (key === 'grade') { if (/^\d$/.test(v)) meta.grade = v; }
+    else if (key === 'groupType') { if (GROUP_TYPES.some((g) => g.id === v)) meta.groupType = v; }
+    else if (key === 'artifactType') { if (ARTIFACT_TYPES.some((a) => a.id === v)) meta.artifactType = v; }
+    else meta[key] = v;
+  }
+  if (meta.grade && !(meta.schoolLevel && levelOf(meta.schoolLevel).grades.includes(meta.grade))) delete meta.grade;
+  const path = meta.domain ? normalizeWork({ ...meta, tags: [] }).path : [];
+  return { meta, rest, path, gradeLabel: gradeLabel(meta.schoolLevel, meta.grade) };
+}
+
 const URL_RE = /https:\/\/[^\s,]+/g;
 function shortHash(text) {
   let h = 0x811c9dc5;
@@ -109,15 +180,18 @@ export function parseMarketCsv(text, spec = MARKET_COLUMNS) {
       const files = cell(r, 'file').match(URL_RE) || [];
       const address = cell(r, 'address');
       const kinds = cell(r, 'kind').split(',').map((x) => x.trim()).filter(Boolean);
-      const code = parseCategoryCode(cell(r, 'category'));
+      // 분류 정보 글은 '설명' 칸 끝(고래곳간이 미리 채움)이나 '분류' 열에 있다
+      const cls = parseClassificationText(cell(r, 'description')) || parseClassificationText(cell(r, 'category'));
+      const code = cls && cls.meta.domain ? { domain: cls.meta.domain, ...(cls.meta.category ? { category: cls.meta.category } : {}), ...(cls.meta.subcategory ? { subcategory: cls.meta.subcategory } : {}) } : parseCategoryCode(cell(r, 'category'));
       return {
         id: 'm-' + shortHash(cell(r, 'timestamp') + '|' + title + '|' + files.join(',')),
         timestamp: cell(r, 'timestamp'),
         whale: cell(r, 'whale'),
         nickname: cell(r, 'nickname'),
         title,
-        description: cell(r, 'description'),
-        categoryText: cell(r, 'category').replace(/\s*\[[a-z_/]+\]\s*$/, ''),
+        description: cls ? cls.rest : cell(r, 'description'),
+        categoryText: cls && cls.path.length ? cls.path.join(' › ') : cell(r, 'category').replace(/\s*\[[a-z_/]+\]\s*$/, ''),
+        meta: cls ? cls.meta : null, // 분류 정보 글에서 되살린 작품 필드 (학교급·교과·성취기준·태그 등)
         kinds,
         format: cell(r, 'format'),
         // 분류 코드가 없으면 '앱 종류'로 영역만 짐작한다
@@ -127,7 +201,9 @@ export function parseMarketCsv(text, spec = MARKET_COLUMNS) {
         files,
       };
     })
-    .filter((e) => e.title && (e.files.length || /^https:\/\//.test(e.address)));
+    // 목록에 올리기 전 최소 점검: 제목이 있고, 파일은 구글 드라이브 https 주소, 주소 작품은 https만
+    .filter((e) => e.title && (e.files.some((f) => driveFileId(f)) || /^https:\/\//.test(e.address)))
+    .map((e) => ({ ...e, files: e.files.filter((f) => driveFileId(f)) }));
   return { ok: true, entries: entries.reverse(), columns: cols, header, missing: [] }; // 최근 등록이 위로
 }
 

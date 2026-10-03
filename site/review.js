@@ -404,21 +404,17 @@ function tokenCard() {
     h('div', { class: 'row' }, h('button', { onclick: () => saveToken(inp.value) }, '토큰 저장'), state.hasToken ? h('button', { class: 'secondary', onclick: clearToken }, '토큰 지우기') : null));
 }
 
-// ---------- 검수 도구 로그인 (임시: 검수 도구 비밀번호) ----------
-const REVIEW_BACKUP_URL = 'reviewer.keybackup.json';
+// ---------- 검수 도구 로그인: 파수꾼고래 본인의 검수 열쇠 백업 파일 + 백업 암호 ----------
+// 열쇠 백업 파일은 사이트에 올려 두지 않는다. 파수꾼고래가 자기 기기에 보관한 파일을 직접 고른다.
 const SESSION_FLAG = 'gorae-review-session';
-async function login(password) {
-  try {
-    const text = await (await fetch(REVIEW_BACKUP_URL, { cache: 'no-store' })).text();
-    await restoreReviewer(text, password);
-    if (!state.reviewer) return;
-    state.session = true;
-    try { sessionStorage.setItem(SESSION_FLAG, '1'); } catch { /* 저장 못 해도 이 탭에서는 계속 로그인 */ }
-    state.tab = 'queue';
-    say(`파수꾼고래 ${state.reviewer.nickname}(으)로 로그인했어요.`);
-  } catch {
-    say('로그인에 실패했어요. 비밀번호를 확인해 주세요.', true);
-  }
+async function login(text, password) {
+  if (!text) return say('검수 열쇠 백업 파일(.keybackup)을 골라 주세요.', true);
+  await restoreReviewer(text, password);
+  if (!state.reviewer) return;
+  state.session = true;
+  try { sessionStorage.setItem(SESSION_FLAG, '1'); } catch { /* 저장 못 해도 이 탭에서는 계속 로그인 */ }
+  state.tab = 'queue';
+  say(`파수꾼고래 ${state.reviewer.nickname}(으)로 로그인했어요.`);
 }
 function logout() {
   state.session = false;
@@ -426,13 +422,15 @@ function logout() {
   render();
 }
 function viewLogin() {
-  const pw = h('input', { type: 'password', 'aria-label': '검수 도구 비밀번호', placeholder: '검수 도구 비밀번호', autocomplete: 'current-password' });
-  const go = () => login(pw.value);
+  const file = h('input', { type: 'file', accept: '.keybackup,.json', 'aria-label': '검수 열쇠 백업 파일' });
+  const pw = h('input', { type: 'password', 'aria-label': '백업 암호', placeholder: '백업 암호', autocomplete: 'current-password' });
+  const go = async () => login(await readFile(file), pw.value);
   pw.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
   return h('div', { class: 'card login' },
     h('h2', {}, '🛡️ 파수꾼고래 로그인'),
-    h('p', { class: 'muted' }, '검수 도구 비밀번호를 넣으면 파수꾼고래로 로그인돼요. 작품을 살펴보고 [검수 완료]를 누르면 검수 서명이 찍혀요.'),
-    pw, h('button', { onclick: go }, '로그인'));
+    h('p', { class: 'muted' }, '검수 열쇠 백업 파일과 백업 암호로 로그인해요. 열쇠는 이 브라우저 안에서만 쓰이고 어디로도 보내지 않아요.'),
+    file, pw, h('button', { onclick: go }, '로그인'),
+    h('p', { class: 'muted' }, '아직 검수 열쇠가 없나요? 관리자 파수꾼고래에게 고래 족보 등록을 요청하세요 (docs/root-key-setup.md).'));
 }
 
 // ---------- 0. 검수 목록 (나눔 곳간에 올라온 작품을 살펴보고 [검수 완료]) ----------

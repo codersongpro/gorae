@@ -1,5 +1,6 @@
 // 수업 진행(도입 → 활동 → 정리) 순서 만들기와 웨일 서비스별 추천 (DOM 없음)
 import { normalizeWork } from '../shared/taxonomy.js';
+import { reviewShort } from './share.js';
 
 // 단계 이름: 3개면 도입·활동·정리, 2개면 도입·활동, 그 밖에는 번호
 export function flowLabels(n) {
@@ -29,7 +30,8 @@ export function recommendForRemote(entries, limit = 4) {
 }
 
 // 학급 꾸러미와 함께 올리는 '과제 안내문' (웨일 클래스 과제 글에 붙여 넣기)
-export function buildAssignment({ name, works, teacherNote = '' }) {
+// statuses: (선택) 작품 id → 검수 검증 결과. 있으면 작품마다 검수 상태를 한 줄 붙인다.
+export function buildAssignment({ name, works, teacherNote = '', statuses = null }) {
   const labels = flowLabels(works.length);
   const total = works.reduce((a, w) => a + (normalizeWork(w).estimatedMinutes || 0), 0);
   return [
@@ -38,7 +40,10 @@ export function buildAssignment({ name, works, teacherNote = '' }) {
     total ? `예상 시간: 약 ${total}분` : null,
     '',
     '해야 할 일',
-    ...works.map((w, i) => `${works.length > 1 ? `${labels[i]}: ` : ''}${w.title} — ${w.howToUse || ''}`.trim()),
+    ...works.flatMap((w, i) => [
+      `${works.length > 1 ? `${labels[i]}: ` : ''}${w.title} — ${w.howToUse || ''}`.trim(),
+      statuses ? `   ${reviewShort(statuses.get(w.id))}` : null,
+    ]),
     '',
     '내는 방법',
     '1. 고래곳간에서 작품을 실행해 활동합니다.',

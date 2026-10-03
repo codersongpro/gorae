@@ -54,3 +54,32 @@ export async function readViewerFragment(hash) {
   if (!check.ok) return { ok: false, reason: 'INVALID', errors: check.errors };
   return { ok: true, work };
 }
+
+// ---------- 인증 곳간 작품의 짧은 링크 ----------
+// 인증 곳간 작품은 이미 catalog.json에 있으므로 작품 전체를 주소에 담지 않고 id만 넘긴다: viewer.html?id=...
+// 뷰어가 catalog.json에서 찾아 검수 서명을 다시 확인한 뒤 실행한다. (# 링크 방식은 그대로 쓴다)
+const SAFE_ID = /^[A-Za-z0-9_-]{1,80}$/;
+export function buildCatalogLink(id, viewerUrl) {
+  return SAFE_ID.test(String(id || '')) ? `${viewerUrl}?id=${id}` : null;
+}
+// location.search 문자열 → 작품 id | null
+export function readViewerQuery(search) {
+  let id = null;
+  try { id = new URLSearchParams(String(search || '')).get('id'); } catch { return null; }
+  return id && SAFE_ID.test(id) ? id : null;
+}
+// 실행할 수 있는 인증 곳간 작품만 찾는다 (EXE 목록은 뷰어에서 열지 않는다)
+export const findCatalogWork = (catalog, id) => ((catalog && catalog.items) || []).find((w) => w && w.id === id) || null;
+// 이 작품이 게시된 인증 곳간 작품과 같은 서명본인가 (짧은 링크를 써도 되는가)
+export function isPublishedInCatalog(catalog, work) {
+  const c = work && findCatalogWork(catalog, work.id);
+  return !!(c && work.tailprint && c.tailprint && c.tailprint.sig && c.tailprint.sig === work.tailprint.sig);
+}
+// 짧은 링크로 연 작품: 목록에서 찾고 # 링크와 같은 형식 검사를 거친다. 검수 서명 확인은 부르는 쪽(뷰어)이 한다.
+// 반환: { ok:true, work } | { ok:false, reason:'NOT_FOUND'|'INVALID' }
+export function readCatalogWork(catalog, id) {
+  const work = findCatalogWork(catalog, id);
+  if (!work) return { ok: false, reason: 'NOT_FOUND' };
+  const check = parsePack({ format: PACK_FORMAT, formatVersion: PACK_VERSION, name: 'catalog', items: [work] });
+  return check.ok ? { ok: true, work } : { ok: false, reason: 'INVALID', errors: check.errors };
+}

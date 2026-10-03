@@ -5,3 +5,8 @@ tests/keys/
 .env
 .vercel
 node_modules/
+
+# 열쇠 백업·공개 열쇠 파일은 사이트에 두지 않음 (운영 열쇠는 저장소 밖 폴더에)
+*.keybackup.json
+*.private.jwk
+PASSPHRASES*.txt

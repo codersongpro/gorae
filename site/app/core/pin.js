@@ -50,11 +50,18 @@ export async function resetPin(storage) {
   await storage.set('mode', 'baby');
 }
 
-// 임시 기본 암호: 처음 쓰는 기기에 한 번만 넣어 준다. 운영 전에는 이 값을 지우고 각 교사가 직접 정하게 한다.
-export const TEMP_DEFAULT_PIN = '1234';
-export async function ensureDefaultPin(storage) {
-  if ((await hasPin(storage)) || (await storage.get('pinDefaultSeeded'))) return false;
-  await setPin(storage, TEMP_DEFAULT_PIN, TEMP_DEFAULT_PIN);
-  await storage.set('pinDefaultSeeded', true);
-  return true;
+// 예전 시험판이 처음 쓰는 기기에 자동으로 넣던 임시 암호(1234)를 정리한다.
+// 지금은 기본 암호를 절대 만들지 않는다. 처음 교사고래로 바꿀 때 교사가 직접 정한다.
+// 자동으로 들어간 기록(pinDefaultSeeded)이 있고 암호가 아직 그 값 그대로면 지우고 학생고래 모드로 돌린다.
+// 교사가 이미 다른 암호로 바꿨으면 그 암호는 그대로 둔다. 반환: 'RESET' | 'KEPT' | 'NONE'
+const LEGACY_SEED_FLAG = 'pinDefaultSeeded';
+const LEGACY_DEFAULT = '1234';
+export async function migrateLegacyDefaultPin(storage) {
+  if (!(await storage.get(LEGACY_SEED_FLAG))) return 'NONE';
+  const rec = await storage.get(KEY);
+  let reset = false;
+  if (rec && rec.salt && rec.hash) reset = (await hashPin(LEGACY_DEFAULT, fromB64u(rec.salt), rec.iter)) === rec.hash; // 실패 횟수는 건드리지 않는다
+  if (reset) await resetPin(storage);
+  await storage.set(LEGACY_SEED_FLAG, null);
+  return reset ? 'RESET' : 'KEPT';
 }

@@ -113,7 +113,16 @@ export async function fetchEntryWorks(entry, { fetchFn, config }) {
   if (!res.ok) throw new MarketError('INVALID', res.errors.map((e) => e.message).join(' '));
   // 고래곳간 밖에서 만든 파일은 시트에 적힌 정보로 빈칸을 채운다
   const works = res.works.map((w) => {
-    const out = { ...w };
+    // 나눔 곳간 작품은 검수 전이다: 파일 속에 검수 서명이 들어 있어도 떼어 내서 인증 작품처럼 보이지 않게 한다
+    const { tailprint, ...out } = w;
+    void tailprint;
+    // 설명 칸의 '분류 정보' 글에서 되살린 값으로 빈 필드만 채운다 (웹앱·주소 작품은 이것이 유일한 분류 정보)
+    if (entry.meta) {
+      for (const [k, v] of Object.entries(entry.meta)) {
+        const cur = out[k];
+        if (cur === undefined || cur === '' || (Array.isArray(cur) && !cur.length)) out[k] = Array.isArray(v) ? [...v] : v;
+      }
+    }
     // 고래곳간 밖에서 만든 파일·주소만 있는 응답은 시트에 적힌 제목을 쓴다
     if (res.kind === 'html-plain' || res.kind === 'url-plain' || !out.title) out.title = entry.title;
     if (!out.howToUse) out.howToUse = entry.description || '';
@@ -122,7 +131,8 @@ export async function fetchEntryWorks(entry, { fetchFn, config }) {
     if (!out.domain && entry.category) Object.assign(out, entry.category);
     return out;
   });
-  return { works, warnings: res.warnings };
+  // 자동 안전 점검 결과도 함께 돌려준다 (미리 보기·가져오기 전에 화면에서 쓴다)
+  return { works, warnings: res.warnings, reports: works.map((w) => checkWork(w)) };
 }
 
 // 검증을 통과한 작품만 내 곳간에 담는다. 같은 id나 같은 제목이 있으면 건너뛴다.

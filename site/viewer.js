@@ -1,6 +1,7 @@
-// 바로 실행 뷰어: 주소의 # 뒤 작품을 풀어서 검수 서명을 확인하고 격리해서 실행한다.
-// 작품 데이터는 # 뒤에만 있어 서버로 전송되지 않는다. 작품은 allow-same-origin 없는 iframe에서만 실행한다.
-import { readViewerFragment } from './shared/link.js';
+// 바로 실행 뷰어: 작품을 찾아 검수 서명을 확인하고 격리해서 실행한다. 작품은 allow-same-origin 없는 iframe에서만 실행한다.
+//   viewer.html?id=작품id  → 인증 곳간(catalog.json)에서 찾는 짧은 링크
+//   viewer.html#g1.…       → 작품을 압축해 # 뒤에 담은 링크 (# 뒤는 서버로 전송되지 않는다)
+import { readViewerFragment, readViewerQuery, readCatalogWork } from './shared/link.js';
 import { createVerifier } from './shared/tailprint.js';
 import { ROOT_PUBLIC_JWK } from './rootkey.js';
 import { S } from './strings.js';
@@ -69,11 +70,32 @@ function runUrl(work, whirlpool, verified) {
   stage.hidden = false;
 }
 
+// 짧은 링크: 인증 곳간 목록에서 작품을 찾는다
+async function fromCatalog(id) {
+  let catalog;
+  try {
+    const res = await fetch('catalog.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    catalog = await res.json();
+  } catch {
+    return { ok: false, message: '인증 곳간 목록을 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.' };
+  }
+  const r = readCatalogWork(catalog, id);
+  if (r.ok) return r;
+  return { ok: false, message: r.reason === 'NOT_FOUND' ? '인증 곳간에서 이 작품을 찾을 수 없어요. 목록에서 내려갔거나 주소가 잘못됐어요.' : '인증 곳간의 작품 정보가 올바르지 않아 열 수 없어요.' };
+}
+
 async function main() {
-  const parsed = await readViewerFragment(location.hash);
+  const id = readViewerQuery(location.search);
+  let parsed;
+  if (id) parsed = await fromCatalog(id);
+  else {
+    parsed = await readViewerFragment(location.hash);
+    if (!parsed.ok) parsed.message = parsed.reason === 'NO_DATA' ? '이 주소에는 작품이 들어 있지 않아요.' : '링크가 깨졌거나 올바르지 않아요. 보내 준 사람에게 다시 요청해 주세요.';
+  }
   if (!parsed.ok) {
     status.className = 'notice error';
-    status.textContent = parsed.reason === 'NO_DATA' ? '이 주소에는 작품이 들어 있지 않아요.' : '링크가 깨졌거나 올바르지 않아요. 보내 준 사람에게 다시 요청해 주세요.';
+    status.textContent = parsed.message;
     return;
   }
   const work = parsed.work;
@@ -92,7 +114,8 @@ async function main() {
     el('p', { class: 'muted' }, [meta.gradeLabel, meta.subject, meta.topic, work.author].filter(Boolean).join(' · ')),
     meta.artifactType === 'webapp' ? el('p', { class: 'notice' }, '🌐 외부 웹앱입니다') : null,
     meta.tags.length ? el('p', { class: 'muted' }, meta.tags.map((t) => '#' + t).join(' ')) : null,
-    el('p', { class: 'muted' }, st.ok ? S.tailprintOk(st.reviewer.nickname, String(st.signedAt).slice(0, 10)) : (S.reason[st.reason] || st.reason)),
+    el('p', { class: st.ok ? 'muted' : 'notice' }, st.ok ? S.tailprintOk(st.reviewer.nickname, String(st.signedAt).slice(0, 10)) : (S.reason[st.reason] || st.reason)),
+    st.ok ? null : el('p', { class: 'muted' }, '🟡 아직 검수되지 않은 작품으로 표시해요. 교사가 먼저 확인한 뒤 사용해 주세요.'),
     work.remixOf ? el('p', { class: 'muted' }, '🔄 ' + S.lineage(work.remixOfTitle || work.remixOf)) : null,
     meta.description ? el('p', {}, meta.description) : null,
     meta.standard ? el('p', {}, `성취기준: ${meta.standard}`) : null,

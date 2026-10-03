@@ -2,6 +2,7 @@
 import { createPack, serializePack, MAX_ITEMS } from '../shared/pack.js';
 import { normalizeWork } from '../shared/taxonomy.js';
 import { buildAssignment } from './flow.js';
+import { shareBlocked } from './share.js';
 
 export const CLASS_URL = 'https://class.whalespace.io/';
 export const TEAMBOARD_URL = 'https://teamboard.whalespace.io/';
@@ -33,11 +34,13 @@ export function buildNotice({ name, works, teacherNote = '' }) {
   ].filter((l) => l !== null).join('\n');
 }
 
+// statuses: (선택) 작품 id → 검수 검증 결과. 보류(소용돌이) 작품이 섞이면 만들지 않고, 과제 글에 검수 상태를 붙인다.
 // 반환: { ok, error?, name, count, fileName, packText, notice, combined, tooLong }
-export function buildClassBundle(records, ids, { name, teacherNote, now = new Date() } = {}) {
+export function buildClassBundle(records, ids, { name, teacherNote, now = new Date(), statuses = null } = {}) {
   const picked = records.filter((r) => ids.includes(r.id));
   if (!picked.length) return { ok: false, error: 'NONE' };
   if (picked.length > MAX_ITEMS) return { ok: false, error: 'TOO_MANY' };
+  if (statuses && picked.some((r) => shareBlocked(statuses.get(r.id)))) return { ok: false, error: 'WHIRLPOOL' };
   const pack = createPack({ name, items: picked.map((r) => r.work), now });
   const packText = serializePack(pack);
   const notice = buildNotice({ name: pack.name, works: picked.map((r) => r.work), teacherNote });
@@ -50,7 +53,7 @@ export function buildClassBundle(records, ids, { name, teacherNote, now = new Da
     fileName: `${safe}.gorae.json`,
     packText,
     notice,
-    assignment: buildAssignment({ name: pack.name, works: picked.map((r) => r.work), teacherNote }),
+    assignment: buildAssignment({ name: pack.name, works: picked.map((r) => r.work), teacherNote, statuses }),
     combined,
     tooLong: combined.length > LONG_TEXT_CHARS,
   };

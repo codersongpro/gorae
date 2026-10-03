@@ -44,9 +44,9 @@
             "date": "2026-10-01"
           }
         ],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "ftuLhHE8aOEr-i-E33Bn4tp5ulq0Lu_DmjYU2VrqCB9H-a9yNpa5xg5bMht9Z67bHVmbhURNHYZh36F3Bh3U3w"
+        "sig": "OsoBaJyRVwGQhqBEzw5mQsdF2FmplUpFjtnyaoT68EvR5BmB1wEjVEV57AMSbXd_ef8qI9BqKszeanPBgLZTuw"
       }
     },
     {
@@ -144,9 +144,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "mNuWh1LrZEtfdY33dApMRABt-GNGbAQ0jsDmf-izfrjE_p57brTgAnAVG89gh88Y7_Y0q4cWff5kXwpy0kSjFA"
+        "sig": "SI5k7YGr7PXXXsgQ3h8a8I-qUSELO3i4atHEcXRay-iX4GUw-MTJpW_-QiQIxyZZWJ4okts6NLgL-1TrPRVAhA"
       }
     },
     {
@@ -178,9 +178,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "3tAHs9947bE_ATfC-WzRoGdYTypg2rXm1vW2sMbMKStmq0b1aiUZeKTOWiF_aHQjC8mk8TxnqhG4thivqdD-2g"
+        "sig": "6OaIdd3JB-nzXMBfKrPtexkSciVAD2_9F0jcOGU0QlwkeC6eaFdR7e658UWsgGNkcstY6MW3GClyupI7vZmxng"
       }
     },
     {
@@ -212,9 +212,9 @@
         "badge": "shallow",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "A4sqvjZZ8dwElMBk0joO4Y3mMcGFZa9jKvKkGNW6ZkgUKyKtXe9YiNUPeCVyb4pjeQVFDYfrnxjdeeOmBzG1Iw"
+        "sig": "d7g2ha0j3dEw4aFEWrw2ufpIvcZTarXOfxjVMysUQUGNKxhu-F0_yZHBrDI7vCxVByAOD0ToI1JHalWgfL4Gmg"
       }
     },
     {
@@ -247,9 +247,9 @@
         "badge": "clear",
         "pick": true,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "T52zKuZgNlm5NHZ9s0ZyERYcv2Z4_w54mgaNNJpaj38Y61mG2HkI5JiK1qOhUUaX6cpESdzUyfBN4aBFJpUp0g"
+        "sig": "kY4djCKhIiXgIyh18nzWgwFV-DV1X-0Ebf2GWPTOeTxDv9XFcg5O91JETlqZctE9aMU-ajOn0xVgreaqpu683g"
       }
     },
     {
@@ -283,9 +283,9 @@
         "badge": "clear",
         "pick": true,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "7VOlOgHE7biEwmZ5NV5CqjbBK60Tcbg1EzxlfVQBIWD9FA1cNlgcpVWZMm2scrYF5oIWi89WdY9iob5v9ELeiA"
+        "sig": "pOjirip5cxCsEYu3mzA5047Sa1jEB7oiY4Z0N93-hdi_ladyTz4qW6mYqTI7ZN6zJ5h7kajG9L6aFbIcfh24Cg"
       }
     },
     {
@@ -318,9 +318,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "wQdOnzs1rmYCCXaISCEL-kaNxkHXdumXzitr9S5JueXFiuoX51xwp299DrEWEbygyk5PYIM1S6Ms2jiRTIiMZw"
+        "sig": "JRZTWsXP2FIEfT1LLc0hJZnQLtVwmaxD3ZzMLLoUcPcQXAlb7WKLj0025ofdxRcSM9PJ-VIFxEOKEGK9oVNv6Q"
       }
     },
     {
@@ -353,9 +353,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "i1L5C3QCSKwFxmfFEm1TxvbsrQBNRy_iROr2Ip4_qCiXptNjl7D235cMTTEX77c6exAMK_KthkMiZ-KN8c6lkA"
+        "sig": "U1XcSHHL-Srhx0dSFNOFF3z5i9NC4wQWedIf3hS4tFmO6cKkeJkFGFjNpFKfKKP6adtC8ZeNk_zZ61kFHmfyrg"
       }
     },
     {
@@ -388,9 +388,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "6uM6uQ3duuRnAIeU4IhLrFmM_bDZ9KI5HtAi_DwpDuMgCkUATkUf1ngE7pxvI108XIoznWeTtA1fhrF8aA7oMg"
+        "sig": "69EcnWej211mK_cOSFpwUfnH_eq1Mm_odhB0xIqYfaLtOTvFx1hzanSZT-G0Xc6rhBVhr856YCbEoqM0tri0fg"
       }
     },
     {
@@ -424,9 +424,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "-VR2yFIaz_vfpfZjrSC-G_Ijmw04VSN7Tb-mPKcSbe8NFe-mGtG12AwtYF12-J_WoujWTP2UTlVk185ETgUi9A"
+        "sig": "EMesxhI7RUYSRjlMNMW88kX4ttb8xMAeioLGmicwK5awdPvnN87GZpiY6RmMewBXSXiOR2CFhymKPJWGzDffOg"
       }
     },
     {
@@ -459,9 +459,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "j8rHPtoGr4qL41V80EHT4A76LcvdmIr74Sj8BUVXlLQd3XDt-K8VFy6509dJ4PTJJJ_INc02zneMfiMi0keJFg"
+        "sig": "2oaVMLRxzOJT0im5iPHkUowNTZJh6arQTSAsJyC_n8EjHrvy6p8JBBIx1YTMuLZFuJc19qvEVmDt5ONnnVy3Cw"
       }
     },
     {
@@ -501,9 +501,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "j8di8DOlaa1wyAaaLcIt9Cz1frAJZJF_TUv1eqZGIFxR-BhcOP0R_cjeRMpgmzzX3O_a5L-oWAbXOv8dZ60b-A"
+        "sig": "JYgXaQtIcnGMFGs9hlAn2cYvzl24onjqAPx9dfrPO9P-_-0KSirTGF1xDj4Ta6krzt4b5Pcnl6NnzpmWJQno6g"
       }
     },
     {
@@ -539,9 +539,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "Zkpl2J7xjNe9gpA9oQSnvWpKixUldgr7SOJwqk_oUI902jGaRyj_ZZgISJ-j5GeGfbGTNIdLrn7WBd8LUc24kg"
+        "sig": "1nqZ8B9qvWFrDArj6ePfFHzf7jT9_IvikWMloP2ZvDFa2g-QT95XijHIQKRWoClpJpKfxpou3j3RkyyRePqjlQ"
       }
     },
     {
@@ -582,9 +582,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "EDgemKpZzScPxWVx795UAuk7nnafHgcHXV2AxX1S2uXuQf3JYnjkcAIk-l1F06wqV27zv8d_Hr7LfsSf2Otu9g"
+        "sig": "Ah7DnuMyLvokda7RDIW9cFWQ9QoXBC-lziscsMFu7sTaEJIiQnurlAZE18xtCSfSU3WAqrFnHEuKIUJVPznIig"
       }
     },
     {
@@ -623,9 +623,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "56lW6aKB-t9KSnfVxw4oANTWmFPG2lfXIhH3UqDpmRnNWu3bHQwkwUaSzD6uL5W4c7UKzFm9yXKTLGTrD9k2WA"
+        "sig": "slJaCvb_0GyYhQ1Va1FBxinKJfd3KUMHFPgcPjj2p2kUu9Wd7WYsGUaRiFRlUx1gmL58wiVji0ESZBfYYZu8Eg"
       }
     },
     {
@@ -664,9 +664,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "cUjEYmo4pIjJXbKg1du3z3ty0kn-2957a5CGgi3drSF7RMlzp6Ok7bE7Xb5i_LNVxelczH2rozwiA1wIPZpWgg"
+        "sig": "Z7E_qaJN1OZ23vPaHsUDK953kPpQAsvgb9GWv8aAh_X2YYhfB3eGSRCCuagmlAf5cUFLo6pSVNuTnF2ddDHVAw"
       }
     },
     {
@@ -706,9 +706,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "a_p6fiLpAz2ijuRfrquGwIQtlnIyffIkKEnZ8735lYVn2m4Q4_9tvswd7wqzOZhc6uqgrP-MPnX4MNcACCl9AA"
+        "sig": "8HgHXU5DyZjxPlk7Rk16acevCOxSmtmlBfLX2T822p_rsiY8IR85deqWJATEc-SBk-zRvZZv2yKbfZdNu1AdEg"
       }
     },
     {
@@ -748,9 +748,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "2HkCg3UuA5xzxxFSlVl0i5s9LETigwDCL3KSISbUcyS3Q7mzZ8hEN7TeDHzLZRieUO9vcw9d8rVp_HzIdl8bvw"
+        "sig": "XtrWxliTTnhSVpypiqjbUdoBDotDQ0B5rZtDcQ7mqUGbAO0_VqnLzOn7x89yhKnbjvPuVCxl90jFW9zdHDBzpQ"
       }
     },
     {
@@ -790,9 +790,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "yhGc_KIifzn8oE4IkBAlrRFOCXjkIVMIthQB1WpH6yk5ZvqGRHqYh6J98QNukqRQi3N7ydfGeLBg52dgpZHciA"
+        "sig": "SU7ikT3RlvYhVL5cicPJ1t8OlD-FAUuCPQPuEXrgRThzLk4CtXYgPiwc38EQSzHJaucZU-uAwcnNk6L5RmEMbA"
       }
     },
     {
@@ -832,9 +832,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "oYu-5TtF1DDcBl1TcYyGpgjQ7mxZWWQdxYrSzDe3g-QAJ_VZyZw38RNeSLKLDSzmU5DAQFF2Ni9s58TDM9o32A"
+        "sig": "bTZwpJYoOkdbb-6SEBjVX2mPxGa24AZNJDFDIia-67KO-PdC2O5AUgIYUFdJaCjRvOx5JCMNjpCKSJvcJsQ6Fg"
       }
     },
     {
@@ -874,9 +874,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "1IXBR5g6w2bLQ8W0Yu48EeBZuicLr1D_uf-OfpM0p-Tk1gpx85OZQ6S2NPkQMn3Jz-yNWGzIKwan2gOearPI4Q"
+        "sig": "ZkOIZe8dXZR7J9d3efzBtxWEIUko9ZiwMwbapj5be8AsFmV8_otGPCzFK_PRpQNn-WKJXKbEy_T0ZHgQmKyp1g"
       }
     },
     {
@@ -915,9 +915,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "PVoDkwNU09wr4ayBvrEYXCg3Rwq6VL-5MBiCiYz0oXGJpHLvdG3_xZIFRpinX838-yr5i4W7v7Foh-EOwkj6ng"
+        "sig": "ai1JOpnNKOuAn-1WVL6o88jBQV2Q2iQCSyOMQoGf5ImyFUIuv5gWrLZVXuS1RDuPIYK8Z65sadw-5JwbWX9cQw"
       }
     },
     {
@@ -956,9 +956,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "RCgNfaSrBtCLBOTU6QOVsGqQM1hfllsd6E7iKvy3dexTjFRucGv2CW2k15FQKjztbCNDEH-RxpLidD4JC1iopw"
+        "sig": "sNrQk-Ad7jJ93pQLAX5wnax2oJUVBtcvWwTJbrW1BCtv0giTzgKfWtVwy7l9D59c0TOC3uj3AB3aM5sVl3LuEw"
       }
     },
     {
@@ -997,9 +997,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "0oyThQECiUN4f8yeAHV0sS5UxpzLkxSZijvgJOrszQMSFRW4JekRg_MxljOl5xqMHGYvZ9T1ZWLkoRyPrhKPQg"
+        "sig": "1_STAlM9y5H33gqusJSk3lV-i8oc5MNaZfT3TcWW4ATG1xYK65_MzEiZV9BkB7lVWwa1GjtvJdTSZ1mqibkczA"
       }
     },
     {
@@ -1039,9 +1039,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "99cfEJEas9CqpT042D04_33i--F4Z7K-AUpCJA4m7YcIM6vIDCUY3xX50OrlY9Q99i8pMwKNMs_u1y0W7L2j9w"
+        "sig": "nmb0hkVeAMDGZQyV4wJgCSi1Hfw6V1s35nJ9jiABcjSNgG4P-VCkwUevySsCyaxpEc1v17BaN8cFI9yf2m54WQ"
       }
     },
     {
@@ -1081,9 +1081,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "z0U4Q0oOXND6JXgdibOi004VuKMHJSYVuZkmyZf8qaK29kicL2v-J6jl6EnvD3equlNLCOZXZ4RvjauxAIxQAA"
+        "sig": "KO2-2puSFkcdRsDbvumm_B-M_cIZA4yfbVcr9PQI6-7RfR94es4l5PfOkfoQ1IhDaQi-MUSOrUP_wO-0G_meQA"
       }
     },
     {
@@ -1123,9 +1123,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "-6LTss3W7URT8Fp9vuAVCxd7HHq6G-IxUvdU4VmyLFgKi1uJeEVHoG8kA-2KmvN7regtyRMeNx-q8orY9H2Tpw"
+        "sig": "UEHrR9q65und0twxQ2wL58uZEJu69mkWOkYB28Lx8WMj9wYN2cF4BfcFrsDcGSP9Gr1u51bh2aN__uEXfw6ZLg"
       }
     },
     {
@@ -1165,9 +1165,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "qIwBGJpDymW8nJfzuVlRLGEiPGTFLnUBW07uGRwLT7obAaju9yIcXtXKJ5i8u2nkmb-wsq12JApwrXx1ZdFuOQ"
+        "sig": "x3CP8dCUBL5CTDItqUWgndJ82dsNCTf8lu9hRcAYmNpUz5Un-eHzD82xHhJ18r6tcy1PYtEuum8_B-UK5ol5aA"
       }
     },
     {
@@ -1198,9 +1198,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "uRkmR_tFXftXC3naDSWgkv3GcFSKzc2z9s70WAfNdRPbBbAPsxTueRJdygKVTC5PxWhZjotN-IliiKzAu7yQQA"
+        "sig": "dfYKONyzVZo4s2OmwjbVJAx2boPmKECEq0BABP0zrAXUxQVclw_XsqEnrFojtPJEVr2ADJwx8ab6SIlTtJpzoA"
       }
     },
     {
@@ -1231,9 +1231,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "9_MKyMHuf0UMKbSZLKMKSW_9rs6qAJwUx9LxFY5WNT6CvSGhnm5cMdCaMylmvOp2Li8zM8nCI9pWq6iiMJu-TQ"
+        "sig": "ZB55P3k1GeAN1m4fOo10sIIdesXqKK69f5ifFEUXdZplOH8BrPWgXvA1qHl8dTyd83HGLF4tZPLv7eW31Utkyg"
       }
     },
     {
@@ -1263,9 +1263,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "wO6CR9B8tXitabaLR1Gmhe8P2_vMjxGetpJ5d46jlTkapjIvZPRiqu0iPTi95FL0GPgZzTMJRO3eR_khU6-xIw"
+        "sig": "zKM1uIxKvHftLeLL2tAm7haIPhz6GrW3J5C6-_RwQmXD0shFWRDIf6pEdH9ZMQiT7OIy5eZGB2vkk75HNwchBw"
       }
     },
     {
@@ -1295,9 +1295,9 @@
         "badge": "clear",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "DuTpGMBLijmWfCQBiXwkPTUtGB2rew0BD4PKy8R9SC7M2uJP6rB1vQeizsjtllJ5Jdi4odVs0Wh2M6SVBdT2Lw"
+        "sig": "Df9x1Z1MuYjypEgbhgbdv83Rw8QMD5vxXfi4nRrPeWwo-XpCWF9FOtu3ESup8T1JS9BAEZsV1qo_nWq241cKSg"
       }
     },
     {
@@ -1327,9 +1327,9 @@
         "badge": "shallow",
         "pick": false,
         "songs": [],
-        "reviewer": "guard-1",
+        "reviewer": "guard-2",
         "signedAt": "2026-10-01T01:00:00Z",
-        "sig": "RbLysGUXDZI1gVL9X9D7t_nQ6Bd6B1BN1KmyOKHx_-0SyezghxzO-QJyiG5EDJyWVpnRT7HutbBCN1LpXhQAug"
+        "sig": "J8w99lgpwslDsaxPYb5IfPg90-WxuvhMMYcjAMxEH3_cPgbRM0r5uE-RPTMOqUZ_ah2Np75DVqB4f3-Rxzxcng"
       }
     }
   ],
@@ -1374,6 +1374,6 @@
       "sample-word-match"
     ],
     "issuedAt": "2026-10-01T02:00:00Z",
-    "sig": "Rm0we7W9GGX0TuV70XbHfTOQjvYG5v51xRBR-TDhEpiY1n5lBhqYWpAtwOMgoLeaGV4CsHQNpvVdVpCgJ-EU-w"
+    "sig": "Lo9zusKi5rheyC72TYw_pTwF1KUKtGdfDjhB3DkWV3cXnILt-ypBg0LYQKfgKAPK4ifKM-LVJwWSIrerXc4MJg"
   }
 }

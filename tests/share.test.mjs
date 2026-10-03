@@ -15,7 +15,8 @@ const LINK = 'https://example.github.io/gorae/viewer.html#g1.AAAA';
 test('클래스용 안내: 제목·설명·시간·성취기준·바로 실행 링크가 한 번에 붙는다', () => {
   const { text } = buildShare('class', work, { link: LINK });
   const lines = text.split('\n');
-  assert.equal(lines[0], '분수 피자 게임');
+  assert.equal(lines[0], '🐋 분수 피자 게임');
+  assert.ok(text.includes('초4 · 수학'));
   assert.ok(text.includes('피자 조각을 눌러 분수를 만들어 보세요.'));
   assert.ok(text.includes('약 5분 동안 활동합니다.'));
   assert.ok(text.includes('성취기준: [4수01-12]'));

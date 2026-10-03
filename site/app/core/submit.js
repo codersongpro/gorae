@@ -5,7 +5,7 @@
 import { MAX_SONG_CHARS } from '../shared/review.js';
 import { toSubmissionHtml, cardLine } from '../shared/submission.js';
 import { normalizeWork } from '../shared/taxonomy.js';
-import { kindsForWork, FORMAT_OPTIONS } from '../shared/market.js';
+import { kindsForWork, FORMAT_OPTIONS, buildClassificationText } from '../shared/market.js';
 
 export const FORM_LIMITS = { title: 100, address: 2000 };
 const REAL_NAME = /^[가-힣]{2,4}$/;
@@ -56,13 +56,18 @@ export function buildSharePackage(work, { nickname, role, comment = '', privacyC
   if (!base.ok) return base;
   const m = normalizeWork(work);
   // 폼 문항: 닉네임 · 앱 제목 · 앱 종류(복수) · 설명 · 자료 종류 · (웹 앱이면) 주소
+  // 폼의 '앱 종류'는 예전 4가지(교무행정·수업자료·학생관리·기타)뿐이라, 실제 분류(수업/업무 → 카테고리 → 하위 →
+  // 교과 정보·태그)는 설명 칸 끝의 '분류 정보' 글로 함께 보낸다. 웹앱은 파일 속에 정보를 숨길 수 없어 이 글이 유일한 통로다.
+  // 시트에서 읽을 때 shared/market.js의 parseClassificationText가 원래 필드로 되살린다.
+  const classification = buildClassificationText(work);
   const prefill = {
     nickname: base.answers.nickname,
     title: work.title,
     kind: kindsForWork(m),
-    description: (m.description || work.howToUse || '').slice(0, 500),
+    description: `${(m.description || work.howToUse || '').slice(0, 500)}\n\n${classification}`.trim(),
     format: work.type === 'html' ? FORMAT_OPTIONS.file : FORMAT_OPTIONS.webapp,
     address: base.answers.address || '',
+    category: classification, // 폼에 '분류' 문항을 따로 만들면(entry.category) 그 칸에도 채운다
   };
   void comment;
   return { ok: true, file: base.file, prefill, warnings: base.warnings };

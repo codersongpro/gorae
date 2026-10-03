@@ -52,3 +52,47 @@ test('잊었을 때 초기화하면 암호가 지워지고 학생고래 모드�
   assert.equal(await st.get('mode'), 'baby');
   assert.equal((await checkPin(st, '2580')).error, 'NO_PIN');
 });
+
+// ---- 공모전·배포판: 기본 암호 없음 ----
+import * as pinModule from '../extension/core/pin.js';
+import { readFile } from 'node:fs/promises';
+
+test('처음 설치한 기기에는 기본 암호가 없다 (1234 자동 설정 없음)', async () => {
+  const st = createMemoryStorage();
+  assert.equal('ensureDefaultPin' in pinModule, false);
+  assert.equal('TEMP_DEFAULT_PIN' in pinModule, false);
+  assert.equal(await pinModule.migrateLegacyDefaultPin(st), 'NONE'); // 앱 시작 때 부르는 정리 함수도 암호를 만들지 않는다
+  assert.equal(await hasPin(st), false);
+  assert.equal((await checkPin(st, '1234')).error, 'NO_PIN');
+  // 사이드바 시작 코드에도 기본 암호를 넣는 부분이 없다
+  const src = await readFile(new URL('../extension/sidebar.js', import.meta.url), 'utf8');
+  assert.ok(!/ensureDefaultPin|setPin\(storage,\s*['"]\d+/.test(src));
+});
+
+test('처음 교사고래로 바꿀 때 직접 두 번 입력해 정하면 그 암호로만 들어간다', async () => {
+  const st = createMemoryStorage();
+  assert.equal(await hasPin(st), false); // → 화면은 '교사고래 암호를 처음 설정해 주세요.'
+  assert.equal((await setPin(st, '13579', '13579')).ok, true);
+  assert.equal((await checkPin(st, '13579')).ok, true);
+  assert.equal((await checkPin(st, '1234')).error, 'WRONG');
+});
+
+test('예전 시험판이 넣은 임시 암호 1234는 시작할 때 지워지고 학생고래로 돌아간다', async () => {
+  const st = createMemoryStorage();
+  await setPin(st, '1234', '1234');
+  await st.set('pinDefaultSeeded', true);
+  await st.set('mode', 'mother');
+  assert.equal(await pinModule.migrateLegacyDefaultPin(st), 'RESET');
+  assert.equal(await hasPin(st), false);
+  assert.equal(await st.get('mode'), 'baby');
+  assert.equal(await pinModule.migrateLegacyDefaultPin(st), 'NONE'); // 한 번만
+});
+
+test('예전 시험판 기기라도 교사가 암호를 바꿨다면 그 암호는 그대로 둔다', async () => {
+  const st = createMemoryStorage();
+  await setPin(st, '8642', '8642');
+  await st.set('pinDefaultSeeded', true);
+  assert.equal(await pinModule.migrateLegacyDefaultPin(st), 'KEPT');
+  assert.equal((await checkPin(st, '8642')).ok, true);
+  assert.equal(await st.get('pinDefaultSeeded'), null);
+});

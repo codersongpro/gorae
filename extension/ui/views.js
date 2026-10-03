@@ -22,7 +22,8 @@ function verifyLine(entry) {
   // 서명이 맞는 경우는 따로 표시하지 않는다(바다 배지와 고래 아이콘으로 충분). 서명이 있는데 문제가 있을 때만 이유를 보여 준다.
   const st = entry.status;
   if (st.ok || st.reason === 'NO_TAILPRINT') return null;
-  return h('p', { class: 'muted' }, S.reason[st.reason] || st.reason);
+  // 서명이 있는데 맞지 않으면(변조·말소 등) 눈에 띄게: 맑은 바다 배지 대신 얕은 바다 + 이유
+  return h('p', { class: 'notice error', role: 'status' }, `⚠️ ${S.reason[st.reason] || st.reason} ${S.bundle.notVerified}`);
 }
 
 function checkList(report) {
@@ -250,12 +251,32 @@ function moreMenu(entry, { onEdit, onRemix, onRemove, share }) {
     if (share.onWhaleonNow) items.push(menuItem(S.share.whaleonNow, () => share.onWhaleonNow(entry), 'whaleon-now'));
     for (const k of (share.kinds || []).filter((x) => x !== 'class' && x !== 'teamboard' && x !== 'space')) items.push(menuItem(S.share.kinds[k], () => share.onShare(entry, k)));
     items.push(menuItem(S.share.link, () => share.onLink(entry)));
+    if (share.onAssessment) items.push(menuItem(S.share.ubt, () => share.onAssessment(entry), 'ubt-copy'));
   }
   if (onRemove) items.push(menuItem(S.actions.remove, () => onRemove(entry), 'danger'));
   if (!items.length) return null;
   return h('details', { class: 'more-menu' },
     h('summary', { 'aria-label': S.actions.more, title: S.actions.more }, '⋯'),
     h('div', { class: 'menu-pop', role: 'menu' }, ...items));
+}
+
+// EXE(실행형 프로그램) 정보: 고래곳간은 파일을 보관하지 않는다. 해시·소스·검사 결과·실행 환경을 보여 주고,
+// 다운로드 링크는 교사고래 모드에서 검수 서명이 확인된(보류 아님) 항목에만 보인다.
+function exeInfo(entry, mode) {
+  const w = entry.work;
+  const E = S.exe;
+  const verified = entry.status.ok && entry.status.badge !== 'whirlpool';
+  let href = '';
+  try { const u = new URL(w.url); href = u.protocol === 'https:' ? u.href : ''; } catch { /* 아래에서 막는다 */ }
+  return h('div', { class: 'notice error', role: 'note' },
+    h('p', {}, h('strong', {}, E.warnTitle)), h('p', {}, E.warn),
+    h('p', { class: 'muted' }, `SHA-256: ${w.sha256 || E.none}`),
+    h('p', { class: 'muted' }, `${E.source}: ${w.sourceRepo || E.none}`),
+    h('p', { class: 'muted' }, `${E.scan}: ${w.scanResult || E.none}`),
+    h('p', { class: 'muted' }, `${E.env}: ${w.environment || E.none}`),
+    mode === 'mother' && verified && href
+      ? h('a', { class: 'btn', href, target: '_blank', rel: 'noopener noreferrer' }, E.download)
+      : h('p', {}, verified ? E.teacherOnly : E.unverified));
 }
 
 function workCard(entry, opts) {
@@ -284,7 +305,7 @@ function workCard(entry, opts) {
     selectBox || null,
     more && m.description ? h('p', { class: 'desc' }, m.description) : null,
     more ? metaLine(entry) : null,
-    more ? verifyLine(entry) : null,
+    verifyLine(entry), // 서명 문제는 접힌 카드에서도 보인다
     more && w.remixOf ? h('p', { class: 'muted' }, '🔄 ' + S.lineage(w.remixOfTitle || w.remixOf)) : null,
     more ? extra || null : null,
     h('div', { class: 'card-actions' },
@@ -297,6 +318,7 @@ function workCard(entry, opts) {
       h('button', { class: 'primary', 'data-tour': 'run', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
+      m.artifactType === 'exe' ? exeInfo(entry, opts.mode) : null,
       m.standard ? h('p', { class: 'muted' }, `성취기준: ${m.standard}`) : null,
       h('div', {}, h('p', { class: 'muted' }, S.detail.howTo), h('p', {}, w.howToUse)),
       w.promptRecipe && !locked ? h('div', {}, h('p', { class: 'muted' }, S.detail.recipe), h('pre', {}, w.promptRecipe)) : null,
@@ -534,7 +556,7 @@ export function pinView({ hasPin, error, askReset, onSet, onEnter, onCancel, onF
   const press = (d) => { if (digits.length < MAX) { digits += d; draw(); } };
   const back = () => { digits = digits.slice(0, -1); draw(); };
   function draw() {
-    const title = step === 'enter' ? P.enterTitle : step === 'set1' ? P.setTitle : P.confirm;
+    const title = step === 'enter' ? P.enterTitle : step === 'set1' ? P.setTitle : P.confirmTitle;
     const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => h('button', { onclick: () => press(d), 'aria-label': d }, d));
     root.replaceChildren(...[
       h('h2', {}, title),

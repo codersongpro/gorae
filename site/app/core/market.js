@@ -70,9 +70,10 @@ export async function fetchText({ fetchFn, url, maxBytes, timeoutMs, allowHost }
   }
 }
 
-// 시트 CSV 불러오기: 게시 CSV → export → pub 순서로 시도. 성공하면 사본 보관, 실패하면 사본으로.
+// 운영은 설정된 공개목록 CSV와 그 주소의 캐시만 사용한다. 원응답은 개발 모드에서 명시적으로 허용해야 한다.
 // 반환: { entries, source: 'network'|'cache', header, missing }
 export async function loadMarket({ fetchFn, config, storage }) {
+  if (storage) await storage.set('marketCache', null); // 예전 원응답 캐시는 삭제하고 사용하지 않는다.
   const urls = sheetCsvUrls(config);
   if (!urls.length) throw new MarketError('NOT_CONFIGURED');
   let lastErr = null;
@@ -82,14 +83,14 @@ export async function loadMarket({ fetchFn, config, storage }) {
       if (/text\/html/i.test(contentType) || /^\s*</.test(text)) throw new MarketError('PRIVATE'); // CSV 대신 웹 화면 = 공개 안 됨
       const parsed = parseMarketCsv(text);
       if (!parsed.ok) return { entries: [], source: 'network', header: parsed.header, missing: parsed.missing };
-      if (storage) await storage.set('marketCache', { text, at: new Date().toISOString() });
+      if (storage) await storage.set('marketPublicCache', { text, url, at: new Date().toISOString() });
       return { entries: parsed.entries, source: 'network', header: parsed.header, missing: [] };
     } catch (e) {
       lastErr = e instanceof MarketError ? e : new MarketError('NETWORK');
     }
   }
-  const cached = storage && (await storage.get('marketCache'));
-  if (cached) {
+  const cached = storage && (await storage.get('marketPublicCache'));
+  if (cached && urls.includes(cached.url)) {
     const parsed = parseMarketCsv(cached.text);
     if (parsed.ok) return { entries: parsed.entries, source: 'cache', header: parsed.header, missing: [], error: lastErr.code };
   }

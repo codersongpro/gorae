@@ -9,6 +9,16 @@ import { lessonInput } from './fixtures.mjs';
 
 const base = lessonInput();
 
+test('최근 사용 기록은 작품과 검수 서명을 변경하지 않고 개인 기록에만 저장한다', async () => {
+  const store = createStore(createMemoryBackend(), { now: () => new Date('2026-10-03T01:00:00Z') });
+  const work = { ...createWork(base), tailprint: { sig: 'original' } };
+  await store.add(work, { source: 'catalog' });
+  await store.markUsed(work.id); await store.markUsed(work.id); await store.markUsed('absent');
+  const rec = await store.get(work.id);
+  assert.equal(rec.useCount, 2); assert.equal(rec.lastUsedAt, '2026-10-03T01:00:00.000Z');
+  assert.deepEqual(rec.work, work);
+});
+
 test('AC-006 꾸러미에서 가져온 작품은 출처가 기록된다', async () => {
   const store = createStore(createMemoryBackend());
   const w = createWork(base);

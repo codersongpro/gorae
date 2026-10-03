@@ -149,6 +149,7 @@ async function run(entry) {
   if (!c.ok) return go({ notice: S.run[c.reason], confirmUrl: null });
   if (c.kind === 'url') return go({ confirmUrl: describeExternalOpen(entry), notice: '' });
   if (entry.source === 'market' && !state.marketRunOk[w.id]) return go({ confirmMarket: entry, notice: '' });
+  await store.markUsed(w.id);
   // HTML 작품은 별도 웨일 창에서 연다 (확장앱 실행 화면 → sandbox 페이지, 격리 방식은 같다)
   if ((chrome.windows && chrome.windows.create) || (chrome.tabs && chrome.tabs.create)) {
     const id = await putRunTicket(storage, entry);
@@ -167,10 +168,10 @@ async function run(entry) {
   app.replaceChildren(view.el);
 }
 
-const openConfirmed = () => {
+const openConfirmed = async () => {
   const info = state.confirmUrl;
   // 외부 웹앱도 HTML 작품처럼 별도 웨일 창으로 연다 (창을 못 열면 새 탭)
-  if (info) openInWindow(info.url);
+  if (info) { await store.markUsed(info.id); openInWindow(info.url); }
   go({ confirmUrl: null, notice: S.run.external });
 };
 
@@ -188,9 +189,10 @@ const viewerLinkOf = async (entry) => {
   return r.ok ? r.url : null;
 };
 const blockedNotice = () => go({ notice: S.share.blocked });
-async function shareWork(entry, kind) {
+async function shareWork(entry, kind, template) {
+  if (template && ['class', 'teamboard'].includes(kind)) return shareNow(entry, kind, template);
   const link = await viewerLinkOf(entry);
-  const { text, blocked } = buildShare(kind, entry.work, { link, status: entry.status });
+  const { text, blocked } = buildShare(kind, entry.work, { link, status: entry.status, template });
   if (blocked) return blockedNotice();
   await navigator.clipboard.writeText(text);
   go({ notice: link ? S.share.copied(S.share.kinds[kind]) : `${S.share.tooBig} ${S.share.tooBigCopied}` });
@@ -212,11 +214,11 @@ const NOW = {
   teamboard: { kind: 'teamboard', done: () => S.share.teamboardNowDone, open: openTeamboardPage },
   remote: { kind: 'space', done: () => S.share.whaleonNowDone, open: openWhaleonPage },
 };
-async function shareNow(entry, where) {
+async function shareNow(entry, where, template) {
   const how = NOW[where];
   const w = entry.work;
   const link = await viewerLinkOf(entry);
-  const out = buildShare(how.kind, w, { link, status: entry.status });
+  const out = buildShare(how.kind, w, { link, status: entry.status, template });
   if (out.blocked) return blockedNotice();
   let text = out.text;
   // 링크가 길면 안내문에 이미 '파일을 첨부했어요' 줄이 있으므로, 링크가 짧을 때만 파일 안내 줄을 더한다
@@ -315,7 +317,8 @@ async function refreshMarket() {
     const r = await loadMarket({ fetchFn: fetch, config: MARKET, storage });
     state.market = { ...state.market, status: 'ok', entries: [...r.entries, ...samples], source: r.source, header: r.header, missing: r.missing };
   } catch (e) {
-    state.market = { ...state.market, status: samples.length ? 'ok' : 'error', error: e.code || 'NETWORK', entries: samples, notice: samples.length ? S.market.error[e.code] || S.market.error.NETWORK : '' };
+    state.market = { ...state.market, status: samples.length ? 'ok' : 'error', error: e.code || 'NETWORK', entries: samples, source: samples.length ? 'sample' : '',
+      notice: samples.length ? (e.code === 'NOT_CONFIGURED' ? S.market.samplesOnly : S.market.error[e.code] || S.market.error.NETWORK) : '' };
   }
   render();
 }
@@ -659,7 +662,11 @@ async function render() {
     // 즐겨찾기(★)는 맨 위로, '즐겨찾기만 보기'를 켜면 그것만
     // EXE(실행형 프로그램)는 학생고래 모드에서 보이지 않는다
     const found = (hit ? all.filter((r) => hit.has(r.id)) : all).filter((r) => !state.favOnly || r.favorite).filter((r) => state.mode === 'mother' || r.work.type !== 'exe-link');
-    const records = [...found.filter((r) => r.favorite), ...found.filter((r) => !r.favorite)];
+    const collection = found.filter(r => !state.myCollection ||
+      (state.myCollection === 'recent' ? !!r.lastUsedAt :
+        ['lesson','work'].includes(state.myCollection) ? metaOf({work:r.work}).domain === state.myCollection :
+          state.myCollection === 'remix' ? !!r.work.remixOf : r.source === state.myCollection));
+    const records = state.myCollection === 'recent' ? collection.sort((a,b) => b.lastUsedAt.localeCompare(a.lastUsedAt)) : [...collection.filter(r => r.favorite), ...collection.filter(r => !r.favorite)];
     body = mypodView({
       records, entriesById: new Map(entries.map((e) => [e.work.id, { ...e, source: (records.find((r) => r.id === e.work.id) || {}).source }])), state,
       onRun: run, onRemove: removeRecord, onToggleDetail: toggleDetail,
@@ -668,6 +675,7 @@ async function render() {
       bar: { onPack: savePack, onClass: shareSelectionToClass, onTeamboard: shareSelectionToTeamboard, onWhaleon: shareSelectionToWhaleon, onFlow: startFlow, onClear: () => go({ selected: [] }) },
       share: shareProps(), submit: submitProps(true),
       onSearch: (q) => go({ mypodQuery: q, limit: PAGE_SIZE }), total: all.length,
+      onCollection: v => go({ myCollection: v, limit: PAGE_SIZE }),
       top: serviceTop(), ui: cardUi(), onFav: toggleFavorite, onFavOnly: (on) => go({ favOnly: on, limit: PAGE_SIZE }),
     });
   }

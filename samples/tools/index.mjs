@@ -25,7 +25,7 @@ export const tools = [
     promptRecipe: '모둠 수를 정하면 점수 카드가 생기는 점수판을 만들어 줘. +1, +5, −1 버튼, 모둠 이름 수정, 1등 강조.',
   },
   {
-    file: 'groups.html', id: 'tool-groups', title: '모둠 편성기', subcategory: 'seating',
+    file: 'groups.html', domain:'work', category:'class_management', id: 'tool-groups', title: '모둠 편성기', subcategory: 'seating',
     audience: ['teacher'], groupType: 'group', estimatedMinutes: 5, tags: ['모둠활동', '랜덤', '자리배치'],
     description: '모둠 수나 모둠당 인원을 정하면 고르게 무작위로 나눠 줘요.',
     howToUse: '번호나 별명을 적고 모둠 수(또는 인원)를 정한 뒤 [편성하기]를 누르세요. 다시 누르면 새로 섞여요.',

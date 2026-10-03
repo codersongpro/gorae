@@ -24,7 +24,7 @@ test('URL 작품은 https만 통과하고 http·javascript·잘못된 주소는 
 
 test('URL 작품은 바로 열지 않고 외부 사이트 확인 정보를 먼저 돌려준다', () => {
   const info = describeExternalOpen({ work: url('https://example.com/play'), status: none });
-  assert.deepEqual(info, { host: 'example.com', url: 'https://example.com/play', verified: false, badge: 'shallow' });
+  assert.deepEqual(info, { id: 'b', host: 'example.com', url: 'https://example.com/play', verified: false, badge: 'shallow' });
   assert.equal(describeExternalOpen({ work: html, status: none }), null);
   assert.equal(describeExternalOpen({ work: url('http://example.com'), status: none }), null);
   assert.equal(describeExternalOpen({ work: url('https://example.com'), status: okStatus('whirlpool') }), null);

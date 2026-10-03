@@ -12,8 +12,8 @@ import { lessonInput, toolInput, workInput } from './fixtures.mjs';
 const none = { ok: false, reason: tp.REASON.NO_TAILPRINT };
 const codes = (r) => r.errors.map((e) => e.code).sort();
 
-test('카테고리 정의: 수업 6개·업무 9개, 하위 id는 카테고리 안에서 겹치지 않는다', () => {
-  assert.deepEqual(CATEGORIES.lesson.map((c) => c.id), ['classroom_tool', 'teaching_material', 'subject_activity', 'assessment', 'project', 'creative']);
+test('카테고리 정의: 수업 8개·업무 9개, 하위 id는 카테고리 안에서 겹치지 않는다', () => {
+  assert.deepEqual(CATEGORIES.lesson.map((c) => c.id), ['classroom_tool', 'teaching_material', 'subject_activity', 'self_learning', 'presentation', 'assessment', 'project', 'creative']);
   assert.equal(CATEGORIES.work.length, 9);
   for (const list of Object.values(CATEGORIES)) {
     for (const c of list) assert.equal(new Set(c.subs.map((s) => s.id)).size, c.subs.length, c.id);
@@ -33,7 +33,7 @@ test('수업/업무·형태·카테고리·하위·대상은 필수, 짝이 안 
   assert.ok(codes(validateNewWork(lessonInput({ audience: ['hacker'] }))).includes('AUDIENCE'));
 });
 
-test('교과활동: 학교급·학년·교과·주제는 필수, 영역·단원·차시·성취기준은 선택', () => {
+test('교과 학습: 학교급·학년·교과·주제는 필수, 영역·단원·차시·성취기준은 선택', () => {
   assert.deepEqual(codes(validateNewWork(lessonInput({ schoolLevel: '', subject: '', topic: ' ' }))), ['SCHOOL_LEVEL', 'SUBJECT', 'TOPIC']);
   assert.ok(codes(validateNewWork(lessonInput({ schoolLevel: 'middle', grade: '5' }))).includes('GRADE')); // 중학교 5학년 없음
   const r = validateNewWork(lessonInput({ area: '', unit: '', lessonNo: '', standard: '' }));
@@ -42,7 +42,7 @@ test('교과활동: 학교급·학년·교과·주제는 필수, 영역·단원�
   assert.equal(validateClassification(toolInput()).length, 0);
 });
 
-test('교과활동 작품 카드에 상세 정보가 숫자·필드로 저장된다', () => {
+test('교과 학습 작품 카드에 상세 정보가 숫자·필드로 저장된다', () => {
   const w = createWork(lessonInput({ grade: '4', subject: '수학', area: '수와 연산', unit: '분수', lessonNo: '4/10', topic: '분수의 크기 비교', standard: '[4수01-12]', estimatedMinutes: '10', groupType: 'individual', tags: '#분수, 게임 , 모둠' }));
   assert.equal(w.domain, 'lesson');
   assert.equal(w.artifactType, 'html');
@@ -100,7 +100,7 @@ test('예전 작품(분류 없음)은 고치지 않고 화면용 분류만 만�
   assert.equal(JSON.stringify(old), frozen); // 원본 그대로 (서명 보호)
   assert.deepEqual([m.legacy, m.domain, m.category, m.schoolLevel, m.grade, m.gradeLabel, m.estimatedMinutes], [true, 'lesson', 'subject_activity', 'elementary', '4', '초4', 5]);
   assert.deepEqual(m.audience, ['student']);
-  assert.deepEqual(m.path, ['수업', '교과활동']);
+  assert.deepEqual(m.path, ['수업', '교과 학습']);
   assert.deepEqual(normalizeWork({ id: 'x', title: 'x', type: 'url', url: 'https://a.b' }).path, ['수업', '분류 없음(예전 작품)']);
 });
 

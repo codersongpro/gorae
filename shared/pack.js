@@ -4,20 +4,23 @@ export const PACK_VERSION = 1;
 export const MAX_ITEMS = 10;
 export const MAX_HTML_BYTES = 1024 * 1024;
 export const MAX_PACK_CHARS = 12 * 1024 * 1024;
+export const BUNDLE_TYPES = ['lesson', 'unit', 'self_learning', 'project', 'classroom_management', 'admin', 'training'];
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const err = (code, message, index) => ({ code, message, ...(index === undefined ? {} : { index }) });
 const byteLen = (s) => new TextEncoder().encode(s).length;
 
 // 작품 1~10개를 꾸러미 객체로 묶는다. 검수 서명(tailprint)이 있으면 그대로 함께 담긴다.
-export function createPack({ name, items, now = new Date() }) {
+export function createPack({ name, items, bundleType, now = new Date() }) {
   if (!Array.isArray(items) || items.length < 1) throw new Error('작품을 1개 이상 골라 주세요.');
   if (items.length > MAX_ITEMS) throw new Error(`꾸러미에는 작품을 ${MAX_ITEMS}개까지 담을 수 있어요.`);
+  if (bundleType && !BUNDLE_TYPES.includes(bundleType)) throw new Error('꾸러미 용도가 올바르지 않아요.');
   return {
     format: PACK_FORMAT,
     formatVersion: PACK_VERSION,
     name: String(name || '').trim().slice(0, 60) || '이름 없는 꾸러미',
     createdAt: now.toISOString(),
+    ...(bundleType ? { bundleType } : {}),
     items,
   };
 }
@@ -50,6 +53,7 @@ export function parsePack(input) {
   if (obj.items.length > MAX_ITEMS) return { ok: false, errors: [err('TOO_MANY', `꾸러미 작품은 ${MAX_ITEMS}개까지예요.`)] };
 
   const errors = [];
+  if (obj.bundleType !== undefined && !BUNDLE_TYPES.includes(obj.bundleType)) errors.push(err('BUNDLE_TYPE', '꾸러미 용도가 올바르지 않아요.'));
   obj.items.forEach((w, i) => {
     if (!isObj(w)) return errors.push(err('BAD_ITEM', '작품 형식이 틀렸어요.', i));
     if (typeof w.id !== 'string' || !w.id || typeof w.title !== 'string' || !w.title) return errors.push(err('BAD_ITEM', '작품의 id나 제목이 없어요.', i));

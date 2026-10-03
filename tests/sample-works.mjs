@@ -1,9 +1,7 @@
+import { readFileSync } from 'node:fs';
+const readSample = (file) => readFileSync(new URL('../samples/more/' + file, import.meta.url), 'utf8');
 // 샘플 작품 (수업·업무, 학년·교과 다양, 1개는 EXE). 서명은 tools/build-sample.mjs가 붙인다.
 // 분류: domain(수업/업무) → category → subcategory → tags
-const page = (title, body, script) =>
-  `<!doctype html><html lang="ko"><meta charset="utf-8"><title>${title}</title>` +
-  `<body style="font-family:sans-serif;padding:12px">${body}<script>${script}</script></body></html>`;
-
 export const works = [
   {
     id: 'sample-fraction-pizza',
@@ -18,20 +16,20 @@ export const works = [
     subject: '수학',
     area: '수와 연산',
     unit: '분수',
-    topic: '분수의 뜻',
+    topic: '분수의 크기 비교',
     standard: '[4수01-12]',
     estimatedMinutes: 10,
     groupType: 'individual',
     audience: ['student'],
     tags: ['분수', '게임', '개별활동'],
-    description: '피자를 나누며 분수를 배워요.',
+    selfDirected: true, learningMode: 'self_directed', contentType: 'interactive_activity', difficulty: 'normal',
+    description: '같은 크기의 피자로 분수를 만들고 비교하며, 6문제와 오답 재학습으로 확인해요.',
     author: '푸른 혹등고래 · 초등',
-    howToUse: '피자 조각을 눌러 주어진 분수만큼 색칠해 보세요.',
+    howToUse: '개념을 읽고 피자 조각을 선택해 두 분수를 비교하세요. 확인 문제를 풀고 오답을 다시 학습한 뒤 비교 방법을 정리하세요.',
     promptRecipe: '4학년 분수 도입용 피자 나누기 게임을 만들어 줘. 조각을 누르면 색이 바뀌고 분수가 표시돼.',
     version: 1,
     addedAt: '2026-09-20T00:00:00Z',
-    html: page('분수 피자', '<h3>분수 피자</h3><p id="t">8조각 중 0조각</p><button id="b">조각 추가</button>',
-      'let n=0;document.getElementById("b").onclick=()=>{n=Math.min(8,n+1);document.getElementById("t").textContent="8조각 중 "+n+"조각 ("+n+"/8)"}'),
+    html: readSample('fraction.html'),
   },
   {
     id: 'sample-times-quiz',
@@ -56,8 +54,7 @@ export const works = [
     promptRecipe: '구구단 문제를 무작위로 내고 정답이면 칭찬해 주는 퀴즈를 만들어 줘.',
     version: 1,
     addedAt: '2026-09-22T00:00:00Z',
-    html: page('구구단 퀴즈', '<p id="q"></p><input id="a" type="number" aria-label="답"><button id="c">확인</button><p id="r"></p>',
-      'let x,y;function nq(){x=2+Math.floor(Math.random()*8);y=2+Math.floor(Math.random()*8);document.getElementById("q").textContent=x+" × "+y+" = ?"}nq();document.getElementById("c").onclick=()=>{document.getElementById("r").textContent=+document.getElementById("a").value===x*y?"정답!":"다시 해 봐요";nq()}'),
+    html: readSample('times.html'),
   },
   {
     id: 'sample-mult-cards',
@@ -82,8 +79,7 @@ export const works = [
     promptRecipe: '곱셈 연습용 뒤집기 카드를 만들어 줘.',
     version: 1,
     addedAt: '2026-09-25T00:00:00Z',
-    html: page('곱셈 카드', '<div id="c" style="padding:24px;border:1px solid #888;cursor:pointer">12 × 3 (눌러서 정답 보기)</div>',
-      'document.getElementById("c").onclick=function(){this.textContent="36"}'),
+    html: readSample('mult.html'),
   },
   {
     id: 'sample-water-states',
@@ -108,8 +104,7 @@ export const works = [
     promptRecipe: '온도 슬라이더로 물의 고체·액체·기체 상태가 바뀌는 시뮬레이터를 만들어 줘.',
     version: 1,
     addedAt: '2026-09-27T00:00:00Z',
-    html: page('물의 상태', '<input id="s" type="range" min="-20" max="120" value="20" aria-label="온도"><p id="o"></p>',
-      'const s=document.getElementById("s"),o=document.getElementById("o");function u(){const t=+s.value;o.textContent=t+"℃ : "+(t<=0?"고체(얼음)":t<100?"액체(물)":"기체(수증기)")}s.oninput=u;u()'),
+    html: readSample('water-states.html'),
   },
   {
     id: 'sample-class-timer',
@@ -129,8 +124,7 @@ export const works = [
     promptRecipe: '전자칠판에 크게 보이는 수업용 타이머를 만들어 줘. 분을 고르고 시작·멈춤 버튼이 있어.',
     version: 1,
     addedAt: '2026-10-01T02:59:00Z', // 기본 도구 바로 뒤에 보이도록
-    html: page('교실 타이머', '<select id="m"><option>1</option><option selected>3</option><option>5</option></select>분 <button id="s">시작</button><p id="t" style="font-size:48px">03:00</p>',
-      'let left=0,iv;const t=document.getElementById("t");function draw(){t.textContent=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}document.getElementById("s").onclick=()=>{clearInterval(iv);left=+document.getElementById("m").value*60;draw();iv=setInterval(()=>{left=Math.max(0,left-1);draw();if(!left)clearInterval(iv)},1000)}'),
+    html: readSample('timer.html'),
   },
   {
     id: 'sample-csv-summary',
@@ -148,8 +142,7 @@ export const works = [
     promptRecipe: 'CSV를 붙여 넣으면 열마다 값별 개수를 표로 보여 주는 집계 도구를 만들어 줘. 외부 전송 없이.',
     version: 1,
     addedAt: '2026-09-12T00:00:00Z',
-    html: page('CSV 집계', '<textarea id="c" rows="6" cols="40" aria-label="CSV"></textarea><br><button id="b">집계</button><pre id="o"></pre>',
-      'document.getElementById("b").onclick=()=>{const rows=document.getElementById("c").value.trim().split(/\\n/).map(r=>r.split(","));const head=rows.shift()||[];document.getElementById("o").textContent=head.map((h,i)=>{const n={};rows.forEach(r=>{const v=(r[i]||"").trim();n[v]=(n[v]||0)+1});return h+": "+Object.entries(n).map(([k,v])=>k+" "+v).join(", ")}).join("\\n")}'),
+    html: readSample('csv-summary.html'),
   },
 ];
 

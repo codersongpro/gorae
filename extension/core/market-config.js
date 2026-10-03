@@ -1,8 +1,10 @@
 // 나눔 곳간 운영 설정 — 구글 폼·시트를 만든 뒤 이 파일만 고친다 (docs/google-form.md 참고)
 export const MARKET = {
-  // 응답 시트 ID: 시트 주소의 /d/ 와 /edit 사이 값. 시트는 '링크가 있는 모든 사용자 - 뷰어'로 공유
-  sheetId: '1sHBcqZcP4cSFyzTUqC1Gj_QK7feCrYKz09EyACaNjj8', // '고래곳간 자료공유' 응답 시트
-  // (선택) 파일 → 공유 → 웹에 게시 → CSV 로 받은 주소. 있으면 이것을 먼저 쓴다
+  // 원응답은 비공개. 운영자 확인을 거친 별도 공개목록 CSV만 연결한다.
+  environment: 'production',
+  allowRawSheetFallback: false,
+  sheetId: '', // 개발용 가상 시트 테스트에만 사용
+  // 공개목록: 파일 → 공유 → 웹에 게시 → CSV 주소 (원응답 CSV 금지)
   publishedCsvUrl: '',
   // 구글 폼 응답 주소 (https://docs.google.com/forms/d/e/.../viewform)
   formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdJG1NXqySDXBPpKIkSrOxFLH9gR9WyA8ZR7ONVuncGrR5uVg/viewform',
@@ -20,5 +22,5 @@ export const MARKET = {
   maxFileBytes: 2 * 1024 * 1024, // 내려받는 파일 상한 (작품 HTML은 1MB 이하)
 };
 
-export const marketReady = (m = MARKET) => !!(m.sheetId || m.publishedCsvUrl);
+export const marketReady = (m = MARKET) => !!(m.publishedCsvUrl || (m.environment === 'development' && m.allowRawSheetFallback === true && m.sheetId));
 export const shareReady = (m = MARKET) => /^https:\/\/docs\.google\.com\/forms\//.test(m.formUrl);

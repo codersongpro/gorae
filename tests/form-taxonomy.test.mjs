@@ -33,7 +33,7 @@ test('교과 메타데이터가 제출 정보(설명 칸의 분류 정보 글)�
   const pkg = buildSharePackage(lesson, { nickname: '파란고래 · 초등', role: 'teacher', privacyChecked: true });
   assert.equal(pkg.ok, true);
   const d = pkg.prefill.description;
-  for (const line of ['수업 › 교과활동 › 게임·퀴즈', '[lesson/subject_activity/game]', '형태: webapp', '학교급: elementary', '학년: 4', '교과: 수학', '영역: 수와 연산',
+  for (const line of ['수업 › 교과 학습 › 게임·퀴즈', '[lesson/subject_activity/game]', '형태: webapp', '학교급: elementary', '학년: 4', '교과: 수학', '영역: 수와 연산',
     '단원: 분수', '차시: 3/10', '주제: 분수의 크기 비교', '성취기준: [4수01-12]', '시간: 10', '활동형태: individual', '대상: student, teacher', '태그: 분수, 게임, 형성평가']) {
     assert.ok(d.includes(line), line);
   }
@@ -49,7 +49,7 @@ test('웹앱: 폼 → 시트 → 나눔 곳간 → 작품으로 되살릴 때 �
   assert.equal(r.ok, true);
   const [entry] = r.entries;
   assert.equal(entry.description, '피자 조각으로 분수 크기를 비교해요.'); // 화면에는 분류 정보 글 없이 설명만
-  assert.equal(entry.categoryText, '수업 › 교과활동 › 게임·퀴즈');
+  assert.equal(entry.categoryText, '수업 › 교과 학습 › 게임·퀴즈');
   assert.deepEqual(entry.category, { domain: 'lesson', category: 'subject_activity', subcategory: 'game' });
   const { works } = await fetchEntryWorks(entry, { fetchFn: async () => { throw new Error('웹앱은 내려받지 않는다'); }, config });
   assert.equal(works[0].url, 'https://pizza.example.com/play');

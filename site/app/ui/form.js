@@ -4,7 +4,7 @@ import { h } from './dom.js';
 import { S } from './strings.js';
 import {
   ARTIFACT_TYPES, DOMAINS, categoriesOf, findCategory, SCHOOL_LEVELS, levelOf, SUBJECTS, SUBJECTS_BY_LEVEL,
-  GROUP_TYPES, TIME_OPTIONS, AUDIENCES, RECOMMENDED_TAGS, normalizeTags,
+  GROUP_TYPES, TIME_OPTIONS, AUDIENCES, RECOMMENDED_TAGS, normalizeTags, CONTENT_TYPES, LEARNING_MODES, DIFFICULTIES, CREATION_METHODS,
 } from '../shared/taxonomy.js';
 
 const F = () => S.form;
@@ -40,6 +40,7 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
 
   // 1. 형태
   const typeBlock = section(F().step1,
+    selectEl('교육적 자료 유형', v.contentType, CONTENT_TYPES, (x) => set({ contentType: x })),
     selectEl(F().artifactType, v.artifactType, types, (x) => set({ artifactType: x }), { required: true }),
     mode !== 'mother' ? h('p', { class: 'muted' }, F().exeMotherOnly) : null);
 
@@ -64,6 +65,9 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
   const lessonBlock = v.domain === 'lesson' && cat
     ? section(cat.detail ? F().step3detail : F().step3lesson,
       cat.detail ? subjectFields : h('details', {}, h('summary', {}, F().subjectOptional), ...subjectFields),
+      selectEl('학습 방식', v.learningMode, LEARNING_MODES, (x) => { v.learningMode = x; }),
+      selectEl('난이도 (선택)', v.difficulty, DIFFICULTIES, (x) => { v.difficulty = x; }),
+      h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: v.selfDirected === true, onchange: (e) => { v.selfDirected = e.target.checked; } }), '학생이 설명을 따라 혼자 진행할 수 있어요'),
       h('div', { class: 'grid2' },
         selectEl(F().groupType, v.groupType, GROUP_TYPES, (x) => { v.groupType = x; }),
         selectEl(F().time, v.estimatedMinutes, TIME_OPTIONS.map((t) => ({ id: t.minutes, label: t.label })), (x) => { v.estimatedMinutes = x; })))
@@ -87,6 +91,10 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
     h('label', { class: 'field' }, h('span', {}, F().tags), tagInput),
     v.domain ? h('div', { class: 'row' }, (RECOMMENDED_TAGS[v.domain] || []).map((t) => h('button', { type: 'button', class: 'chip', onclick: () => addTag(t) }, '#' + t))) : null,
     textEl(S.create.author, v, 'author'),
+    h('details', {}, h('summary', {}, '제작 방식 (선택)'), CREATION_METHODS.map(method => h('label', { class: 'check' },
+      h('input', { type: 'checkbox', checked: (v.creationMethod || []).includes(method.id), onchange: (e) => {
+        const picked = new Set(v.creationMethod || []); if (e.target.checked) picked.add(method.id); else picked.delete(method.id); v.creationMethod = [...picked];
+      } }), method.label))),
     textEl(S.create.recipe, v, 'promptRecipe', { multiline: true }),
     mode === 'mother' ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: v.referenceOnly === true, onchange: (e) => { v.referenceOnly = e.target.checked; } }), S.reference.formLabel) : null,
     mode === 'mother' ? h('p', { class: 'muted' }, S.reference.formHint) : null);
@@ -98,7 +106,7 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
     const ta = h('textarea', { 'aria-label': S.create.html, oninput: (e) => { v.html = e.target.value; } }, v.html || '');
     file.addEventListener('change', async () => { const f = file.files[0]; if (f) { v.html = await f.text(); ta.value = v.html; } });
     contentBlock = section(F().htmlTitle, h('p', { class: 'muted' }, F().htmlHint), h('span', { class: 'muted' }, S.create.file), file, h('span', { class: 'muted' }, S.create.html), ta);
-  } else if (v.artifactType === 'webapp') {
+  } else if (['webapp', 'link', 'file'].includes(v.artifactType)) {
     contentBlock = section(F().webappTitle,
       h('p', { class: 'notice error' }, F().webappWarn),
       textEl(F().webappUrl, v, 'url', { required: true, type: 'url', placeholder: 'https://' }),
@@ -123,7 +131,7 @@ export function createView({ values, mode, onChange, onSubmit, onCancel, errors,
     h('p', { class: 'notice' }, S.create.privacyNote),
     errors && errors.length ? h('div', { class: 'notice error', role: 'alert' }, errors.map((e) => h('p', {}, e.message))) : null,
     warnings && warnings.length ? h('div', { class: 'notice' }, warnings.map((e) => h('p', {}, e.message))) : null,
-    typeBlock, classBlock, lessonBlock, audienceBlock, infoBlock, contentBlock,
+    classBlock, typeBlock, lessonBlock, audienceBlock, infoBlock, contentBlock,
     h('div', { class: 'row' },
       h('button', { class: 'primary', onclick: () => onSubmit(v) }, S.actions.save),
       h('button', { onclick: onCancel }, S.actions.back)));

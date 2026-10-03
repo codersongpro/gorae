@@ -352,3 +352,8 @@ button.in-mine { background: var(--color-mypod-soft); color: var(--color-mypod);
 
 .guide-badges { display: inline-flex; gap: var(--space-1); }
 .guide-row .badge.verified, .guide-row .badge.popular { white-space: normal; }
+
+/* 펼친 공유 템플릿도 좁은 패널과 작은 화면에서 접근 가능 */
+.menu-pop { max-height: min(65vh, 560px); overflow-y: auto; overscroll-behavior: contain; }
+.menu-pop details > summary { padding: 10px; cursor: pointer; min-height: 44px; }
+.purpose-chooser .row { margin-top: 8px; }

@@ -83,7 +83,11 @@ export async function flushPending({ storage, fetchFn, config }) {
 
 // 물뿜기 응답 시트를 읽어 센다. 반환: { counts, seen } (tallySpouts 참고)
 export async function loadSpoutCounts({ fetchFn, config }) {
-  const urls = sheetCsvUrls({ sheetId: config.spoutSheetId, publishedCsvUrl: config.spoutCsvUrl });
+  // 물뿜기는 작품 ID·교사/학생 구분만 있는 익명 집계. 자료공유 원응답 시트의 정책과 구분한다.
+  const urls = config.spoutCsvUrl ? sheetCsvUrls({ publishedCsvUrl: config.spoutCsvUrl }) : config.spoutSheetId ? [
+    'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(config.spoutSheetId) + '/export?format=csv',
+    'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(config.spoutSheetId) + '/pub?output=csv',
+  ] : [];
   if (!urls.length) return null;
   for (const url of urls) {
     try {

@@ -5,6 +5,11 @@ export function createStore(backend, { now = () => new Date() } = {}) {
     get: (id) => backend.get(id),
     remove: (id) => backend.delete(id),
     put: (rec) => backend.put(rec), // 기존 기록 갱신(수정 저장)
+    async markUsed(id) {
+      const rec = await backend.get(id);
+      if (!rec) return;
+      await backend.put({ ...rec, lastUsedAt: now().toISOString(), useCount: (Number(rec.useCount) || 0) + 1 });
+    },
     clear: async () => {
       for (const r of await backend.getAll()) await backend.delete(r.id);
     },

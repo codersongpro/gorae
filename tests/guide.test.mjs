@@ -35,7 +35,7 @@ import { flowLabels, buildFlowSteps, recommendForRemote, buildAssignment, totalM
 
 test('수업 진행: 세 작품은 도입·활동·정리, 순서는 고른 순서를 따른다', () => {
   assert.deepEqual(flowLabels(3), ['도입', '활동', '정리']);
-  assert.deepEqual(flowLabels(4), ['1단계', '2단계', '3단계', '4단계']);
+  assert.deepEqual(flowLabels(4), ['도입', '활동', '발표', '정리']);
   const recs = ['a', 'b', 'c'].map((id) => ({ id, work: { id, title: id.toUpperCase(), estimatedMinutes: 5, type: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'timer', audience: ['teacher'], tags: [] } }));
   const steps = buildFlowSteps(recs, ['c', 'x', 'a']);
   assert.deepEqual(steps.map((s) => [s.id, s.label]), [['c', '도입'], ['a', '활동']]);
@@ -46,6 +46,12 @@ test('웨일온 추천은 10분 이하 전체·교사용 작품만', () => {
   const mk = (id, min, groupType) => ({ work: { id, title: id, estimatedMinutes: min, groupType, type: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'timer', audience: ['teacher'], tags: [] } });
   const got = recommendForRemote([mk('long', 30, 'whole_class'), mk('solo', 5, 'individual'), mk('ok', 5, 'whole_class'), mk('t', 10, 'teacher')]);
   assert.deepEqual(got.map((e) => e.work.id), ['ok', 't']);
+});
+
+test('웨일온은 개인 발표자료·학습자료를 수업도구와 함께 추천한다', () => {
+  const mk = (id, contentType, estimatedMinutes, groupType = 'individual') => ({work:{id,domain:'lesson',contentType,estimatedMinutes,groupType}});
+  const got = recommendForRemote([mk('timer','teacher_tool',5,'whole_class'),mk('slides','presentation',20),mk('reading','learning_material',10),mk('long','presentation',90),mk('solo','interactive_activity',10)]);
+  assert.deepEqual(got.map(e=>e.work.id), ['slides','reading','timer']);
 });
 
 test('과제 안내문에는 제목·단계·내는 방법이 들어간다', () => {

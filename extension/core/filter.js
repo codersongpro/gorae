@@ -1,7 +1,7 @@
 // 필터·정렬·검색 (순수 함수). 항목 형태: { work, status } (core/trust.js 참고)
 // 분류 정보는 normalizeWork로 만든다 — 예전 작품(분류 없음)도 깨지지 않고 검색된다.
 import { displayBadge } from './trust.js';
-import { normalizeWork } from '../shared/taxonomy.js';
+import { normalizeWork, contentLabel, groupLabel } from '../shared/taxonomy.js';
 
 const cache = new WeakMap();
 export function metaOf(entry) {
@@ -13,9 +13,12 @@ export function metaOf(entry) {
 function matchesQuery(e, q) {
   const m = metaOf(e);
   const w = e.work;
-  const hay = [w.title, m.description, w.howToUse, m.topic, m.unit, m.area, m.standard, m.subject, m.gradeLabel, ...m.tags, ...m.path]
+  const hay = ['교육자료 도구', w.title, m.description, w.howToUse, m.topic, m.unit, m.area, m.standard, m.subject, m.gradeLabel,
+    m.estimatedMinutes ? `${m.estimatedMinutes}분` : '', contentLabel(m.contentType), groupLabel(m.groupType),
+    m.selfDirected ? '혼자 공부하기 자기주도학습' : '', ...m.tags, ...m.path]
     .join(' ').toLowerCase().replace(/[[\]]/g, '');
-  return q.toLowerCase().replace(/[[\]#]/g, '').split(/\s+/).filter(Boolean).every((t) => hay.includes(t));
+  const query = q.toLowerCase().replace(/혼자\s*(공부|학습|진행)할\s*수\s*있는/g, '혼자');
+  return query.replace(/[[\]#]/g, '').split(/\s+/).filter(Boolean).every((t) => hay.includes(t));
 }
 
 // criteria: { mode, domain, category, subcategory, grade(예: '초4'), schoolLevel, subject, standard,
@@ -28,6 +31,11 @@ export function filterEntries(entries, c = {}) {
     if (c.mode === 'baby' && m.artifactType === 'exe') return false; // EXE는 교사고래 모드에서만
     if (c.domain && m.domain !== c.domain) return false;
     if (c.category && m.category !== c.category) return false;
+    if (c.contentType && m.contentType !== c.contentType) return false;
+    if (c.artifactType && m.artifactType !== c.artifactType) return false;
+    if (c.learningMode && m.learningMode !== c.learningMode) return false;
+    if (c.selfDirected && !m.selfDirected) return false;
+    if (c.difficulty && m.difficulty !== c.difficulty) return false;
     if (c.subcategory && m.subcategory !== c.subcategory) return false;
     if (c.schoolLevel && m.schoolLevel && m.schoolLevel !== c.schoolLevel) return false; // 학교급이 없는 작품은 공통이라 늘 보인다
     if (c.grade && m.gradeLabel !== c.grade) return false;

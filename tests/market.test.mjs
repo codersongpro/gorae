@@ -8,7 +8,7 @@ import { createStore, createMemoryBackend } from '../extension/core/store.js';
 import { createMemoryStorage } from '../extension/core/storage.js';
 import { toSubmissionHtml } from '../shared/submission.js';
 
-const config = { sheetId: 'SHEET123', publishedCsvUrl: '', fetchTimeoutMs: 2000, maxFileBytes: 2 * 1024 * 1024 };
+const config = { environment:'development', allowRawSheetFallback:true, sheetId: 'SHEET123', publishedCsvUrl: '', fetchTimeoutMs: 2000, maxFileBytes: 2 * 1024 * 1024 };
 const work = { id: 'my-1', title: '럭키드로우', type: 'html', artifactType: 'html', domain: 'lesson', category: 'classroom_tool', subcategory: 'lucky_draw', audience: ['teacher'], tags: ['랜덤'], html: '<p>뽑기</p>', howToUse: '누르세요', description: '무작위로 뽑아요', version: 1 };
 
 const HEADER = '타임스탬프,어떤 고래이신가요?,제작하신 분의 닉네임,제작한 앱의 제목,설명,분류,웹앱 주소,한 마디,제작한 파일을 업로드 해주세요.';

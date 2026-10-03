@@ -10,7 +10,25 @@ export const ARTIFACT_TYPES = [
   { id: 'html', label: 'HTML 파일', runtime: 'html' },
   { id: 'webapp', label: '웹앱 URL', runtime: 'url' },
   { id: 'exe', label: '실행형 프로그램(EXE)', runtime: 'exe-link' },
+  { id: 'link', label: '자료 링크', runtime: 'url' },
+  { id: 'file', label: '파일 링크 (PDF·슬라이드·이미지 등)', runtime: 'url' },
 ];
+
+export const CONTENT_TYPES = [
+  { id: 'interactive_activity', label: '학습활동' }, { id: 'presentation', label: '발표자료' },
+  { id: 'learning_material', label: '학습자료' }, { id: 'worksheet', label: '활동지' },
+  { id: 'quiz', label: '퀴즈·평가' }, { id: 'portfolio', label: '포트폴리오' },
+  { id: 'teacher_tool', label: '수업·학급 도구' }, { id: 'work_tool', label: '교사 업무도구' },
+  { id: 'reference', label: '참고자료' }, { id: 'other', label: '기타' },
+];
+export const LEARNING_MODES = [{ id: 'guided', label: '수업과 함께' }, { id: 'self_directed', label: '자기주도학습' }];
+export const DIFFICULTIES = [{ id: 'easy', label: '기초' }, { id: 'normal', label: '보통' }, { id: 'challenge', label: '도전' }];
+export const CREATION_METHODS = [
+  { id: 'teacher_created', label: '교사 제작' }, { id: 'student_created', label: '학생 제작' },
+  { id: 'ai_assisted', label: 'AI 도움' }, { id: 'vibe_coding', label: '바이브코딩' }, { id: 'remix', label: '리믹스' },
+];
+export const contentLabel = (id) => CONTENT_TYPES.find(x => x.id === id)?.label || '';
+export const difficultyLabel = (id) => DIFFICULTIES.find(x => x.id === id)?.label || '';
 
 const subs = (pairs) => pairs.map(([id, label]) => ({ id, label }));
 
@@ -25,13 +43,20 @@ export const CATEGORIES = {
       ['intro', '도입·동기유발'], ['slides', '설명·발표 슬라이드'], ['worksheet', '활동지·학습지'], ['wrapup', '정리·성찰'],
       ['parent', '학부모·안내 자료'], ['etc', '기타 수업자료']]) },
     // 교과활동의 하위 카테고리는 '활동 유형'을 겸한다
-    { id: 'subject_activity', label: '교과활동', detail: true, subs: subs([
+    { id: 'subject_activity', label: '교과 학습', detail: true, subs: subs([
       ['concept', '개념 학습'], ['practice', '연습·문제풀이'], ['game', '게임·퀴즈'], ['simulation', '시뮬레이션·탐구'],
       ['creation', '표현·창작'], ['review', '정리·복습'], ['etc', '기타 활동']]) },
+    { id: 'self_learning', label: '자기주도학습', detail: true, subs: subs([
+      ['today', '오늘의 학습'], ['concept', '개념 익히기'], ['practice', '연습하기'], ['review', '복습하기'],
+      ['challenge', '도전 문제'], ['inquiry', '탐구하기'], ['plan', '학습 계획'], ['check', '학습 점검'],
+      ['retry', '오답 다시 학습'], ['summary', '학습 결과 정리']]) },
+    { id: 'presentation', label: '발표·표현', subs: subs([
+      ['slides', '발표자료'], ['portfolio', '디지털 포트폴리오'], ['webpage', '웹페이지'],
+      ['poster', '포스터·카드뉴스'], ['inquiry', '조사·탐구 결과'], ['project', '프로젝트 결과물'], ['etc', '기타']]) },
     { id: 'assessment', label: '평가·피드백', subs: subs([
       ['formative', '형성평가'], ['diagnostic', '진단평가'], ['performance', '수행평가'], ['self', '자기평가'],
       ['peer', '동료평가'], ['rubric', '루브릭'], ['feedback', '피드백'], ['etc', '기타 평가도구']]) },
-    { id: 'project', label: '프로젝트·창의활동', subs: subs([
+    { id: 'project', label: '프로젝트·탐구', subs: subs([
       ['pbl', '프로젝트 학습'], ['inquiry', '탐구활동'], ['problem_solving', '문제해결'], ['maker', '메이커'],
       ['coding', '코딩'], ['ai', 'AI 활용'], ['debate', '토론·논쟁'], ['collab_project', '협업 프로젝트'], ['etc', '기타']]) },
     { id: 'creative', label: '창체·교육활동', subs: subs([
@@ -42,7 +67,8 @@ export const CATEGORIES = {
   work: [
     { id: 'class_management', label: '학급운영', subs: subs([
       ['attendance', '출석·현황'], ['seating', '자리배치'], ['roles', '당번·역할'], ['schedule', '학급 일정'],
-      ['rules', '학급 규칙'], ['counseling_log', '상담 기록'], ['stats', '학급 통계'], ['student_status', '학생 현황'], ['etc', '기타']]) },
+      ['rules', '학급 규칙'], ['counseling_log', '상담 지원'], ['event', '학급 행사'], ['life', '생활교육'],
+      ['stats', '학급 통계'], ['student_status', '학생 현황'], ['etc', '기타']]) },
     { id: 'admin', label: '교무·행정', subs: subs([
       ['doc_analysis', '공문 분석'], ['doc_tasks', '공문 할 일 추출'], ['plan', '계획서 작성'], ['report', '보고서 작성'],
       ['minutes', '회의록'], ['drafting', '기안·문서 작성'], ['schedule', '일정 관리'], ['handover', '업무 인수인계'],
@@ -67,7 +93,7 @@ export const CATEGORIES = {
       ['survey_analysis', '설문·분석'], ['research_report', '연구보고서'], ['slides', '발표자료'], ['etc', '기타']]) },
     { id: 'automation', label: '업무자동화', subs: subs([
       ['batch_files', '파일 일괄처리'], ['spreadsheet', '엑셀·CSV 처리'], ['convert', '문서 변환'], ['data_cleanup', '데이터 정리'],
-      ['repetitive_input', '반복 입력'], ['qr', 'QR 생성'], ['rename', '파일명 변경'], ['auto_sum', '자동 집계'], ['etc', '기타 자동화']]) },
+      ['repetitive_input', '반복 입력'], ['qr', 'QR 생성'], ['rename', '파일명 변경'], ['auto_sum', '자동 집계'], ['survey_analysis', '설문 결과 정리'], ['etc', '기타 자동화']]) },
   ],
 };
 
@@ -77,7 +103,7 @@ export const SCHOOL_LEVELS = [
   { id: 'high', label: '고등학교', prefix: '고', grades: ['1', '2', '3'] },
 ];
 
-export const SUBJECTS = ['국어', '수학', '사회', '과학', '영어', '도덕', '음악', '미술', '체육', '실과', '정보', '제2외국어', '융합·STEAM', '기타'];
+export const SUBJECTS = ['국어', '수학', '사회', '과학', '영어', '도덕', '음악', '미술', '체육', '실과', '정보', '제2외국어', '통합교과', '융합·STEAM', '기타'];
 // 학교급별 교과 선택지 (추후 조정할 수 있게 분리해 둔다)
 export const SUBJECTS_BY_LEVEL = {
   elementary: SUBJECTS.filter((s) => !['정보', '제2외국어'].includes(s)),
@@ -168,6 +194,17 @@ function parseLegacyGrade(g) {
   return { schoolLevel: { 초: 'elementary', 중: 'middle', 고: 'high' }[m[1]], grade: m[2] };
 }
 const TYPE_TO_ARTIFACT = { html: 'html', url: 'webapp', 'exe-link': 'exe' };
+const validId = (choices, value) => choices.some(x => x.id === value);
+function inferContent(w, domain, category) {
+  if (w.referenceOnly) return 'reference';
+  if (domain === 'work') return 'work_tool';
+  if (category === 'presentation' || w.subcategory === 'slides') return w.subcategory === 'portfolio' ? 'portfolio' : 'presentation';
+  if (w.subcategory === 'worksheet') return 'worksheet';
+  if (category === 'assessment') return 'quiz';
+  if (category === 'classroom_tool') return 'teacher_tool';
+  if (category === 'teaching_material') return 'learning_material';
+  return 'interactive_activity';
+}
 
 export function normalizeWork(w) {
   const legacy = !w.domain;
@@ -181,6 +218,11 @@ export function normalizeWork(w) {
     legacy,
     domain,
     artifactType: w.artifactType || TYPE_TO_ARTIFACT[w.type] || 'html',
+    contentType: validId(CONTENT_TYPES, w.contentType) ? w.contentType : inferContent(w, domain, category),
+    learningMode: validId(LEARNING_MODES, w.learningMode) ? w.learningMode : (category === 'self_learning' || w.selfDirected === true ? 'self_directed' : 'guided'),
+    selfDirected: w.selfDirected === true,
+    difficulty: validId(DIFFICULTIES, w.difficulty) ? w.difficulty : '',
+    creationMethod: Array.isArray(w.creationMethod) ? [...new Set(w.creationMethod.filter(v => validId(CREATION_METHODS, v)))] : [],
     category,
     subcategory: w.subcategory || '',
     schoolLevel,
@@ -211,7 +253,12 @@ export function validateClassification(input) {
   const errors = [];
   const e = (code, message) => errors.push({ code, message });
   if (!DOMAINS.some((d) => d.id === input.domain)) e('DOMAIN', '수업 / 업무 중 하나를 골라 주세요.');
-  if (!ARTIFACT_TYPES.some((a) => a.id === input.artifactType)) e('ARTIFACT', '작품 형태(HTML·웹앱·EXE)를 골라 주세요.');
+  if (!ARTIFACT_TYPES.some((a) => a.id === input.artifactType)) e('ARTIFACT', '자료의 실행 형태를 골라 주세요.');
+  if (input.contentType && !validId(CONTENT_TYPES, input.contentType)) e('CONTENT_TYPE', '교육적 자료 유형이 올바르지 않아요.');
+  if (input.learningMode && !validId(LEARNING_MODES, input.learningMode)) e('LEARNING_MODE', '학습 방식이 올바르지 않아요.');
+  if (input.difficulty && !validId(DIFFICULTIES, input.difficulty)) e('DIFFICULTY', '난이도가 올바르지 않아요.');
+  if (input.selfDirected !== undefined && typeof input.selfDirected !== 'boolean') e('SELF_DIRECTED', '혼자 학습 가능 여부를 확인해 주세요.');
+  if (input.creationMethod !== undefined && (!Array.isArray(input.creationMethod) || !input.creationMethod.every(v => validId(CREATION_METHODS, v)))) e('CREATION_METHOD', '제작 방식이 올바르지 않아요.');
   const cat = findCategory(input.domain, input.category);
   if (!cat) e('CATEGORY', '대표 카테고리를 하나 골라 주세요.');
   else if (!findSub(input.domain, input.category, input.subcategory)) e('SUBCATEGORY', '하위 카테고리를 하나 골라 주세요.');

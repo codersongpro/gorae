@@ -21,7 +21,7 @@ export const catalogExtras = [
     addedAt: '2026-09-28T00:00:00Z',
   }),
   lesson({
-    file: 'slides-water.html', id: 'sample-ref-slides', title: '[참고용] 물의 순환 수업 발표 예시', category: 'teaching_material', subcategory: 'slides', badge: 'clear',
+    file: 'slides-water.html', id: 'sample-ref-slides', title: '[참고용] 물의 순환 수업 발표 예시', contentType: 'presentation', category: 'presentation', subcategory: 'slides', badge: 'clear',
     schoolLevel: 'elementary', grade: '5', subject: '과학', topic: '물의 순환 발표 구성', unit: '물의 여행', area: '물질', estimatedMinutes: 10, groupType: 'whole_class', audience: ['teacher', 'student'],
     tags: ['발표', '참고자료', '수업예시'], author: '송프로 · 초등', referenceOnly: true,
     description: '발표 구성(질문→설명→정리→확인 문제)을 보여 주는 참고용 예시예요. 보고 따라 구성만 배우고, 내 모둠의 내용으로 새로 만들어요.',
@@ -140,7 +140,7 @@ export const catalogExtras = [
   {
     file: 'admin-doctasks.html', id: 'sample-admin-doctasks', title: '공문 할 일 추출기', type: 'html', artifactType: 'html', domain: 'work', category: 'admin', subcategory: 'doc_tasks', badge: 'clear',
     audience: ['teacher'], tags: ['공문', '업무경감', '문서작성'], version: 1, author: '송프로 · 초등',
-    description: '공문 본문에서 기한·제출·대상이 들어 있는 문장을 골라 할 일 목록으로 만들어요.', howToUse: '공문 내용을 붙여 넣고 [할 일 뽑기]를 누르세요. 끝낸 일은 체크하고, 목록은 복사해 메모에 붙일 수 있어요.',
+    description: '공문에서 업무 후보와 원문 행을 찾고 기한·담당을 수정해 확인 목록을 만들어요.', howToUse: '익명화한 본문에서 후보를 뽑고 원문과 대조하세요. 누락 업무를 추가하고 기한·담당을 수정한 뒤 완료 표시와 함께 목록을 보관하세요.',
     promptRecipe: '공문 본문을 붙여 넣으면 기한, 제출 방법, 대상이 있는 문장을 찾아 체크리스트로 만들어 주는 도구를 만들어 줘. 외부 전송 없이.', addedAt: '2026-10-02T06:00:00Z',
   },
   {
@@ -168,6 +168,9 @@ export const catalogExtras = [
     author: '물결 고래 · 중등', promptRecipe: '회의 메모를 논의/결정/할 일로 나눠 회의록 형식으로 정리하는 도구를 만들어 줘. 외부 전송 없이.',
     addedAt: '2026-09-15T00:00:00Z',
   },
+  lesson({file:'fraction.html',id:'sample-fraction-practice',title:'혼자 공부하는 분수 비교 10분',category:'self_learning',subcategory:'practice',badge:'clear',contentType:'interactive_activity',schoolLevel:'elementary',grade:'4',subject:'수학',topic:'분수의 크기 비교',unit:'분수',estimatedMinutes:10,groupType:'individual',audience:['student'],selfDirected:true,learningMode:'self_directed',difficulty:'normal',tags:['분수','연습','복습','개별활동'],description:'개념 안내와 피자 조작, 6문제 해설, 오답 재학습, 결과 정리까지 혼자 진행해요.',howToUse:'개념 2분 → 피자 조작 3분 → 확인 문제 3분 → 비교 방법 정리 2분. 오답은 해설을 읽고 다시 풀어요.',author:'고래곳간 · 기본 자료',addedAt:'2026-10-03T01:00:00Z'}),
+  lesson({file:'argument.html',id:'sample-argument',title:'주장과 근거 찾기',category:'subject_activity',subcategory:'practice',badge:'clear',contentType:'learning_material',schoolLevel:'elementary',grade:'5',subject:'국어',topic:'주장하는 글의 근거와 출처',unit:'주장하는 글',estimatedMinutes:15,groupType:'individual',audience:['teacher','student'],selfDirected:true,learningMode:'self_directed',tags:['근거','글쓰기','토론'],description:'가상 학급 자료로 근거와 의견을 구분하고 내 주장·근거·다른 의견에 대한 답을 정리해요.',howToUse:'안내를 읽고 근거 판단 4문제를 풀어요. 해설을 확인하고 내 주장과 근거의 출처를 작성한 뒤 친구 피드백을 받아요.',author:'고래곳간 · 기본 자료',addedAt:'2026-10-03T01:10:00Z'}),
+  lesson({file:'population.html',id:'sample-population',title:'우리 지역 인구 변화 탐구 발표',category:'presentation',subcategory:'inquiry',badge:'clear',contentType:'presentation',schoolLevel:'elementary',grade:'6',subject:'사회',topic:'인구 자료 비교와 탐구 결과 발표',estimatedMinutes:25,groupType:'group',audience:['teacher','student'],tags:['사회','발표','탐구','시각화','모둠활동'],description:'자료의 출처와 단위를 확인해 표·그래프를 만들고 발견한 점과 추가 질문을 정리해 발표해요. 기본 숫자는 가상 자료예요.',howToUse:'같은 지역·기준의 연도별 인구를 입력하고 출처를 적어요. 변화량과 그래프를 읽고 발견한 점을 작성한 뒤 발표 화면과 결과 정리 글로 친구의 피드백을 받아요.',author:'고래곳간 · 기본 자료',addedAt:'2026-10-03T01:20:00Z'}),
 ];
 
 // 나눔 곳간 샘플 (시트 목록과 함께 보이는 앱 안 샘플, 미검수)
@@ -191,7 +194,7 @@ export const marketSamples = [
       howToUse: '← → 키나 아래 버튼으로 슬라이드를 넘겨요. [발표자 메모]를 누르면 말할 내용이 보여요.',
       promptRecipe: '5학년 과학 물의 순환 발표를 슬라이드로 만들어 줘. 7장이고 증발, 응결, 강수 순서야. 키보드 화살표로 넘기고 발표 메모 버튼도 넣어 줘. 글씨는 크게!', addedAt: '2026-10-02T00:00:00Z' }) },
   { file: 'slide-maker.html', nickname: '별빛 고래', whale: '학생고래', kinds: ['수업자료'], timestamp: '2026. 10. 1',
-    work: lesson({ id: 'share-slide-maker', title: '한 장씩 발표 슬라이드 만들기', category: 'subject_activity', subcategory: 'creation', schoolLevel: 'elementary', grade: '6', subject: '국어', topic: '발표 자료 만들기', unit: '효과적으로 발표해요', area: '말하기·듣기',
+    work: lesson({ id: 'share-slide-maker', contentType:'presentation', title: '한 장씩 발표 슬라이드 만들기', category: 'subject_activity', subcategory: 'creation', schoolLevel: 'elementary', grade: '6', subject: '국어', topic: '발표 자료 만들기', unit: '효과적으로 발표해요', area: '말하기·듣기',
       estimatedMinutes: 20, groupType: 'individual', audience: ['student'], tags: ['발표', '창작'], author: '별빛 고래 · 초등',
       description: '글만 쓰면 슬라이드가 돼요. 빈 줄로 장을 나누고 색도 바꿀 수 있어요.',
       howToUse: '왼쪽에 제목과 내용을 쓰고 빈 줄로 다음 장을 만들어요. 오른쪽에서 바로 확인해요.',
@@ -203,13 +206,13 @@ export const marketSamples = [
       howToUse: '항목마다 별을 누르고 한 줄씩 쓴 뒤 [평가 카드 만들기]를 눌러요.',
       promptRecipe: '친구 발표를 평가하는 카드 만들어 줘. 별 3개 중에 고르고, 좋은 점이랑 더 좋아질 점을 쓰게 해 줘. 상처 주는 말 쓰지 말라는 안내도 넣어 줘.', addedAt: '2026-09-30T00:00:00Z' }) },
   { file: 'group-town.html', nickname: '바람 고래', whale: '학생고래', kinds: ['수업자료'], timestamp: '2026. 10. 2',
-    work: lesson({ id: 'share-group-town', title: '우리 고장 소개 모둠 발표', category: 'classroom_tool', subcategory: 'presentation', schoolLevel: 'elementary', grade: '3', subject: '사회', area: '지리', unit: '우리 고장의 모습', topic: '우리 고장 소개하기',
+    work: lesson({ id: 'share-group-town', contentType:'presentation', title: '우리 고장 소개 모둠 발표', category: 'classroom_tool', subcategory: 'presentation', schoolLevel: 'elementary', grade: '3', subject: '사회', area: '지리', unit: '우리 고장의 모습', topic: '우리 고장 소개하기',
       estimatedMinutes: 20, groupType: 'group', audience: ['teacher', 'student'], tags: ['발표', '모둠활동', '사회'], author: '바람 고래 · 초등',
       description: '모둠 친구 4명이 위치·자연·사람들·자랑거리를 한 장씩 맡아 우리 고장을 소개하는 발표 화면이에요. 한 사람마다 말하는 시간을 재 줘요.',
       howToUse: '내용을 채우고 [발표 시작]을 눌러요. 1번 친구부터 차례로 말하고, 오른쪽 아래 시간이 줄어들어요. ← → 키로 넘겨요.',
       promptRecipe: '3학년 사회 우리 고장 소개 발표를 모둠 4명이 나눠서 하는 화면을 만들어 줘. 위치, 자연, 사람들, 자랑거리 4장이고 한 사람마다 45초 타이머가 있어야 해. 이름 대신 1번~4번으로 쓰게 해 줘.', addedAt: '2026-10-02T03:00:00Z' }) },
   { file: 'group-plant.html', nickname: '새싹 고래', whale: '학생고래', kinds: ['수업자료'], timestamp: '2026. 10. 2',
-    work: lesson({ id: 'share-group-plant', title: '식물 관찰 기록 발표판', category: 'subject_activity', subcategory: 'creation', schoolLevel: 'elementary', grade: '4', subject: '과학', area: '생명', unit: '식물의 한살이', topic: '강낭콩 관찰 기록 발표',
+    work: lesson({ id: 'share-group-plant', contentType:'presentation', title: '식물 관찰 기록 발표판', category: 'presentation', subcategory: 'inquiry', schoolLevel: 'elementary', grade: '4', subject: '과학', area: '생명', unit: '식물의 한살이', topic: '강낭콩 관찰 기록 발표',
       estimatedMinutes: 25, groupType: 'group', audience: ['teacher', 'student'], tags: ['발표', '모둠활동', '관찰'], author: '새싹 고래 · 초등',
       description: '모둠이 며칠째·모습·키·관찰 내용을 기록해 두면, 시간 순서 카드와 키 막대로 한눈에 발표할 수 있어요.',
       howToUse: '날짜와 모습, 키, 관찰한 내용을 적고 [기록 추가]를 눌러요. 모두 모이면 [발표 화면 켜기]로 크게 보여 주세요.',

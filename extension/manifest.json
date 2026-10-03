@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "고래곳간",
-  "description": "만들고 끝나는 바이브코딩을, 이어 쓰는 수업으로. 교실에서 만든 바이브코딩 작품을 안전하게 실행·검수·공유·리믹스하는 웨일 사이드바.",
+  "description": "사람과 수업은 웨일이 연결하고, 고래곳간은 교육 자료와 도구를 이어 줍니다. 수업·자기주도학습·발표·학급운영·교사 업무에 필요한 교육 자료와 도구를 찾아 쓰고 나누는 웨일 사이드바.",
   "version": "0.1.0",
   "permissions": ["storage", "clipboardWrite"],
   "host_permissions": [

@@ -101,6 +101,14 @@ async function main() {
   const work = parsed.work;
   const meta = normalizeWork(work); // 예전 작품도 같은 모양으로
   const st = await verify(work);
+  // 인증 목록의 짧은 링크는 검증 성공만 실행 허용. 개인 #g1 링크의 경고 정책은 유지한다.
+  if (id && !st.ok) {
+    status.className = 'notice error';
+    status.textContent = `검수 서명을 확인하지 못해 실행을 차단했어요. ${S.reason[st.reason] || st.reason}`;
+    $('stage').replaceChildren();
+    $('stage').hidden = true;
+    return;
+  }
   const badge = st.ok ? st.badge : 'shallow';
   const whirlpool = st.ok && st.badge === 'whirlpool';
 

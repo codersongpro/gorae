@@ -5,7 +5,8 @@ import { displayBadge } from '../core/trust.js';
 import { facetValues, metaOf, topTags } from '../core/filter.js';
 import { KIND_OPTIONS } from '../shared/market.js';
 import { isPopular } from '../shared/spout.js';
-import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel } from '../shared/taxonomy.js';
+import { DOMAINS, categoriesOf, findCategory, GROUP_TYPES, TIME_OPTIONS, AUDIENCES, timeLabel, groupLabel, audienceLabel, CONTENT_TYPES, ARTIFACT_TYPES, DIFFICULTIES, contentLabel, difficultyLabel } from '../shared/taxonomy.js';
+import { CLASS_TEMPLATES, TEAMBOARD_TEMPLATES } from '../core/share.js';
 import { canRun } from '../core/runner.js';
 import { isRestricted } from '../core/reference.js';
 import { TOUR_STEPS } from './guide-steps.js';
@@ -78,11 +79,17 @@ function select(label, value, options, onChange, labels = {}, allLabel = S.filte
 }
 
 // 찾기: 검색·학교급 칩·분류·정렬만 보이고, 나머지 조건은 [필터] 하나에 모은다
+function bindSearch(input, onSearch) {
+  const apply = () => onSearch(input.value.trim());
+  input.addEventListener('change', apply);
+  input.addEventListener('search', apply);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } });
+}
 function findBar({ entries, state, onFilter, sortSel }) {
   const Fd = S.find;
   const cat = findCategory(state.domain, state.category);
   const q = h('input', { type: 'search', placeholder: Fd.search, 'aria-label': Fd.search, value: state.query || '' });
-  q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
+  bindSearch(q, query => onFilter({ query }));
   const tags = topTags(entries);
   // 분류: 수업/업무와 카테고리를 한 칸에 (수업 › 수업도구 …)
   const catSel = h('label', {}, Fd.categoryOne,
@@ -91,10 +98,17 @@ function findBar({ entries, state, onFilter, sortSel }) {
       DOMAINS.map((d) => h('optgroup', { label: d.label }, categoriesOf(d.id).map((c) => h('option', { value: `${d.id}/${c.id}`, selected: state.domain === d.id && state.category === c.id }, c.label))))));
   const levels = [['', Fd.levelAll], ['elementary', '초'], ['middle', '중'], ['high', '고']];
   return h('div', { class: 'filters', 'data-tour': 'find' },
+    h('details', { class: 'wide purpose-chooser' }, h('summary', {}, '무엇을 찾으세요?'),
+      h('div', { class: 'row' }, [
+        ['📚 교과 학습', 'lesson', 'subject_activity', false], ['🧠 혼자 공부하기', 'lesson', '', true],
+        ['🎤 발표·공유', 'lesson', 'presentation', false], ['🧰 수업도구', 'lesson', 'classroom_tool', false],
+        ['🏫 학급운영', 'work', 'class_management', false], ['📋 교사 업무', 'work', '', false],
+      ].map(([label, domain, category, selfDirected]) => h('button', { type: 'button', class: 'chip', onclick: () => onFilter({ domain, category, selfDirected, query: '', subcategory: '', schoolLevel: '', grade: '', subject: '', maxMinutes: '', tag: '', contentType: '', artifactType: '', difficulty: '', learningMode: '', groupType: '' }) }, label)))),
     h('div', { class: 'wide' }, q),
     h('div', { class: 'wide level-chips', role: 'group', 'aria-label': Fd.level },
       levels.map(([id, label]) => h('button', { type: 'button', class: 'chip', 'aria-pressed': String((state.schoolLevel || '') === id), onclick: () => onFilter({ schoolLevel: id }) }, label))),
     catSel,
+    h('label', { class: 'check wide' }, h('input', { type: 'checkbox', checked: !!state.selfDirected, onchange: e => onFilter({ selfDirected: e.target.checked }) }), '혼자 진행할 수 있는 자료'),
     sortSel,
     h('details', { class: 'wide', open: state.moreOpen || null, ontoggle: (e) => { state.moreOpen = e.target.open; } },
       h('summary', {}, Fd.more),
@@ -103,9 +117,13 @@ function findBar({ entries, state, onFilter, sortSel }) {
         select(Fd.grade, state.grade, facetValues(entries, 'gradeLabel'), (v) => onFilter({ grade: v })),
         select(S.filter.subject, state.subject, facetValues(entries, 'subject'), (v) => onFilter({ subject: v })),
         select(Fd.time, state.maxMinutes, TIME_OPTIONS.map((t) => ({ id: t.minutes, label: t.label })), (v) => onFilter({ maxMinutes: v })),
+        select('자료 유형', state.contentType, CONTENT_TYPES, v => onFilter({ contentType: v })),
+        select('난이도', state.difficulty, DIFFICULTIES, v => onFilter({ difficulty: v })),
+        select('활동 형태', state.groupType, GROUP_TYPES, v => onFilter({ groupType: v })),
+        select('실행 형태', state.artifactType, ARTIFACT_TYPES, v => onFilter({ artifactType: v })),
         tags.length ? h('div', { class: 'row wide' }, h('span', { class: 'muted' }, Fd.tag),
           tags.map((t) => h('button', { class: state.tag === t ? 'chip primary' : 'chip', onclick: () => onFilter({ tag: state.tag === t ? '' : t }) }, '#' + t))) : null,
-        h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', schoolLevel: '', grade: '', subject: '', maxMinutes: '', tag: '' }) }, Fd.reset))));
+        h('button', { class: 'wide', onclick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', schoolLevel: '', grade: '', subject: '', maxMinutes: '', tag: '', contentType: '', artifactType: '', difficulty: '', learningMode: '', selfDirected: false, groupType: '' }) }, Fd.reset))));
 }
 
 // 지금 보고 있는 웨일 서비스에 맞춘 안내 띠 (클래스·팀보드·웨일온)
@@ -168,8 +186,8 @@ function metaLine(entry) {
     m.artifactType === 'exe' ? h('p', { class: 'notice error' }, S.cardMeta.exe) : null);
 }
 
-// 검수된 작품은 🐋, 검수 전 작품은 범고래 🫍
-export const VERIFIED_WHALE = '🐋';
+// 검수된 작품의 제작자는 돌고래 🐬, 검수 전 작품은 범고래 🫍
+export const VERIFIED_WHALE = '🐬';
 export const UNVERIFIED_WHALE = '🫍';
 // 제작자 줄: [고래 아이콘] 제작자 **닉네임** · 학교급 — 고래 아이콘은 검수 여부(그림 두 가지)만 알려 준다
 export function makerLine(author, role, verified = false) {
@@ -206,7 +224,7 @@ export function catalogView({ entries, visible, state, onFilter, onAdd, onRun, o
     state.source !== 'network' || state.listRejected ? h('p', { class: 'notice' }, S.listState[state.source] + (state.listRejected ? ` · ${S.listState.listRejected}` : '')) : null,
     findBar({ entries, state, onFilter, sortSel }),
     listTools(visible.map((e) => e.work.id)),
-    visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, inMine: mineIds.has(e.work.id), onOpenMine, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '' }) } : null }));
+    visible.length ? [...sliceOf(visible, ui).map((e) => workCard(e, { mode: state.mode, ui, onAdd, inMine: mineIds.has(e.work.id), onOpenMine, onRun, onToggleDetail, onRemix, share, submit, spout, open: state.openId === e.work.id })), moreButton(visible.length, sliceOf(visible, ui).length, ui)] : emptyState(S.empty.catalog, { icon: '🔍', action: onFilter ? { label: S.find.reset, onClick: () => onFilter({ query: '', domain: '', category: '', subcategory: '', grade: '', subject: '', audience: '', groupType: '', maxMinutes: '', badge: '', pickOnly: false, tag: '', schoolLevel:'', contentType:'', artifactType:'', difficulty:'', selfDirected:false, learningMode:'' }) } : null }));
 }
 
 // 학교급 뱃지: 학교급이 정해진 작품은 초/중/고 하나, 정해지지 않은(공통) 수업 작품은 초·중·고 모두
@@ -224,7 +242,6 @@ export function cardGroup(domain, category) {
 // 시트에 적힌 주소가 구글 드라이브·문서 주소일 때만 링크로 만든다 (아무 사이트로나 보내지 않는다)
 const DRIVE_HOSTS = ['drive.google.com', 'docs.google.com', 'drive.usercontent.google.com'];
 const driveHref = (u) => { try { const x = new URL(u); return x.protocol === 'https:' && DRIVE_HOSTS.includes(x.hostname) ? x.href : ''; } catch { return ''; } };
-const KIND_LABEL = { html: 'HTML', webapp: '웹앱', exe: 'EXE' };
 
 // 목록 도구: 모두 펼치기/접기, 더 보기 (작품이 늘어도 길게 스크롤하지 않도록 기본은 접힌 카드 + 12개씩)
 export const PAGE_SIZE = 12;
@@ -249,7 +266,10 @@ function moreMenu(entry, { onEdit, onRemix, onRemove, share }) {
     if (share.onClassNow) items.push(menuItem(S.actions.classShare, () => share.onClassNow(entry), 'class-now'));
     if (share.onTeamboardNow) items.push(menuItem(S.share.teamboardNow, () => share.onTeamboardNow(entry), 'teamboard-now'));
     if (share.onWhaleonNow) items.push(menuItem(S.share.whaleonNow, () => share.onWhaleonNow(entry), 'whaleon-now'));
-    for (const k of (share.kinds || []).filter((x) => x !== 'class' && x !== 'teamboard' && x !== 'space')) items.push(menuItem(S.share.kinds[k], () => share.onShare(entry, k)));
+    for (const [kind, templates] of [['class', CLASS_TEMPLATES], ['teamboard', TEAMBOARD_TEMPLATES]]) {
+      items.push(h('details', {}, h('summary', {}, kind === 'class' ? '클래스 활용 방식' : '팀보드 공유 방식'),
+        templates.map(t => menuItem(t.label, () => share.onShare(entry, kind, t.id)))));
+    }
     items.push(menuItem(S.share.link, () => share.onLink(entry)));
     if (share.onAssessment) items.push(menuItem(S.share.ubt, () => share.onAssessment(entry), 'ubt-copy'));
   }
@@ -298,7 +318,9 @@ function workCard(entry, opts) {
       onFav ? h('button', { class: `star${fav ? ' on' : ''}`, type: 'button', 'aria-pressed': String(!!fav), 'aria-label': fav ? S.fav.off : S.fav.on, title: fav ? S.fav.off : S.fav.on, onclick: () => onFav(entry) }, fav ? '★' : '☆') : null),
     h('div', { class: 'row', 'data-tour': 'badge' }, ...levelBadges(m), badgeEl(entry), entry.status.ok && entry.status.pick ? h('span', { class: 'badge pick' }, S.pick) : null,
       w.referenceOnly === true ? h('span', { class: 'badge reference' }, S.reference.badge) : null,
-      KIND_LABEL[m.artifactType] ? h('span', { class: 'pill info' }, KIND_LABEL[m.artifactType]) : null,
+      h('span', { class: 'pill info' }, contentLabel(m.contentType)),
+      m.selfDirected ? h('span', { class: 'pill edu' }, '혼자 공부 가능') : null,
+      m.difficulty ? h('span', { class: 'pill info' }, difficultyLabel(m.difficulty)) : null,
       spout && isPopular(spout.countsOf(entry)) ? h('span', { class: 'badge popular', title: S.popular.hint }, S.popular.badge) : null),
     makerLine(w.author, '', !!entry.status.ok),
     locked ? h('p', { class: 'notice' }, S.reference.cardNote) : null,
@@ -318,6 +340,7 @@ function workCard(entry, opts) {
       h('button', { class: 'primary', 'data-tour': 'run', disabled: !run.ok, onclick: () => onRun(entry) }, S.actions.run)),
     !run.ok ? h('p', { class: 'muted' }, S.run[run.reason]) : null,
     open ? h('div', { class: 'detail' },
+      h('p', { class: 'muted' }, '실행 형태: ' + (ARTIFACT_TYPES.find(a => a.id === m.artifactType)?.label || m.artifactType)),
       m.artifactType === 'exe' ? exeInfo(entry, opts.mode) : null,
       m.standard ? h('p', { class: 'muted' }, `성취기준: ${m.standard}`) : null,
       h('div', {}, h('p', { class: 'muted' }, S.detail.howTo), h('p', {}, w.howToUse)),
@@ -377,7 +400,7 @@ function submitPanel(entry, { allowRecommend, draft, profile, ready, onPrepare, 
 export function marketView({ m, onRefresh, onFilter, onImport, onPreview, onReview, onSwitch, mode = 'baby', spout, sendBar, web = false, ui }) {
   const M = S.market;
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: m.query || '' });
-  q.addEventListener('change', () => onFilter({ query: q.value.trim() }));
+  bindSearch(q, query => onFilter({ query }));
   const shown = (m.entries || []).filter((e) => {
     if (m.kind && !e.kinds.includes(m.kind)) return false;
     if (!m.query) return true;
@@ -460,12 +483,16 @@ function selectBar({ count, teacher, bar }) {
       h('button', { onclick: bar.onClear }, T.clear)));
 }
 
-export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, share, submit, onSearch, total, ui, onFav, onFavOnly, top, bar }) {
+export function mypodView({ records, entriesById, state, onRun, onRemove, onToggleDetail, onEdit, onRemix, onSelect, share, submit, onSearch, total, ui, onFav, onFavOnly, onCollection, top, bar }) {
   const q = h('input', { type: 'search', placeholder: S.find.search, 'aria-label': S.find.search, value: state.mypodQuery || '' });
-  q.addEventListener('change', () => onSearch(q.value.trim()));
+  bindSearch(q, onSearch);
   const selected = state.selected || [];
   return h('section', { class: `section${selected.length ? ' has-bar' : ''}` },
     top || null,
+    total ? select('내 자료 모아보기', state.myCollection, [
+      { id: 'recent', label: '최근 사용' }, { id: 'lesson', label: '수업자료' }, { id: 'work', label: '업무도구' },
+      { id: 'maker', label: '내가 만든 자료' }, { id: 'remix', label: '리믹스한 자료' }, { id: 'bundle', label: '꾸러미에서 가져온 자료' },
+    ], v => onCollection(v)) : null,
     total ? h('label', { class: 'field' }, h('span', {}, S.find.search), q) : null,
     state.mypodQuery ? h('p', { class: 'muted' }, S.find.found(records.length, total)) : null,
     total ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!state.favOnly, onchange: (e) => onFavOnly(e.target.checked) }), S.fav.only) : null,
@@ -474,6 +501,7 @@ export function mypodView({ records, entriesById, state, onRun, onRemove, onTogg
       const w = r.work;
       const tags = [`출처: ${S.source[r.source] || r.source}`, `버전 ${w.version}`];
       if (r.sample) tags.unshift(S.market.sampleTag);
+      if (r.lastUsedAt) tags.push(`최근 사용 ${dateOnly(r.lastUsedAt)} · ${r.useCount || 0}회`);
       if (w.editedFrom) tags.push(`${S.edit.editedFrom} (원본 ${w.editedFrom})`);
       if (r.checkReport && !r.checkReport.ok) tags.push(`점검 경고 ${r.checkReport.warnings.length}개`);
       return workCard(entriesById.get(r.id), {

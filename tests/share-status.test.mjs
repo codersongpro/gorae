@@ -27,8 +27,8 @@ test('검수된 작품: 클래스 공유 글에 제목·학년교과·시간·�
   assert.ok(parts[0].startsWith('🐋 '));
   assert.ok(parts[1].includes('초4 · 수학'));
   assert.ok(/약 \d+분 동안 활동합니다\./.test(parts[1]));
-  assert.equal(parts[2], `🟢 맑은 바다\n검수 서명 확인됨 · 파수꾼고래 ${pizza.status.reviewer.nickname}`);
-  assert.equal(parts[3], `▶ 바로 실행\n${LINK}`);
+  assert.equal(parts[3], `🟢 맑은 바다\n검수 서명 확인됨 · 파수꾼고래 ${pizza.status.reviewer.nickname}`);
+  assert.equal(parts[4], `▶ 바로 실행\n${LINK}`);
 });
 
 test('팀보드·웨일온 공유 글에도 검수 상태가 들어간다', () => {
@@ -86,7 +86,7 @@ test('UBT 평가용 정보: 작품·교과·성취기준·실행 링크·버전�
   if (pizza.work.standard) assert.ok(text.includes(`성취기준: ${pizza.work.standard}`));
   // 원작(리믹스 아님)은 리믹스 여부 없음, 검수 상태 표시
   const orig = buildAssessmentText(pizza.work, { link: LINK, status: pizza.status }).text;
-  assert.ok(orig.includes('리믹스 여부: 없음'));
+  assert.ok(!orig.includes('리믹스 여부'));
   assert.ok(orig.includes('🟢 맑은 바다 · 검수 서명 확인됨'));
   assert.ok(!/학생 이름|이메일|전화/.test(orig));
 });

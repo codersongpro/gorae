@@ -1,9 +1,9 @@
 // 작품 카드 만들기·검증 (DOM 없음)
 // 구조: 최상위 영역(domain) → 대표 카테고리(category) → 하위 카테고리(subcategory) → 태그(tags)
-// 형태: artifactType html | webapp | exe  (실행용 type: html | url | exe-link 는 호환을 위해 함께 저장)
+// 실행 형태: artifactType html | webapp | exe | link | file (실행용 type: html | url | exe-link 유지)
 import { CONFIG } from './config.js';
 import { looksLikeRealName } from './checker.js';
-import { validateClassification, normalizeTags, ARTIFACT_TYPES } from '../shared/taxonomy.js';
+import { validateClassification, normalizeTags, normalizeWork, ARTIFACT_TYPES } from '../shared/taxonomy.js';
 
 const byteLen = (s) => new TextEncoder().encode(s).length;
 const isHttps = (u) => {
@@ -26,8 +26,8 @@ export function validateNewWork(input) {
   if (input.artifactType === 'html') {
     if (!input.html) err('HTML_EMPTY', 'HTML 내용이 비어 있어요.');
     else if (byteLen(input.html) > CONFIG.maxHtmlBytes) err('HTML_TOO_BIG', 'HTML은 1MB 이하만 올릴 수 있어요.');
-  } else if (input.artifactType === 'webapp') {
-    if (!isHttps(input.url)) err('URL_NOT_HTTPS', '웹앱 주소는 https:// 로 시작해야 해요.');
+  } else if (['webapp', 'link', 'file'].includes(input.artifactType)) {
+    if (!isHttps(input.url)) err('URL_NOT_HTTPS', '자료 주소는 https:// 로 시작해야 해요.');
     if (input.sourceUrl && !isHttps(input.sourceUrl)) err('SOURCE_NOT_HTTPS', '소스코드 주소는 https:// 로 시작해야 해요.');
   } else if (input.artifactType === 'exe') {
     if (!isHttps(input.url)) err('EXE_URL', '다운로드 링크는 https:// 로 시작해야 해요.');
@@ -47,6 +47,11 @@ export function createWork(input, { now = new Date(), idGen = () => Math.random(
     title: input.title.trim(),
     type: art.runtime, // 실행·꾸러미 호환용
     artifactType: art.id,
+    contentType: normalizeWork(input).contentType,
+    learningMode: normalizeWork(input).learningMode,
+    selfDirected: input.selfDirected === true,
+    ...(input.difficulty ? { difficulty: input.difficulty } : {}),
+    creationMethod: normalizeWork(input).creationMethod,
     domain: input.domain,
     category: input.category,
     subcategory: input.subcategory,
@@ -73,7 +78,7 @@ export function createWork(input, { now = new Date(), idGen = () => Math.random(
   }
   if (art.id === 'html') {
     w.html = input.html;
-  } else if (art.id === 'webapp') {
+  } else if (art.runtime === 'url') {
     w.url = input.url;
     if (input.sourceUrl) w.sourceUrl = input.sourceUrl;
     for (const k of ['loginRequired', 'usesExternalApi', 'mobileSupported', 'collectsPersonalInfo', 'needsInternet']) w[k] = triState(input[k]);

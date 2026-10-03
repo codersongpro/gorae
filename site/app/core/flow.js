@@ -2,8 +2,9 @@
 import { normalizeWork } from '../shared/taxonomy.js';
 import { reviewShort } from './share.js';
 
-// 단계 이름: 3개면 도입·활동·정리, 2개면 도입·활동, 그 밖에는 번호
+// 단계 이름: 4개면 발표를 포함하고, 3개면 도입·활동·정리, 2개면 도입·활동
 export function flowLabels(n) {
+  if (n === 4) return ['도입', '활동', '발표', '정리'];
   if (n === 3) return ['도입', '활동', '정리'];
   if (n === 2) return ['도입', '활동'];
   return Array.from({ length: n }, (_, i) => `${i + 1}단계`);
@@ -19,13 +20,16 @@ export function buildFlowSteps(records, ids) {
 
 export const totalMinutes = (steps) => steps.reduce((a, s) => a + s.minutes, 0);
 
-// 웨일온 수업 중에 바로 쓰기 좋은 도구: 전체·교사용, 짧은(10분 이하) 작품을 위에서 limit개
+// 웨일온: 발표·학습·정리 자료를 먼저, 짧은 전체·교사용 도구도 함께 추천한다.
 export function recommendForRemote(entries, limit = 4) {
+  const material = e => ['presentation', 'portfolio', 'learning_material', 'worksheet', 'quiz'].includes(normalizeWork(e.work).contentType);
   return entries
     .filter((e) => {
       const m = normalizeWork(e.work);
-      return m.estimatedMinutes > 0 && m.estimatedMinutes <= 10 && ['whole_class', 'teacher'].includes(m.groupType);
+      return m.domain === 'lesson' && (material(e) ? m.estimatedMinutes <= 45 :
+        m.estimatedMinutes > 0 && m.estimatedMinutes <= 10 && ['whole_class', 'teacher'].includes(m.groupType));
     })
+    .sort((a, b) => Number(material(b)) - Number(material(a)))
     .slice(0, limit);
 }
 

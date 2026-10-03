@@ -39,8 +39,8 @@ test('AC-001 인터넷이 되면 목록과 족보를 받아 작품 카드를 만
   assert.equal(res.source, 'network');
   assert.equal(res.offline, false);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.length, 35); // 샘플 6개 + 기본 수업도구 7개 + 추가 샘플 3개
-  assert.equal(entries.filter((e) => e.status.ok).length, 33); // 미검수 시연용 2개(구구단·곱셈 카드)만 빼고 검증 통과
+  assert.equal(entries.length, 38); // 기본 6개 + 도구 7개 + 추가 25개
+  assert.equal(entries.filter((e) => e.status.ok).length, 36); // 미검수 시연용 2개(구구단·곱셈 카드)만 빼고 검증 통과
 });
 
 test('AC-002 한 번 받은 뒤 인터넷이 끊겨도 사본으로 보여 주고 배지 검증도 된다', async () => {
@@ -49,7 +49,7 @@ test('AC-002 한 번 받은 뒤 인터넷이 끊겨도 사본으로 보여 주�
   const res = await loadCatalog({ fetchFn: downFetch, storage, config: CONFIG, resolveLocal });
   assert.deepEqual([res.source, res.offline], ['cache', true]);
   const entries = await entriesFrom(res, storage);
-  assert.equal(entries.filter((e) => displayBadge({ status: e.status }) === 'clear').length, 31);
+  assert.equal(entries.filter((e) => displayBadge({ status: e.status }) === 'clear').length, 34);
 });
 
 test('처음부터 인터넷이 없으면 번들 샘플 목록을 쓴다', async () => {
@@ -61,7 +61,7 @@ test('AC-003 초4·수학 3건 중 고래 픽 1건을 필터하면 1건만 나�
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const g4 = filterEntries(entries, { grade: '초4', subject: '수학', mode: 'mother' });
-  assert.equal(g4.length, 4);
+  assert.equal(g4.length, 5);
   const picked = filterEntries(entries, { grade: '초4', subject: '수학', pickOnly: true, mode: 'mother' });
   assert.deepEqual(picked.map((e) => e.work.id), ['sample-fraction-pizza']);
 });
@@ -70,7 +70,7 @@ test('학생고래 모드는 맑은 바다(검증 통과)만 보인다', async (
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const baby = filterEntries(entries, { mode: 'baby' });
-  assert.ok(baby.length === 31 && baby.every((e) => displayBadge(e) === 'clear'));
+  assert.ok(baby.length === 34 && baby.every((e) => displayBadge(e) === 'clear'));
 });
 
 test('정렬: 고래 픽 먼저 / 새로 들어옴 / 물뿜기 많은 순', async () => {
@@ -91,11 +91,11 @@ test('exe 항목은 서명이 없으면 검증 실패로 표시된다', async ()
   assert.equal(exe[0].status.ok, false);
 });
 
-test('기본 수업도구 7개가 수업도구 카테고리로 들어 있고 모두 검수 서명·점검을 통과한다', async () => {
+test('기본 수업도구와 학급운영 도구가 각각의 카테고리로 들어 있고 모두 검수 서명·점검을 통과한다', async () => {
   const storage = createMemoryStorage();
   const entries = await entriesFrom(await loadCatalog({ fetchFn: localFetch, storage, config: CONFIG, resolveLocal }), storage);
   const tools = filterEntries(entries, { domain: 'lesson', category: 'classroom_tool', mode: 'baby' });
-  assert.equal(tools.length, 8); // 기본 수업도구 7개 + 교실 타이머
+  assert.equal(tools.length, 7); // 기본 수업도구 6개 + 교실 타이머 (모둠편성은 학급운영)
   assert.ok(tools.every((e) => e.status.ok && checkHtml(e.work.html).ok));
   assert.deepEqual(filterEntries(entries, { query: '럭키드로우' }).map((e) => e.work.id), ['tool-lucky-draw']);
   assert.deepEqual(filterEntries(entries, { subcategory: 'scoreboard' }).map((e) => e.work.id), ['tool-scoreboard']);

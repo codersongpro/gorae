@@ -3,9 +3,9 @@ import { createPack, parsePack, serializePack } from '../shared/pack.js';
 import { checkWork } from './checker.js';
 
 // 내 곳간 기록 중 고른 것만 꾸러미 텍스트로 만든다. 반환: { text, count, fileName }
-export function exportBundle(records, ids, { name, now = new Date() } = {}) {
+export function exportBundle(records, ids, { name, bundleType, now = new Date() } = {}) {
   const picked = records.filter((r) => ids.includes(r.id));
-  const pack = createPack({ name, items: picked.map((r) => r.work), now });
+  const pack = createPack({ name, items: picked.map((r) => r.work), bundleType, now });
   const safe = pack.name.replace(/[\\/:*?"<>|\s]+/g, '_');
   return { text: serializePack(pack), count: picked.length, fileName: `${safe}.gorae.json` };
 }

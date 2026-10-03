@@ -32,5 +32,5 @@ export const buildRunMessage = (work) => ({ type: 'gorae-run', html: work.html }
 export function describeExternalOpen(entry) {
   const c = canRun(entry);
   if (!c.ok || c.kind !== 'url') return null;
-  return { host: c.host, url: c.url, verified: entry.status.ok, badge: displayBadge(entry) };
+  return { id: entry.work.id, host: c.host, url: c.url, verified: entry.status.ok, badge: displayBadge(entry) };
 }

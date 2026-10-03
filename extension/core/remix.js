@@ -8,6 +8,7 @@ function formInput(w) {
   const m = normalizeWork(w);
   const input = {
     title: w.title, artifactType: m.artifactType, domain: m.domain, category: m.category, subcategory: m.subcategory,
+    contentType: m.contentType, learningMode: m.learningMode, selfDirected: m.selfDirected, difficulty: m.difficulty, creationMethod: m.creationMethod,
     audience: m.audience.length ? m.audience : ['student'], tags: m.tags, description: m.description,
     howToUse: w.howToUse, promptRecipe: w.promptRecipe, author: w.author,
     schoolLevel: m.schoolLevel, grade: m.grade, subject: m.subject, area: m.area, unit: m.unit, lessonNo: m.lessonNo,

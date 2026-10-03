@@ -2,7 +2,7 @@
 // 에듀노트 스킬마켓 구조를 옮긴 것. 화면과 분리된 순수 함수만 둔다(단위 시험 대상).
 //   CSV 파싱(셀 안 줄바꿈·"" 이스케이프 처리) · 열 이름 찾기 · 드라이브 공유 주소 → 직접 받기 주소 · 폼 미리 채우기 주소
 //   분류 정보 글(수업/업무 → 카테고리 → 하위 → 교과 정보·태그): 폼 → 시트를 거쳐도 원래 분류를 되살린다
-import { normalizeWork, findCategory, findSub, levelOf, GROUP_TYPES, AUDIENCES, ARTIFACT_TYPES, normalizeTags, gradeLabel } from './taxonomy.js';
+import { normalizeWork, findCategory, findSub, levelOf, GROUP_TYPES, AUDIENCES, ARTIFACT_TYPES, CONTENT_TYPES, LEARNING_MODES, DIFFICULTIES, CREATION_METHODS, normalizeTags, gradeLabel } from './taxonomy.js';
 
 // ---------- CSV (RFC 4180) ----------
 export function parseCsv(text) {
@@ -99,6 +99,7 @@ export const categoryText = (path, code) => `${path.join(' › ')} [${code.domai
 //   학년: 4 ...
 export const CLASSIFICATION_MARK = '[고래곳간 분류 정보]';
 const CLS_FIELDS = [
+  ['contentType', '자료유형'], ['learningMode', '학습방식'], ['selfDirected', '혼자학습'], ['difficulty', '난이도'], ['creationMethod', '제작방식'],
   ['artifactType', '형태'], ['schoolLevel', '학교급'], ['grade', '학년'], ['subject', '교과'], ['area', '영역'], ['unit', '단원'],
   ['lessonNo', '차시'], ['topic', '주제'], ['standard', '성취기준'], ['estimatedMinutes', '시간'], ['groupType', '활동형태'],
   ['audience', '대상'], ['tags', '태그'],
@@ -150,6 +151,12 @@ export function parseClassificationText(text) {
     else if (key === 'grade') { if (/^\d$/.test(v)) meta.grade = v; }
     else if (key === 'groupType') { if (GROUP_TYPES.some((g) => g.id === v)) meta.groupType = v; }
     else if (key === 'artifactType') { if (ARTIFACT_TYPES.some((a) => a.id === v)) meta.artifactType = v; }
+    else if (key === 'selfDirected') { if (v === 'true' || v === 'false') meta.selfDirected = v === 'true'; }
+    else if (key === 'creationMethod') meta.creationMethod = v.split(/\s*,\s*/).filter(id => CREATION_METHODS.some(x => x.id === id));
+    else if (['contentType', 'learningMode', 'difficulty'].includes(key)) {
+      const choices = { contentType: CONTENT_TYPES, learningMode: LEARNING_MODES, difficulty: DIFFICULTIES }[key];
+      if (choices.some(x => x.id === v)) meta[key] = v;
+    }
     else meta[key] = v;
   }
   if (meta.grade && !(meta.schoolLevel && levelOf(meta.schoolLevel).grades.includes(meta.grade))) delete meta.grade;
@@ -227,10 +234,10 @@ export const toDriveDownloadUrl = (url) => {
 export const isAllowedDownloadHost = (host) => ['drive.google.com', 'drive.usercontent.google.com', 'docs.google.com'].includes(host) || /\.googleusercontent\.com$/.test(host);
 
 // ---------- 시트 CSV 주소 ----------
-export function sheetCsvUrls({ sheetId, publishedCsvUrl }) {
+export function sheetCsvUrls({ sheetId, publishedCsvUrl, environment, allowRawSheetFallback }) {
   const out = [];
   if (publishedCsvUrl) out.push(publishedCsvUrl); // '웹에 게시' → CSV 주소
-  if (sheetId) {
+  if (sheetId && environment === 'development' && allowRawSheetFallback === true) {
     out.push(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`); // 링크가 있는 모든 사용자 보기
     out.push(`https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv`);
   }

@@ -46,7 +46,7 @@
 
 ## 개인정보
 고래곳간은 사용자 식별정보(이름·이메일·학교명·전화번호)를 직접 수집·저장하지 않습니다. 작성자 표시는 **닉네임 · 학교급**만 씁니다.
-구글 폼(나눔 곳간 제출·물뿜기·고래 노래)과 GitHub Pages 같은 외부 서비스에는 그 서비스의 일반적인 접속 기록이 남을 수 있고, 파일을 올릴 때는 구글 계정 로그인이 필요합니다. 자세한 흐름은 `docs/security-privacy-audit-2026-10-02.md`, `docs/google-form.md`.
+구글 폼(나눔 곳간 제출·물뿜기·고래 노래)과 GitHub Pages 같은 외부 서비스에는 그 서비스의 일반적인 접속 기록이 남을 수 있고, 파일을 올릴 때는 구글 계정 로그인이 필요합니다. 자세한 흐름은 `docs/google-form.md`.
 
 ## 개발·시험
 ```
@@ -57,6 +57,8 @@ npm test       # sync + 단위 시험 전체
 - 샘플 목록 다시 서명: `node tools/build-sample.mjs` (저장소 밖 열쇠 폴더 필요)
 - 변조 시연용 꾸러미: `node tools/make-tamper-demo.mjs` → `output/demo/`
 
-## 파일
-- CLAUDE.md : 영구 규칙 · docs/PRD.md : 제품 요구사항(구현 상태 반영)
-- DESIGN_BRIEF.md · design/tokens.css : 디자인 토큰 계약
+## 폴더
+- `extension/` 웨일 사이드바 확장앱 · `site/` GitHub Pages(인증 곳간 목록·족보·뷰어·검수 도구·웹 버전)
+- `shared/` 확장앱·뷰어·검수 도구 공용 코드 · `design/tokens.css` 디자인 토큰
+- `samples/` 시연용 샘플 작품 · `tools/` 동기화·서명·열쇠 도구 · `tests/` 단위 시험
+- `docs/google-form.md` 나눔 곳간 운영 설정 · `docs/root-key-setup.md` 운영 열쇠 관리

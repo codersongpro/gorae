@@ -1,6 +1,6 @@
 # extension — 웨일 사이드바 확장앱
 
-웨일은 `sidebar_action` 키를 씁니다 (0단계에서 `tests/probe0`로 확인). 빌드 도구 없이 이 폴더를 그대로 불러옵니다.
+웨일은 `sidebar_action` 키를 씁니다. 빌드 도구 없이 이 폴더를 그대로 불러옵니다.
 
 ## 불러오기
 1. `whale://extensions` → 개발자 모드 켜기
